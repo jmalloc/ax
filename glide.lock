@@ -1,5 +1,5 @@
 hash: 84eac431a5675635260fa616e6537935f3b2f68cfc1090147abb4226a5c51851
-updated: 2018-04-24T14:56:37.261091545+10:00
+updated: 2018-04-27T09:04:45.426586881+10:00
 imports:
 - name: github.com/go-sql-driver/mysql
   version: 3287d94d4c6a48a63e16fffaabf27ab20203af2a
@@ -11,8 +11,6 @@ imports:
   version: f58768cc1a7a7e77a3bd49e98cdd21419399b6a3
 - name: github.com/streadway/amqp
   version: 8e4aba63da9fc5571e01c6a45dc809a58cbc5a68
-- name: go.uber.org/atomic
-  version: 8474b86a5a6f79c443ce4b2992817ff32cf208b8
 - name: go.uber.org/multierr
   version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
 testImports:
@@ -20,6 +18,7 @@ testImports:
   version: 9eda700730cba42af70d53180f9dcce9266bc2bc
   subpackages:
   - config
+  - extensions/table
   - internal/codelocation
   - internal/containernode
   - internal/failer
