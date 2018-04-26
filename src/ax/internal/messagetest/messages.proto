@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package ax.internal.messagetest;
+option go_package = "messagetest";
+
+message Message {}
+message Command {}
+message Event {}
