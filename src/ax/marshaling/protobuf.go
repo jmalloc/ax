@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	protobufContentType = "application/vnd.google.protobuf"
+	// ProtobufContentType is the content-type name for protocol buffer messages.
+	ProtobufContentType = "application/vnd.google.protobuf"
 )
 
 // MarshalProtobuf marshals a ProtocolBuffers messages to its binary
@@ -28,7 +29,7 @@ func MarshalProtobuf(m proto.Message) (ct string, data []byte, err error) {
 	}
 
 	ct = mime.FormatMediaType(
-		protobufContentType,
+		ProtobufContentType,
 		map[string]string{"proto": n},
 	)
 
@@ -55,11 +56,11 @@ func UnmarshalProtobuf(ct string, data []byte) (proto.Message, error) {
 // ctn is the MIME content-type name, p is the set of pre-parsed content-type
 // parameters, as returned by mime.ParseMediaType().
 func UnmarshalProtobufParams(ctn string, p map[string]string, data []byte) (proto.Message, error) {
-	if ctn != protobufContentType {
+	if ctn != ProtobufContentType {
 		return nil, fmt.Errorf(
 			"can not unmarshal '%s' using protocol buffers, expected content-type is '%s'",
 			ctn,
-			protobufContentType,
+			ProtobufContentType,
 		)
 	}
 

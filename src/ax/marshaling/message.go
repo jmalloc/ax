@@ -20,7 +20,7 @@ func UnmarshalMessage(ct string, data []byte) (ax.Message, error) {
 		return nil, err
 	}
 
-	if ctn != protobufContentType {
+	if ctn != ProtobufContentType {
 		return nil, fmt.Errorf(
 			"can not unmarshal '%s', content-type is not supported",
 			ct,
