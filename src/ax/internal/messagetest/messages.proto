@@ -3,6 +3,22 @@ syntax = "proto3";
 package ax.internal.messagetest;
 option go_package = "messagetest";
 
-message Message {}
-message Command {}
-message Event {}
+// Message is a protocol buffers message that implements ax.Message.
+message Message {
+    string value = 1;
+}
+
+// Command is a protocol buffers message that implements ax.Command.
+message Command {
+    string value = 1;
+}
+
+// Event is a protocol buffers message that implements ax.Event.
+message Event {
+    string value = 1;
+}
+
+// NonAxMessage is a protocol buffers message that does not implement ax.Message.
+message NonAxMessage{
+    string value = 1;
+}
