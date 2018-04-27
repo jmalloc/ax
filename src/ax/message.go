@@ -29,7 +29,6 @@ type Message interface {
 // Command is a message that requests some action take place.
 //
 // Commands are always sent to a single handler within a single end-point.
-// Commands may optionally have an associated reply message.
 type Command interface {
 	Message
 
