@@ -23,9 +23,6 @@ type Message interface {
 	//
 	// Follow the same conventions as for error messages:
 	// https://github.com/golang/go/wiki/CodeReviewComments#error-strings
-	//
-	// Messages that implement DomainMessage should return a description that
-	// makes sense to a person familiar with the business domain.
 	Description() string
 }
 

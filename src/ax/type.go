@@ -55,7 +55,7 @@ func (mt MessageType) ToSet() MessageTypeSet {
 	}
 }
 
-// New returns a new pointer to a zero-value messageo of this type.
+// New returns a new pointer to a zero-value message of this type.
 func (mt MessageType) New() Message {
 	return reflect.New(mt.StructType).Interface().(Message)
 }
