@@ -11,11 +11,11 @@ import (
 // InboundPipeline interface that forwards messages to another pipeline.
 type InboundPipeline interface {
 	// Initialize is called when the transport is initialized.
-	Initialize(context.Context, Transport) error
+	Initialize(ctx context.Context, t Transport) error
 
 	// DeliverMessage forwards an inbound message through the pipeline until
 	// it is handled by some application-defined message handler(s).
-	DeliverMessage(context.Context, MessageSender, InboundEnvelope) error
+	DeliverMessage(ctx context.Context, s MessageSender, m InboundEnvelope) error
 }
 
 // OutboundPipeline is an interface for a message pipeline that processes
@@ -27,5 +27,5 @@ type OutboundPipeline interface {
 	MessageSender
 
 	// Initialize is called when the transport is initialized.
-	Initialize(context.Context, Transport) error
+	Initialize(ctx context.Context, t Transport) error
 }

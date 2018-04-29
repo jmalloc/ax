@@ -8,7 +8,7 @@ import "context"
 // It is implemented by Transport and InboundPipeline.
 type MessageSender interface {
 	// SendMessage sends a message.
-	SendMessage(context.Context, OutboundEnvelope) error
+	SendMessage(ctx context.Context, m OutboundEnvelope) error
 }
 
 // MessageBuffer is a Sender that keeps a collection of sent messages in memory.
