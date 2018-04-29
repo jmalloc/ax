@@ -13,14 +13,14 @@ type InboundEnvelope struct {
 
 	// DeliveryCount is the number of times that this message has been delivered
 	// to the endpoint.
-
+	//
 	// Messages may be redelivered after a failure handling the message, or of
 	// an endpoint crashes, for example. Not all transports support a delivery
 	// count, in which case the count is zero.
 	DeliveryCount uint
 
-	// Done indicates that the endpoint has finished processing the message.
-	// This does not necessarily mean that the message has been handled
+	// Done is called to indicate that the endpoint has finished processing the
+	// message. This does not necessarily mean that the message has been handled
 	// successfully. The InboundOperation passed to Done() determines whether or
 	// not the message is retried or not.
 	Done func(context.Context, InboundOperation) error
@@ -50,8 +50,13 @@ const (
 type OutboundEnvelope struct {
 	ax.Envelope
 
-	Operation       OutboundOperation
-	UnicastEndpoint string
+	// Operation is the operation to be performed on the message. It dictates
+	// how the message is sent by the transport.
+	Operation OutboundOperation
+
+	// DestinationEndpoint is the endpoint to which the message is sent when
+	// Operation is OpSendUnicast. The field is ignored for other operations.
+	DestinationEndpoint string
 }
 
 // OutboundOperation is an enumeration of operations that can be performed to
@@ -61,7 +66,7 @@ type OutboundOperation int
 const (
 	// OpSendUnicast is an outbound transport operation that sends a message to
 	// a specific endpoint as determined by the outbound message's
-	// UnicastEndpoint property.
+	// DestinationEndpoint property.
 	OpSendUnicast OutboundOperation = iota
 
 	// OpSendMulticast is an outbound transport operation that sends a message
