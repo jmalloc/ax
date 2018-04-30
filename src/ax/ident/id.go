@@ -95,7 +95,7 @@ func (id ID) Validate() error {
 	return nil
 }
 
-// MustValidate panics if the ID is not valud
+// MustValidate panics if the ID is not valid.
 func (id ID) MustValidate() {
 	if err := id.Validate(); err != nil {
 		panic(err)

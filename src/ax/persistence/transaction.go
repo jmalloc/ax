@@ -48,7 +48,7 @@ func GetTx(ctx context.Context) (tx Tx, ok bool) {
 	return
 }
 
-// GetOrBeginTx returns the transaction stored in ctx, or starts a new one
+// GetOrBeginTx returns the transaction stored in ctx, or starts a new one if
 // ctx does not contain a transaction.
 //
 // If a new transaction is started, the caller is said to "own" the transaction,
@@ -66,7 +66,7 @@ func GetOrBeginTx(ctx context.Context) (Tx, error) {
 	return BeginTx(ctx)
 }
 
-// BeginTx starts a new transactions using the data store in ctx.
+// BeginTx starts a new transaction using the data store in ctx.
 func BeginTx(ctx context.Context) (Tx, error) {
 	if ds, ok := GetDataStore(ctx); ok {
 		return ds.BeginTx(ctx)

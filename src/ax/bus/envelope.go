@@ -14,7 +14,7 @@ type InboundEnvelope struct {
 	// DeliveryCount is the number of times that this message has been delivered
 	// to the endpoint.
 	//
-	// Messages may be redelivered after a failure handling the message, or of
+	// Messages may be redelivered after a failure handling the message, or if
 	// an endpoint crashes, for example. Not all transports support a delivery
 	// count, in which case the count is zero.
 	DeliveryCount uint
@@ -22,7 +22,7 @@ type InboundEnvelope struct {
 	// Done is called to indicate that the endpoint has finished processing the
 	// message. This does not necessarily mean that the message has been handled
 	// successfully. The InboundOperation passed to Done() determines whether or
-	// not the message is retried or not.
+	// not the message is retried.
 	Done func(context.Context, InboundOperation) error
 }
 

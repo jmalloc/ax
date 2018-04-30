@@ -6,8 +6,8 @@ import (
 	"github.com/jmalloc/ax/src/ax"
 )
 
-// MessageContext an implementation of ax.MessageContext that sends messages
-// using a Sender.
+// MessageContext is an implementation of ax.MessageContext that sends messages
+// using a MessageSender.
 type MessageContext struct {
 	context.Context
 
@@ -20,7 +20,10 @@ func (c *MessageContext) MessageEnvelope() ax.Envelope {
 	return c.Envelope
 }
 
-// ExecuteCommand enqueues a command to be executed.
+// ExecuteCommand sends a command message.
+//
+// Commands are routed to a single endpoint as per the routing rules of the
+// outbound message pipeline.
 func (c *MessageContext) ExecuteCommand(m ax.Command) error {
 	return c.Sender.SendMessage(c, OutboundEnvelope{
 		Operation: OpSendUnicast,
@@ -28,7 +31,9 @@ func (c *MessageContext) ExecuteCommand(m ax.Command) error {
 	})
 }
 
-// PublishEvent enqueues events to be published.
+// PublishEvent sends an event message.
+//
+// Events are routed to endpoints that subscribe to messages of that type.
 func (c *MessageContext) PublishEvent(m ax.Event) error {
 	return c.Sender.SendMessage(c, OutboundEnvelope{
 		Operation: OpSendMulticast,

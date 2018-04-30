@@ -17,7 +17,7 @@ type MessageBuffer struct {
 	Messages []OutboundEnvelope
 }
 
-// SendMessage adds m to c.Messages.
+// SendMessage adds m to b.Messages.
 func (b *MessageBuffer) SendMessage(ctx context.Context, m OutboundEnvelope) error {
 	b.Messages = append(b.Messages, m)
 	return nil
