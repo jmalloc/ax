@@ -11,13 +11,14 @@ type MessageSender interface {
 	SendMessage(ctx context.Context, m OutboundEnvelope) error
 }
 
-// MessageBuffer is a Sender that keeps a collection of sent messages in memory.
+// MessageBuffer is a MessageSender that keeps a collection of sent messages in
+// memory.
 type MessageBuffer struct {
 	Messages []OutboundEnvelope
 }
 
-// DispatchMessage adds m to c.Messages.
-func (b *MessageBuffer) DispatchMessage(ctx context.Context, m OutboundEnvelope) error {
+// SendMessage adds m to c.Messages.
+func (b *MessageBuffer) SendMessage(ctx context.Context, m OutboundEnvelope) error {
 	b.Messages = append(b.Messages, m)
 	return nil
 }

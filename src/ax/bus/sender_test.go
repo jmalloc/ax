@@ -11,12 +11,12 @@ import (
 var _ = Describe("MessageBuffer", func() {
 	b := &MessageBuffer{}
 
-	Describe("DeliverMessage", func() {
+	Describe("SendMessage", func() {
 		It("adds the message to the internal slice", func() {
 			m := OutboundEnvelope{}
 			m.MessageID.GenerateUUID()
 
-			err := b.DispatchMessage(context.Background(), m)
+			err := b.SendMessage(context.Background(), m)
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(b.Messages).To(ConsistOf(m))
 		})
