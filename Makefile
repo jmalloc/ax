@@ -1,4 +1,5 @@
 REQ += $(shell find src -name "*.proto")
+REQ += src/ax/internal/bustest/handler.go
 REQ += src/ax/internal/bustest/sender.go
 REQ += src/ax/internal/bustest/transport.go
 REQ += src/ax/internal/bustest/pipeline.go
@@ -11,6 +12,9 @@ REQ += src/ax/internal/bustest/pipeline.go
 MOQ := $(GOPATH)/bin/moq
 $(MOQ):
 	go get -u github.com/matryer/moq
+
+src/ax/internal/bustest/handler.go: src/ax/bus/handler.go | $(MOQ)
+	$(MOQ) -out "$@" -pkg "bustest" src/ax/bus MessageHandler
 
 src/ax/internal/bustest/sender.go: src/ax/bus/sender.go | $(MOQ)
 	$(MOQ) -out "$@" -pkg "bustest" src/ax/bus MessageSender
