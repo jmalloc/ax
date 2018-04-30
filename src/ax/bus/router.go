@@ -14,7 +14,7 @@ import (
 // Router is an outbound pipeline stage that choses a destination endpoint for
 // unicast messages based on the message type.
 type Router struct {
-	Routes *RoutingTable
+	Routes RoutingTable
 	Next   OutboundPipeline
 
 	// cache is a map of message type to endpoint, used to bypass scanning the
@@ -66,10 +66,8 @@ func (r *Router) ensureDestination(m *OutboundEnvelope) error {
 // routing table if available, or otherwise routing to the endpoint with the
 // same name as the message's protocol buffers package name.
 func (r *Router) lookupDestination(mt ax.MessageType) (string, bool) {
-	if r.Routes != nil {
-		if ep, ok := r.Routes.Lookup(mt); ok {
-			return ep, ok
-		}
+	if ep, ok := r.Routes.Lookup(mt); ok {
+		return ep, ok
 	}
 
 	if ep := mt.PackageName(); ep != "" {
@@ -81,11 +79,7 @@ func (r *Router) lookupDestination(mt ax.MessageType) (string, bool) {
 
 // RoutingTable is set of rules that determine the destination endpoint for
 // unicast messages.
-type RoutingTable struct {
-	// routes is an ordered set of rules that are scanned to find the endpoint
-	// for a given message type.
-	routes []route
-}
+type RoutingTable []route
 
 // NewRoutingTable returns a routing table that choses a destination endpoint
 // based on a mapping of protocol buffers message name to endpoint name.
@@ -94,26 +88,24 @@ type RoutingTable struct {
 // be a fully-qualified protocol buffers message name, or a protocol buffers
 // package name. The corresponding value is the endpoint name that such messages
 // are routed to.
-func NewRoutingTable(r ...string) (*RoutingTable, error) {
+func NewRoutingTable(r ...string) (RoutingTable, error) {
 	size := len(r)
 
 	if size%2 != 0 {
 		return nil, errors.New("r must contain an even number of strings")
 	}
 
-	t := &RoutingTable{
-		routes: make([]route, 0, size/2),
-	}
+	t := make(RoutingTable, 0, size/2)
 
 	for i := 0; i < size; i += 2 {
-		t.routes = append(
-			t.routes,
+		t = append(
+			t,
 			route{r[i+0], r[i+1]},
 		)
 	}
 
-	sort.Slice(t.routes, func(i, j int) bool {
-		return len(t.routes[i].prefix) > len(t.routes[j].prefix)
+	sort.Slice(t, func(i, j int) bool {
+		return len(t[i].prefix) > len(t[j].prefix)
 	})
 
 	return t, nil
@@ -128,8 +120,8 @@ func NewRoutingTable(r ...string) (*RoutingTable, error) {
 // If there is no default route and mt is a top-level message, that is, a
 // message with no package name, then ok is false, indicating no route could be
 // found.
-func (t *RoutingTable) Lookup(mt ax.MessageType) (ep string, ok bool) {
-	for _, r := range t.routes {
+func (t RoutingTable) Lookup(mt ax.MessageType) (ep string, ok bool) {
+	for _, r := range t {
 		if r.IsMatch(mt) {
 			return r.endpoint, true
 		}

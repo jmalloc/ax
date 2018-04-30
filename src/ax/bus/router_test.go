@@ -137,7 +137,7 @@ var _ = Describe("Router", func() {
 })
 
 var _ = Describe("RoutingTable", func() {
-	var table *RoutingTable
+	var table RoutingTable
 
 	Describe("NewRoutingTable", func() {
 		It("returns an error when passed an odd number of arguments", func() {
