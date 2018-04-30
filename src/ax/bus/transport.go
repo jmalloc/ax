@@ -34,7 +34,7 @@ func (s *TransportStage) Initialize(ctx context.Context, t Transport) error {
 	return nil
 }
 
-// SendMessage sends m via s.transport.
+// SendMessage sends m via the transport.
 func (s *TransportStage) SendMessage(ctx context.Context, m OutboundEnvelope) error {
 	return s.transport.SendMessage(ctx, m)
 }
