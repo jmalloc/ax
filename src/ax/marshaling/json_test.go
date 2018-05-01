@@ -2,7 +2,9 @@ package marshaling_test
 
 import (
 	"encoding/json"
+	"fmt"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/jmalloc/ax/src/ax/internal/messagetest"
 	. "github.com/jmalloc/ax/src/ax/marshaling"
 	. "github.com/onsi/ginkgo"
@@ -17,7 +19,7 @@ var _ = Describe("MarshalJSON", func() {
 
 	It("marshals the message using JSON", func() {
 
-		data, err := MarshalJSON(message)
+		_, data, err := MarshalJSON(message)
 		Expect(err).ShouldNot(HaveOccurred())
 
 		var m messagetest.NonAxMessage
@@ -26,40 +28,61 @@ var _ = Describe("MarshalJSON", func() {
 		Expect(m).Should(Equal(*message))
 	})
 
-	// It("includes the protocol information in the content-type", func() {
-	// 	ct, _, err := MarshalProtobuf(message)
-	// 	Expect(err).ShouldNot(HaveOccurred())
-	// 	Expect(ct).To(Equal("application/vnd.google.protobuf; proto=ax.internal.messagetest.NonAxMessage"))
-	// })
-
-	// It("returns an error if the protocol name is not available", func() {
-	// 	var m proto.Message // no concrete value
-
-	// 	_, _, err := MarshalProtobuf(m)
-	// 	Expect(err).Should(HaveOccurred())
-	// })
+	It("includes the protocol information in the content-type", func() {
+		ct, _, err := MarshalJSON(message)
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(ct).To(Equal(JSONContentType))
+	})
 })
 
-var _ = Describe("UnmarshalProtobuf", func() {
-	// message := &messagetest.NonAxMessage{
-	// 	Value: "<value>",
-	// }
-	// data, err := proto.Marshal(message)
-	// if err != nil {
-	// 	panic(err)
-	// }
+var _ = Describe("UnmarshalJSON", func() {
 
-	// It("unmarshals the message using the protocol specified in the content-type", func() {
-	// 	m, err := UnmarshalProtobuf(
-	// 		"application/vnd.google.protobuf; proto=ax.internal.messagetest.NonAxMessage",
-	// 		data,
-	// 	)
-	// 	Expect(err).ShouldNot(HaveOccurred())
-	// 	Expect(proto.Equal(m, message)).To(BeTrue())
-	// })
+	message := &messagetest.NonAxMessage{
+		Value: "<value>",
+	}
+	_, data, err := MarshalJSON(message)
+	if err != nil {
+		panic(err)
+	}
 
-	// It("returns an error if the content-type is invalid", func() {
-	// 	_, err := UnmarshalProtobuf("", data)
-	// 	Expect(err).Should(HaveOccurred())
-	// })
+	It("unmarshals the message using the JSON specified in the content-type", func() {
+
+		m, err := UnmarshalJSON(
+			fmt.Sprintf(
+				"%s; proto=%s",
+				JSONContentType,
+				"ax.internal.messagetest.NonAxMessage",
+			),
+			data,
+		)
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(proto.Equal(m, message)).To(BeTrue())
+	})
+
+	It("returns an error if the content-type is invalid", func() {
+		_, err := UnmarshalJSON("", data)
+		Expect(err).Should(HaveOccurred())
+	})
+
+	It("returns an error if the content-type is not specific to message json encoding", func() {
+		_, err := UnmarshalJSON("text/plain	", data)
+		Expect(err).Should(HaveOccurred())
+	})
+
+	It("returns an error if the content-type does not specify protocol as a content type parameter", func() {
+		_, err := UnmarshalJSON(JSONContentType, data)
+		Expect(err).Should(HaveOccurred())
+	})
+
+	It("returns an error if message type is unregistered", func() {
+		_, err := UnmarshalJSON(
+			fmt.Sprintf(
+				"%s; proto=%s",
+				JSONContentType,
+				"ax.internal.messagetest.NonExistingType",
+			),
+			data,
+		)
+		Expect(err).Should(HaveOccurred())
+	})
 })
