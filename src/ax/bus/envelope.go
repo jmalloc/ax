@@ -11,6 +11,9 @@ import (
 type InboundEnvelope struct {
 	ax.Envelope
 
+	// SourceEndpoint is the endpoint that sent the message.
+	SourceEndpoint string
+
 	// DeliveryCount is the number of times that this message has been delivered
 	// to the endpoint.
 	//
