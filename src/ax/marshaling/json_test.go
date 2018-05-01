@@ -31,7 +31,14 @@ var _ = Describe("MarshalJSON", func() {
 	It("includes the protocol information in the content-type", func() {
 		ct, _, err := MarshalJSON(message)
 		Expect(err).ShouldNot(HaveOccurred())
-		Expect(ct).To(Equal(JSONContentType))
+		Expect(ct).To(Equal("application/vnd+ax.message+json; proto=ax.internal.messagetest.NonAxMessage"))
+	})
+
+	It("returns an error if the protocol name is not available", func() {
+		var m proto.Message // no concrete value
+
+		_, _, err := MarshalJSON(m)
+		Expect(err).Should(HaveOccurred())
 	})
 })
 

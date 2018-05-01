@@ -16,8 +16,19 @@ const (
 	JSONContentType = "application/vnd+ax.message+json"
 )
 
-// MarshalJSON JSON-ensodes a `proto.Message`
+// MarshalJSON marshals a ProtocolBuffers messages to JSON
+// representation and returns a MIME content-type that identifies the particular
+// message protocol.
 func MarshalJSON(msg proto.Message) (string, []byte, error) {
+
+	n := proto.MessageName(msg)
+	if n == "" {
+		err := fmt.Errorf(
+			"can not marshal '%s', protocol is not registered",
+			reflect.TypeOf(msg),
+		)
+		return "", nil, err
+	}
 
 	b := new(bytes.Buffer)
 
@@ -33,7 +44,12 @@ func MarshalJSON(msg proto.Message) (string, []byte, error) {
 		return "", nil, err
 	}
 
-	return JSONContentType, b.Bytes(), nil
+	ct := mime.FormatMediaType(
+		JSONContentType,
+		map[string]string{"proto": n},
+	)
+
+	return ct, b.Bytes(), nil
 }
 
 // UnmarshalJSON decodes JSON-encoded data into `proto.Message`
@@ -43,6 +59,18 @@ func UnmarshalJSON(ct string, data []byte) (proto.Message, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return UnmarshalJSONParams(ctn, p, data)
+
+}
+
+// UnmarshalJSONParams unmarshals a JSON-encoded messages using
+// a pre-parsed MIME content-type to identify the particlar
+// message protocol.
+//
+// ctn is the MIME content-type name, p is the set of pre-parsed content-type
+// parameters, as returned by mime.ParseMediaType().
+func UnmarshalJSONParams(ctn string, p map[string]string, data []byte) (proto.Message, error) {
 
 	if ctn != JSONContentType {
 		return nil, fmt.Errorf(
