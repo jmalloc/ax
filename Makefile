@@ -3,6 +3,8 @@ REQ += src/ax/internal/bustest/handler.go
 REQ += src/ax/internal/bustest/sender.go
 REQ += src/ax/internal/bustest/transport.go
 REQ += src/ax/internal/bustest/pipeline.go
+REQ += src/ax/internal/persistencetest/datastore.go
+REQ += src/ax/internal/persistencetest/transaction.go
 
 -include artifacts/make/go/Makefile
 
@@ -24,6 +26,12 @@ src/ax/internal/bustest/transport.go: src/ax/bus/transport.go src/ax/bus/sender.
 
 src/ax/internal/bustest/pipeline.go: src/ax/bus/pipeline.go | $(MOQ)
 	$(MOQ) -out "$@" -pkg "bustest" src/ax/bus InboundPipeline OutboundPipeline
+
+src/ax/internal/persistencetest/datastore.go: src/ax/persistence/datastore.go | $(MOQ)
+	$(MOQ) -out "$@" -pkg "persistencetest" src/ax/persistence DataStore
+
+src/ax/internal/persistencetest/transaction.go: src/ax/persistence/transaction.go | $(MOQ)
+	$(MOQ) -out "$@" -pkg "persistencetest" src/ax/persistence Tx Committer
 
 artifacts/make/%/Makefile:
 	curl -sf https://jmalloc.github.io/makefiles/fetch | bash /dev/stdin $*

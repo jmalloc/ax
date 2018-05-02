@@ -3,6 +3,7 @@ package persistence_test
 import (
 	"context"
 
+	"github.com/jmalloc/ax/src/ax/internal/persistencetest"
 	. "github.com/jmalloc/ax/src/ax/persistence"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -10,50 +11,43 @@ import (
 
 var _ = Describe("WithTransaction / GetTransaction", func() {
 	It("transports a transaction via the context", func() {
-		in := &transaction{}
-		ctx := WithTx(context.Background(), in)
+		expected := &persistencetest.TxMock{}
+		ctx := WithTx(context.Background(), expected)
 
-		out, ok := GetTx(ctx)
+		tx, ok := GetTx(ctx)
 
 		Expect(ok).To(BeTrue())
-		Expect(out).To(Equal(in))
+		Expect(tx).To(BeIdenticalTo(expected))
 	})
 })
 
 var _ = Describe("GetOrBeginTx", func() {
 	Context("when the context already contains a transaction", func() {
-		tx := &transaction{
-			Underlying: "<underlying tx>",
-		}
+		tx := &persistencetest.TxMock{}
 		ctx := WithTx(context.Background(), tx)
 
-		It("returns a transaction that exposes the same underlying transaction", func() {
-			t, err := GetOrBeginTx(ctx)
+		It("returns the transaction", func() {
+			t, _, err := GetOrBeginTx(ctx)
 
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(t.UnderlyingTx()).To(Equal(tx.Underlying))
+			Expect(t).To(BeIdenticalTo(tx))
 		})
 
-		It("does not allow the transaction to be committed", func() {
-			t, _ := GetOrBeginTx(ctx)
-			t.Commit()
+		It("returns a no-op committer", func() {
+			_, c, err := GetOrBeginTx(ctx)
+			Expect(err).ShouldNot(HaveOccurred())
 
-			Expect(tx.CommitCalled).To(BeFalse())
-		})
-
-		It("does not allow the transaction to be rolled back", func() {
-			t, _ := GetOrBeginTx(ctx)
-			t.Rollback()
-
-			Expect(tx.RollbackCalled).To(BeFalse())
+			err = c.Commit()
+			Expect(err).ShouldNot(HaveOccurred())
 		})
 	})
 
 	Context("when the context does not already contain a transaction", func() {
-		tx := &transaction{}
-		ds := &dataStore{
-			Begin: func() Tx {
-				return tx
+		tx := &persistencetest.TxMock{}
+		com := &persistencetest.CommitterMock{}
+		ds := &persistencetest.DataStoreMock{
+			BeginTxFunc: func(context.Context) (Tx, Committer, error) {
+				return tx, com, nil
 			},
 		}
 
@@ -61,57 +55,26 @@ var _ = Describe("GetOrBeginTx", func() {
 			ctx := WithDataStore(context.Background(), ds)
 
 			It("starts a new transaction using the data store", func() {
-				t, err := GetOrBeginTx(ctx)
+				t, _, err := GetOrBeginTx(ctx)
 
 				Expect(err).ShouldNot(HaveOccurred())
-				Expect(t).To(Equal(tx))
+				Expect(t).To(BeIdenticalTo(tx))
 			})
 
-			It("allows the transaction to be committed", func() {
-				t, _ := GetOrBeginTx(ctx)
-				t.Commit()
+			It("returns the committer returned by the data store", func() {
+				_, c, err := GetOrBeginTx(ctx)
 
-				Expect(tx.CommitCalled).To(BeTrue())
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(c).To(BeIdenticalTo(com))
 			})
+		})
 
-			It("allows the transaction to be rolled back", func() {
-				t, _ := GetOrBeginTx(ctx)
-				t.Rollback()
+		Context("when the context does not contains a data store", func() {
+			It("returns an error", func() {
+				_, _, err := GetOrBeginTx(context.Background())
 
-				Expect(tx.RollbackCalled).To(BeTrue())
+				Expect(err).Should(HaveOccurred())
 			})
 		})
 	})
-
-	Context("when the context does not contains a data store", func() {
-		It("returns an error ", func() {
-			_, err := GetOrBeginTx(context.Background())
-
-			Expect(err).Should(HaveOccurred())
-		})
-	})
 })
-
-var _ = Describe("BeginTx", func() {
-
-})
-
-type transaction struct {
-	CommitCalled   bool
-	RollbackCalled bool
-	Underlying     interface{}
-}
-
-func (tx *transaction) Commit() error {
-	tx.CommitCalled = true
-	return nil
-}
-
-func (tx *transaction) Rollback() error {
-	tx.RollbackCalled = true
-	return nil
-}
-
-func (tx *transaction) UnderlyingTx() interface{} {
-	return tx.Underlying
-}

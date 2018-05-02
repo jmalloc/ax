@@ -41,11 +41,11 @@ func (h *MessageHandler) HandleMessage(ctx ax.MessageContext, m ax.Message) erro
 		return err
 	}
 
-	tx, err := persistence.GetOrBeginTx(ctx)
+	tx, com, err := persistence.GetOrBeginTx(ctx)
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer com.Rollback()
 
 	hctx := ax.BindContext(
 		persistence.WithTx(ctx, tx),
@@ -73,5 +73,5 @@ func (h *MessageHandler) HandleMessage(ctx ax.MessageContext, m ax.Message) erro
 		return err
 	}
 
-	return tx.Commit()
+	return com.Commit()
 }

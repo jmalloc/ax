@@ -58,11 +58,11 @@ func (d *Deduplicator) DeliverMessage(
 // deliver passes m to the next pipeline stage and captures and persists the
 // messages it produces.
 func (d *Deduplicator) deliver(ctx context.Context, m bus.InboundEnvelope) ([]bus.OutboundEnvelope, error) {
-	tx, err := persistence.BeginTx(ctx)
+	tx, com, err := persistence.BeginTx(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback()
+	defer com.Rollback()
 
 	var s bus.MessageBuffer
 
@@ -83,7 +83,7 @@ func (d *Deduplicator) deliver(ctx context.Context, m bus.InboundEnvelope) ([]bu
 		return nil, err
 	}
 
-	return s.Messages, tx.Commit()
+	return s.Messages, com.Commit()
 }
 
 // send uses s to send a message that was previously persisted before marking it
@@ -97,15 +97,15 @@ func (d *Deduplicator) send(
 		return err
 	}
 
-	tx, err := persistence.BeginTx(ctx)
+	tx, com, err := persistence.BeginTx(ctx)
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer com.Rollback()
 
 	if err := d.Repository.MarkAsSent(ctx, tx, m); err != nil {
 		return err
 	}
 
-	return tx.Commit()
+	return com.Commit()
 }

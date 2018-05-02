@@ -5,6 +5,7 @@ import (
 
 	"github.com/jmalloc/ax/src/ax/bus"
 	"github.com/jmalloc/ax/src/ax/internal/bustest"
+	"github.com/jmalloc/ax/src/ax/internal/persistencetest"
 	. "github.com/jmalloc/ax/src/ax/persistence"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -19,7 +20,7 @@ var _ = Describe("Injector", func() {
 	BeforeEach(func() {
 		next = &bustest.InboundPipelineMock{}
 		inj = &Injector{
-			DataStore: &dataStore{},
+			DataStore: &persistencetest.DataStoreMock{},
 			Next:      next,
 		}
 	})

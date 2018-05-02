@@ -3,6 +3,7 @@ package persistence_test
 import (
 	"context"
 
+	"github.com/jmalloc/ax/src/ax/internal/persistencetest"
 	. "github.com/jmalloc/ax/src/ax/persistence"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -10,13 +11,13 @@ import (
 
 var _ = Describe("WithDataStore / GetDataStore", func() {
 	It("transports a datastore via the context", func() {
-		in := &dataStore{}
-		ctx := WithDataStore(context.Background(), in)
+		expected := &persistencetest.DataStoreMock{}
+		ctx := WithDataStore(context.Background(), expected)
 
-		out, ok := GetDataStore(ctx)
+		ds, ok := GetDataStore(ctx)
 
 		Expect(ok).To(BeTrue())
-		Expect(out).To(Equal(in))
+		Expect(ds).To(BeIdenticalTo(expected))
 	})
 })
 
