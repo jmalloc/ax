@@ -1,6 +1,8 @@
 package marshaling_test
 
 import (
+	"fmt"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/jmalloc/ax/src/ax/internal/messagetest"
 	. "github.com/jmalloc/ax/src/ax/marshaling"
@@ -32,10 +34,17 @@ var _ = Describe("MarshalMessage", func() {
 })
 
 var _ = Describe("UnmarshalMessage", func() {
+
 	message := &messagetest.Message{
 		Value: "<value>",
 	}
-	data, err := proto.Marshal(message)
+
+	pbdata, err := proto.Marshal(message)
+	if err != nil {
+		panic(err)
+	}
+
+	_, jsondata, err := MarshalJSON(message)
 	if err != nil {
 		panic(err)
 	}
@@ -43,26 +52,43 @@ var _ = Describe("UnmarshalMessage", func() {
 	It("unmarshals the message using the protocol specified in the content-type", func() {
 		m, err := UnmarshalMessage(
 			"application/vnd.google.protobuf; proto=ax.internal.messagetest.Message",
-			data,
+			pbdata,
+		)
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(proto.Equal(m, message)).To(BeTrue())
+	})
+
+	It("unmarshals the message using JSON specified in the content-type", func() {
+		m, err := UnmarshalMessage(
+			fmt.Sprintf("%s; proto=ax.internal.messagetest.Message", JSONContentType),
+			jsondata,
 		)
 		Expect(err).ShouldNot(HaveOccurred())
 		Expect(proto.Equal(m, message)).To(BeTrue())
 	})
 
 	It("returns an error if the content-type is invalid", func() {
-		_, err := UnmarshalMessage("", data)
+		_, err := UnmarshalMessage("", pbdata)
 		Expect(err).Should(HaveOccurred())
 	})
 
 	It("returns an error if the content-type is not supported", func() {
-		_, err := UnmarshalMessage("application/x-unknown", data)
+		_, err := UnmarshalMessage("application/x-unknown", pbdata)
 		Expect(err).Should(HaveOccurred())
 	})
 
 	It("returns an error if an error occurs unmarshaling the protocol buffers message", func() {
 		_, err := UnmarshalMessage(
 			"application/vnd.google.protobuf; proto=ax.internal.messagetest.Unknown", // note unknown message type
-			data,
+			pbdata,
+		)
+		Expect(err).Should(HaveOccurred())
+	})
+
+	It("returns an error if an error occurs unmarshaling JSON message", func() {
+		_, err := UnmarshalMessage(
+			fmt.Sprintf("%s; proto=ax.internal.messagetest.Unknown", JSONContentType), // note unknown message type
+			pbdata,
 		)
 		Expect(err).Should(HaveOccurred())
 	})

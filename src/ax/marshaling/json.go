@@ -19,15 +19,15 @@ const (
 // MarshalJSON marshals a ProtocolBuffers messages to JSON
 // representation and returns a MIME content-type that identifies the particular
 // message protocol.
-func MarshalJSON(msg proto.Message) (string, []byte, error) {
+func MarshalJSON(msg proto.Message) (ct string, data []byte, err error) {
 
 	n := proto.MessageName(msg)
 	if n == "" {
-		err := fmt.Errorf(
+		err = fmt.Errorf(
 			"can not marshal '%s', protocol is not registered",
 			reflect.TypeOf(msg),
 		)
-		return "", nil, err
+		return
 	}
 
 	b := new(bytes.Buffer)
@@ -39,17 +39,15 @@ func MarshalJSON(msg proto.Message) (string, []byte, error) {
 		OrigName:     false,
 	}
 
-	err := m.Marshal(b, msg)
-	if err != nil {
-		return "", nil, err
-	}
-
-	ct := mime.FormatMediaType(
+	ct = mime.FormatMediaType(
 		JSONContentType,
 		map[string]string{"proto": n},
 	)
 
-	return ct, b.Bytes(), nil
+	err = m.Marshal(b, msg)
+	data = b.Bytes()
+
+	return
 }
 
 // UnmarshalJSON decodes JSON-encoded data into `proto.Message`
@@ -103,12 +101,8 @@ func UnmarshalJSONParams(ctn string, p map[string]string, data []byte) (proto.Me
 		t.Elem(),
 	).Interface().(proto.Message)
 
-	if err := um.Unmarshal(
+	return m, um.Unmarshal(
 		bytes.NewReader(data),
 		m,
-	); err != nil {
-		return nil, err
-	}
-
-	return m, nil
+	)
 }
