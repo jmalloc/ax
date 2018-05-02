@@ -5,9 +5,8 @@ package persistencetest
 
 import (
 	"context"
-	"sync"
-
 	"github.com/jmalloc/ax/src/ax/persistence"
+	"sync"
 )
 
 var (
