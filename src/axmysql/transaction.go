@@ -1,4 +1,4 @@
-package axsql
+package axmysql
 
 import (
 	"database/sql"
