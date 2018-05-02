@@ -7,7 +7,7 @@ import (
 
 // Tx represents an atomic unit-of-work performed on a DataStore.
 type Tx interface {
-	// DataStore returns the DataStore that the transaction operats on.
+	// DataStore returns the DataStore that the transaction operates on.
 	DataStore() DataStore
 }
 
