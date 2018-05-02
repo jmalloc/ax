@@ -2,6 +2,7 @@ package outbox
 
 import (
 	"context"
+	"errors"
 
 	"github.com/jmalloc/ax/src/ax/bus"
 	"github.com/jmalloc/ax/src/ax/persistence"
@@ -31,8 +32,14 @@ func (d *Deduplicator) DeliverMessage(
 	s bus.MessageSender,
 	m bus.InboundEnvelope,
 ) error {
+	ds, ok := persistence.GetDataStore(ctx)
+	if !ok {
+		return errors.New("no data store is available in ctx")
+	}
+
 	messages, ok, err := d.Repository.LoadOutbox(
 		ctx,
+		ds,
 		m.Envelope.MessageID,
 	)
 	if err != nil {

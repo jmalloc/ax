@@ -17,6 +17,7 @@ type Repository interface {
 	// ok is false if the message has not yet been successfully delivered.
 	LoadOutbox(
 		ctx context.Context,
+		ds persistence.DataStore,
 		id ax.MessageID,
 	) (m []bus.OutboundEnvelope, ok bool, err error)
 
