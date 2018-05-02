@@ -3,8 +3,8 @@ package persistence_test
 import (
 	"context"
 
-	"github.com/jmalloc/ax/src/ax/internal/persistencetest"
 	. "github.com/jmalloc/ax/src/ax/persistence"
+	"github.com/jmalloc/ax/src/internal/persistencetest"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
