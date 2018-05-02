@@ -87,7 +87,10 @@ var _ = Describe("UnmarshalMessage", func() {
 
 	It("returns an error if an error occurs unmarshaling JSON message", func() {
 		_, err := UnmarshalMessage(
-			fmt.Sprintf("%s; proto=ax.internal.messagetest.Unknown", JSONContentType), // note unknown message type
+			fmt.Sprintf(
+				"%s; proto=ax.internal.messagetest.Unknown", // note unknown message type
+				JSONContentType,
+			),
 			pbdata,
 		)
 		Expect(err).Should(HaveOccurred())

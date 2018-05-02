@@ -13,7 +13,7 @@ import (
 
 const (
 	// JSONContentType is the content-type name for JSON-encoded messages.
-	JSONContentType = "application/vnd+ax.message+json"
+	JSONContentType = "application/json"
 )
 
 // MarshalJSON marshals a ProtocolBuffers messages to JSON
