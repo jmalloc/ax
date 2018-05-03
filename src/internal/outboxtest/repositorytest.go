@@ -52,9 +52,8 @@ func RepositorySuite(
 				var t1, t2 time.Time
 
 				g.BeforeEach(func() {
-					// strip monotonic clock component for sake of comparison
-					t1 = time.Now().Round(0)
-					t2 = time.Now().Round(0)
+					t1 = time.Now()
+					t2 = time.Now()
 
 					m1 = bus.OutboundEnvelope{
 						Envelope: ax.Envelope{
@@ -115,10 +114,20 @@ func RepositorySuite(
 					envs, _, err := repo.LoadOutbox(ctx, store, causationID)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 
-					// strip monotonic clock component for sake of comparison
 					for i, env := range envs {
-						envs[i].Time = env.Time.Round(0)
+						if env.MessageID == m1.MessageID {
+							m.Expect(env.Time).To(m.BeTemporally("==", t1))
+						} else if env.MessageID == m2.MessageID {
+							m.Expect(env.Time).To(m.BeTemporally("==", t2))
+						}
+
+						// zero times for easy comparison
+						envs[i].Time = time.Time{}
 					}
+
+					// zero times for easy comparison
+					m1.Time = time.Time{}
+					m2.Time = time.Time{}
 
 					m.Expect(envs).To(m.ConsistOf(m1, m2))
 				})
@@ -141,12 +150,8 @@ func RepositorySuite(
 					envs, _, err := repo.LoadOutbox(ctx, store, causationID)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 
-					// strip monotonic clock component for sake of comparison
-					for i, env := range envs {
-						envs[i].Time = env.Time.Round(0)
-					}
-
-					m.Expect(envs).To(m.ConsistOf(m2))
+					m.Expect(envs).To(m.HaveLen(1))
+					m.Expect(envs[0].MessageID).To(m.Equal(m2.MessageID))
 				})
 			})
 
