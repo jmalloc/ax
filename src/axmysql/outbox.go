@@ -130,7 +130,7 @@ func scanOutboxMessage(rows *sql.Rows, causationID ax.MessageID) (bus.OutboundEn
 	err := rows.Scan(
 		&env.MessageID,
 		&env.CorrelationID,
-		timeStr,
+		&timeStr,
 		&ct,
 		&body,
 		&env.Operation,

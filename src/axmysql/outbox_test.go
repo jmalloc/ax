@@ -20,7 +20,7 @@ var _ = Describe("OutboxRepository", func() {
 
 	var db *sql.DB
 
-	BeforeSuite(func() {
+	BeforeEach(func() {
 		var err error
 		db, err = sql.Open("mysql", dsn)
 		if err != nil {
@@ -45,7 +45,7 @@ var _ = Describe("OutboxRepository", func() {
 		}
 	})
 
-	AfterSuite(func() {
+	AfterEach(func() {
 		if err := db.Close(); err != nil {
 			panic(err)
 		}
