@@ -83,7 +83,7 @@ func (id ID) String() string {
 		return "<unidentified>"
 	}
 
-	return FormatID(id.value)
+	return Format(id.value)
 }
 
 // Validate returns an error if the ID is not valid.

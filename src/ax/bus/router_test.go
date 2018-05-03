@@ -5,8 +5,8 @@ import (
 
 	"github.com/jmalloc/ax/src/ax"
 	. "github.com/jmalloc/ax/src/ax/bus"
-	"github.com/jmalloc/ax/src/ax/internal/bustest"
-	"github.com/jmalloc/ax/src/ax/internal/messagetest"
+	"github.com/jmalloc/ax/src/internal/bustest"
+	"github.com/jmalloc/ax/src/internal/messagetest"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

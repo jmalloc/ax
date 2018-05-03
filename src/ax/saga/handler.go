@@ -5,7 +5,7 @@ import (
 	"github.com/jmalloc/ax/src/ax/persistence"
 )
 
-// MessageHandler is an implementation of ax.MessageHandler that handles the
+// MessageHandler is an implementation of bus.MessageHandler that handles the
 // persistence of saga instances before forwarding the message to a saga.
 type MessageHandler struct {
 	Repository Repository

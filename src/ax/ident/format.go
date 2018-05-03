@@ -1,8 +1,8 @@
 package ident
 
-// FormatID returns a compact rendering of ID for use in log messages and other
+// Format returns a compact rendering of ID for use in log messages and other
 // human-readable strings.
-func FormatID(id string) string {
+func Format(id string) string {
 	if looksLikeUUID(id) {
 		return id[:uuidSep1] + id[uuidLen:]
 	}
