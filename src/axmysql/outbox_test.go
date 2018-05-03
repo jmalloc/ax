@@ -14,10 +14,6 @@ import (
 
 var _ = Describe("OutboxRepository", func() {
 	dsn := os.Getenv("AX_MYSQL_DSN")
-	if dsn == "" {
-		return
-	}
-
 	var db *sql.DB
 
 	BeforeEach(func() {
@@ -51,12 +47,20 @@ var _ = Describe("OutboxRepository", func() {
 		}
 	})
 
-	outboxtest.DescribeRepository(
-		func() persistence.DataStore {
-			return &DataStore{DB: db}
-		},
-		func() outbox.Repository {
-			return &OutboxRepository{}
-		},
+	fn := Describe
+	if dsn == "" {
+		fn = XDescribe
+	}
+
+	fn(
+		"OutboxRepository",
+		outboxtest.RepositorySuite(
+			func() persistence.DataStore {
+				return &DataStore{DB: db}
+			},
+			func() outbox.Repository {
+				return &OutboxRepository{}
+			},
+		),
 	)
 })

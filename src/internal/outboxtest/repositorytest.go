@@ -13,137 +13,175 @@ import (
 	m "github.com/onsi/gomega"
 )
 
-// DescribeRepository describes an integration test suite for implementations of
-// outbox.Repository.
-func DescribeRepository(
+// RepositorySuite returns a test suite for implementations of outbox.Repository.
+func RepositorySuite(
 	getStore func() persistence.DataStore,
 	getRepo func() outbox.Repository,
-) {
-	var (
-		causationID, correlationID ax.MessageID
-		store                      persistence.DataStore
-		repo                       outbox.Repository
-		ctx                        context.Context
-		cancel                     func()
-	)
+) func() {
+	return func() {
+		var (
+			causationID, correlationID ax.MessageID
+			store                      persistence.DataStore
+			repo                       outbox.Repository
+			ctx                        context.Context
+			cancel                     func()
+		)
 
-	g.BeforeEach(func() {
-		store = getStore()
-		repo = getRepo()
+		g.BeforeEach(func() {
+			store = getStore()
+			repo = getRepo()
 
-		var fn func()
-		ctx, fn = context.WithTimeout(context.Background(), 15*time.Second)
-		cancel = fn // defeat go vet warning about unused cancel func
+			var fn func()
+			ctx, fn = context.WithTimeout(context.Background(), 15*time.Second)
+			cancel = fn // defeat go vet warning about unused cancel func
 
-		causationID = ax.MessageID{}
-		causationID.GenerateUUID()
+			causationID = ax.MessageID{}
+			causationID.GenerateUUID()
 
-		correlationID = ax.MessageID{}
-		correlationID.GenerateUUID()
-	})
+			correlationID = ax.MessageID{}
+			correlationID.GenerateUUID()
+		})
 
-	g.AfterEach(func() {
-		cancel()
-	})
+		g.AfterEach(func() {
+			cancel()
+		})
 
-	g.Describe("LoadOutbox", func() {
-		g.Context("when the outbox exists", func() {
-			var m1, m2 bus.OutboundEnvelope
-			var t1, t2 time.Time
+		g.Describe("LoadOutbox", func() {
+			g.Context("when the outbox exists", func() {
+				var m1, m2 bus.OutboundEnvelope
+				var t1, t2 time.Time
 
-			g.BeforeEach(func() {
-				// strip monotonic clock component so that comparisons are easier
-				t1 = time.Now().Round(0)
-				t2 = time.Now().Round(0)
+				g.BeforeEach(func() {
+					// strip monotonic clock component so that comparisons are easier
+					t1 = time.Now().Round(0)
+					t2 = time.Now().Round(0)
 
-				m1 = bus.OutboundEnvelope{
-					Envelope: ax.Envelope{
-						CausationID:   causationID,
-						CorrelationID: correlationID,
-						Time:          t1,
-						Message: &messagetest.Command{
-							Value: "<foo>",
+					m1 = bus.OutboundEnvelope{
+						Envelope: ax.Envelope{
+							CausationID:   causationID,
+							CorrelationID: correlationID,
+							Time:          t1,
+							Message: &messagetest.Command{
+								Value: "<foo>",
+							},
 						},
-					},
-					Operation:           bus.OpSendUnicast,
-					DestinationEndpoint: "<dest>",
-				}
-				m1.MessageID.GenerateUUID()
+						Operation:           bus.OpSendUnicast,
+						DestinationEndpoint: "<dest>",
+					}
+					m1.MessageID.GenerateUUID()
 
-				m2 = bus.OutboundEnvelope{
-					Envelope: ax.Envelope{
-						CausationID:   causationID,
-						CorrelationID: correlationID,
-						Time:          t2,
-						Message: &messagetest.Event{
-							Value: "<bar>",
+					m2 = bus.OutboundEnvelope{
+						Envelope: ax.Envelope{
+							CausationID:   causationID,
+							CorrelationID: correlationID,
+							Time:          t2,
+							Message: &messagetest.Event{
+								Value: "<bar>",
+							},
 						},
-					},
-					Operation: bus.OpSendMulticast,
-				}
-				m2.MessageID.GenerateUUID()
+						Operation: bus.OpSendMulticast,
+					}
+					m2.MessageID.GenerateUUID()
 
-				tx, com, err := store.BeginTx(ctx)
-				if err != nil {
-					panic(err)
-				}
-				defer com.Rollback()
+					tx, com, err := store.BeginTx(ctx)
+					if err != nil {
+						panic(err)
+					}
+					defer com.Rollback()
 
-				err = repo.SaveOutbox(
-					ctx,
-					tx,
-					causationID,
-					[]bus.OutboundEnvelope{m1, m2},
-				)
-				if err != nil {
-					panic(err)
-				}
+					err = repo.SaveOutbox(
+						ctx,
+						tx,
+						causationID,
+						[]bus.OutboundEnvelope{m1, m2},
+					)
+					if err != nil {
+						panic(err)
+					}
 
-				err = com.Commit()
-				if err != nil {
-					panic(err)
-				}
+					err = com.Commit()
+					if err != nil {
+						panic(err)
+					}
+				})
+
+				g.It("returns true", func() {
+					_, ok, err := repo.LoadOutbox(ctx, store, causationID)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+					m.Expect(ok).To(m.BeTrue())
+				})
+
+				g.It("returns the messages in the outbox", func() {
+					envs, _, err := repo.LoadOutbox(ctx, store, causationID)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+					m.Expect(envs).To(m.ConsistOf(m1, m2))
+				})
+
+				g.It("does not return messages that are marked as sent", func() {
+					tx, com, err := store.BeginTx(ctx)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+					defer com.Rollback()
+
+					err = repo.MarkAsSent(
+						ctx,
+						tx,
+						m1,
+					)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+
+					err = com.Commit()
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+
+					envs, _, err := repo.LoadOutbox(ctx, store, causationID)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+					m.Expect(envs).To(m.ConsistOf(m2))
+				})
 			})
 
-			g.It("returns true", func() {
-				_, ok, err := repo.LoadOutbox(ctx, store, causationID)
-				m.Expect(err).ShouldNot(m.HaveOccurred())
-				m.Expect(ok).To(m.BeTrue())
+			g.Context("when the outbox exists but contains no messages", func() {
+				g.BeforeEach(func() {
+					tx, com, err := store.BeginTx(ctx)
+					if err != nil {
+						panic(err)
+					}
+					defer com.Rollback()
+
+					err = repo.SaveOutbox(
+						ctx,
+						tx,
+						causationID,
+						nil,
+					)
+					if err != nil {
+						panic(err)
+					}
+
+					err = com.Commit()
+					if err != nil {
+						panic(err)
+					}
+				})
+
+				g.It("returns true", func() {
+					_, ok, err := repo.LoadOutbox(ctx, store, causationID)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+					m.Expect(ok).To(m.BeTrue())
+				})
 			})
 
-			g.It("returns the messages in the outbox", func() {
-				envs, _, err := repo.LoadOutbox(ctx, store, causationID)
-				m.Expect(err).ShouldNot(m.HaveOccurred())
-				m.Expect(envs).To(m.ConsistOf(m1, m2))
-			})
-
-			g.It("does not return messages that are marked as sent", func() {
-				tx, com, err := store.BeginTx(ctx)
-				m.Expect(err).ShouldNot(m.HaveOccurred())
-				defer com.Rollback()
-
-				err = repo.MarkAsSent(
-					ctx,
-					tx,
-					m1,
-				)
-				m.Expect(err).ShouldNot(m.HaveOccurred())
-
-				err = com.Commit()
-				m.Expect(err).ShouldNot(m.HaveOccurred())
-
-				envs, _, err := repo.LoadOutbox(ctx, store, causationID)
-				m.Expect(err).ShouldNot(m.HaveOccurred())
-				m.Expect(envs).To(m.ConsistOf(m2))
+			g.Context("when the outbox does not exist", func() {
+				g.It("returns false", func() {
+					_, ok, err := repo.LoadOutbox(ctx, store, causationID)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+					m.Expect(ok).To(m.BeFalse())
+				})
 			})
 		})
 
-		g.Context("when the outbox exists but contains no messages", func() {
-			g.BeforeEach(func() {
+		g.Describe("SaveOutbox", func() {
+			g.It("returns an error if the outbox already exists", func() {
 				tx, com, err := store.BeginTx(ctx)
-				if err != nil {
-					panic(err)
-				}
+				m.Expect(err).ShouldNot(m.HaveOccurred())
 				defer com.Rollback()
 
 				err = repo.SaveOutbox(
@@ -152,136 +190,99 @@ func DescribeRepository(
 					causationID,
 					nil,
 				)
-				if err != nil {
-					panic(err)
-				}
+				m.Expect(err).ShouldNot(m.HaveOccurred())
 
-				err = com.Commit()
-				if err != nil {
-					panic(err)
-				}
+				err = repo.SaveOutbox(
+					ctx,
+					tx,
+					causationID,
+					nil,
+				)
+				m.Expect(err).Should(m.HaveOccurred())
 			})
 
-			g.It("returns true", func() {
-				_, ok, err := repo.LoadOutbox(ctx, store, causationID)
+			g.It("does not add new messages to an existing outbox", func() {
+				tx, com, err := store.BeginTx(ctx)
 				m.Expect(err).ShouldNot(m.HaveOccurred())
+				defer com.Rollback()
+
+				err = repo.SaveOutbox(
+					ctx,
+					tx,
+					causationID,
+					nil,
+				)
+				m.Expect(err).ShouldNot(m.HaveOccurred())
+
+				env := bus.OutboundEnvelope{
+					Envelope: ax.Envelope{
+						CausationID:   causationID,
+						CorrelationID: correlationID,
+						Time:          time.Now(),
+						Message:       &messagetest.Message{},
+					},
+					Operation:           bus.OpSendUnicast,
+					DestinationEndpoint: "<dest>",
+				}
+				env.MessageID.GenerateUUID()
+
+				err = repo.SaveOutbox(
+					ctx,
+					tx,
+					causationID,
+					[]bus.OutboundEnvelope{env},
+				)
+				m.Expect(err).Should(m.HaveOccurred())
+
+				err = com.Commit()
+				m.Expect(err).ShouldNot(m.HaveOccurred())
+
+				envs, ok, err := repo.LoadOutbox(ctx, store, causationID)
+				m.Expect(err).ShouldNot(m.HaveOccurred())
+				m.Expect(envs).To(m.BeEmpty())
 				m.Expect(ok).To(m.BeTrue())
 			})
 		})
 
-		g.Context("when the outbox does not exist", func() {
-			g.It("returns false", func() {
-				_, ok, err := repo.LoadOutbox(ctx, store, causationID)
+		g.Describe("MarkAsSent", func() {
+			g.It("does not return an error if the message has already been marked as sent", func() {
+				tx, com, err := store.BeginTx(ctx)
 				m.Expect(err).ShouldNot(m.HaveOccurred())
-				m.Expect(ok).To(m.BeFalse())
+				defer com.Rollback()
+
+				env := bus.OutboundEnvelope{
+					Envelope: ax.Envelope{
+						CausationID:   causationID,
+						CorrelationID: correlationID,
+						Time:          time.Now(),
+						Message:       &messagetest.Message{},
+					},
+					Operation:           bus.OpSendUnicast,
+					DestinationEndpoint: "<dest>",
+				}
+				env.MessageID.GenerateUUID()
+
+				err = repo.SaveOutbox(
+					ctx,
+					tx,
+					causationID,
+					[]bus.OutboundEnvelope{env},
+				)
+				m.Expect(err).ShouldNot(m.HaveOccurred())
+
+				err = com.Commit()
+				m.Expect(err).ShouldNot(m.HaveOccurred())
+
+				tx, com, err = store.BeginTx(ctx)
+				m.Expect(err).ShouldNot(m.HaveOccurred())
+				defer com.Rollback()
+
+				err = repo.MarkAsSent(ctx, tx, env)
+				m.Expect(err).ShouldNot(m.HaveOccurred())
+
+				err = repo.MarkAsSent(ctx, tx, env)
+				m.Expect(err).ShouldNot(m.HaveOccurred())
 			})
 		})
-	})
-
-	g.Describe("SaveOutbox", func() {
-		g.It("returns an error if the outbox already exists", func() {
-			tx, com, err := store.BeginTx(ctx)
-			m.Expect(err).ShouldNot(m.HaveOccurred())
-			defer com.Rollback()
-
-			err = repo.SaveOutbox(
-				ctx,
-				tx,
-				causationID,
-				nil,
-			)
-			m.Expect(err).ShouldNot(m.HaveOccurred())
-
-			err = repo.SaveOutbox(
-				ctx,
-				tx,
-				causationID,
-				nil,
-			)
-			m.Expect(err).Should(m.HaveOccurred())
-		})
-
-		g.It("does not add new messages to an existing outbox", func() {
-			tx, com, err := store.BeginTx(ctx)
-			m.Expect(err).ShouldNot(m.HaveOccurred())
-			defer com.Rollback()
-
-			err = repo.SaveOutbox(
-				ctx,
-				tx,
-				causationID,
-				nil,
-			)
-			m.Expect(err).ShouldNot(m.HaveOccurred())
-
-			env := bus.OutboundEnvelope{
-				Envelope: ax.Envelope{
-					CausationID:   causationID,
-					CorrelationID: correlationID,
-					Time:          time.Now(),
-					Message:       &messagetest.Message{},
-				},
-				Operation:           bus.OpSendUnicast,
-				DestinationEndpoint: "<dest>",
-			}
-			env.MessageID.GenerateUUID()
-
-			err = repo.SaveOutbox(
-				ctx,
-				tx,
-				causationID,
-				[]bus.OutboundEnvelope{env},
-			)
-			m.Expect(err).Should(m.HaveOccurred())
-
-			err = com.Commit()
-			m.Expect(err).ShouldNot(m.HaveOccurred())
-
-			envs, ok, err := repo.LoadOutbox(ctx, store, causationID)
-			m.Expect(err).ShouldNot(m.HaveOccurred())
-			m.Expect(envs).To(m.BeEmpty())
-			m.Expect(ok).To(m.BeTrue())
-		})
-	})
-
-	g.Describe("MarkAsSent", func() {
-		g.It("does not return an error if the message has already been marked as sent", func() {
-			tx, com, err := store.BeginTx(ctx)
-			m.Expect(err).ShouldNot(m.HaveOccurred())
-			defer com.Rollback()
-
-			env := bus.OutboundEnvelope{
-				Envelope: ax.Envelope{
-					CausationID:   causationID,
-					CorrelationID: correlationID,
-					Time:          time.Now(),
-					Message:       &messagetest.Message{},
-				},
-				Operation:           bus.OpSendUnicast,
-				DestinationEndpoint: "<dest>",
-			}
-			env.MessageID.GenerateUUID()
-
-			err = repo.SaveOutbox(
-				ctx,
-				tx,
-				causationID,
-				[]bus.OutboundEnvelope{env},
-			)
-			m.Expect(err).ShouldNot(m.HaveOccurred())
-
-			err = com.Commit()
-			m.Expect(err).ShouldNot(m.HaveOccurred())
-
-			tx, com, err = store.BeginTx(ctx)
-			m.Expect(err).ShouldNot(m.HaveOccurred())
-			defer com.Rollback()
-
-			err = repo.MarkAsSent(ctx, tx, env)
-			m.Expect(err).ShouldNot(m.HaveOccurred())
-
-			err = repo.MarkAsSent(ctx, tx, env)
-			m.Expect(err).ShouldNot(m.HaveOccurred())
-		})
-	})
+	}
 }
