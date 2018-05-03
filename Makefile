@@ -8,6 +8,11 @@ REQ += src/internal/persistencetest/transactionmock.go
 
 -include artifacts/make/go/Makefile
 
+.PHONY: banking
+banking:
+	protoc --go_out=. examples/banking/messages/*.proto
+	go run examples/banking/main.go $(RUN_ARGS)
+
 %.pb.go: %.proto
 	protoc --go_out=. $(@D)/*.proto
 
