@@ -52,7 +52,7 @@ func RepositorySuite(
 				var t1, t2 time.Time
 
 				g.BeforeEach(func() {
-					// strip monotonic clock component so that comparisons are easier
+					// strip monotonic clock component for sake of comparison
 					t1 = time.Now().Round(0)
 					t2 = time.Now().Round(0)
 
@@ -114,6 +114,12 @@ func RepositorySuite(
 				g.It("returns the messages in the outbox", func() {
 					envs, _, err := repo.LoadOutbox(ctx, store, causationID)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
+
+					// strip monotonic clock component for sake of comparison
+					for i, env := range envs {
+						envs[i].Time = env.Time.Round(0)
+					}
+
 					m.Expect(envs).To(m.ConsistOf(m1, m2))
 				})
 
@@ -134,6 +140,12 @@ func RepositorySuite(
 
 					envs, _, err := repo.LoadOutbox(ctx, store, causationID)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
+
+					// strip monotonic clock component for sake of comparison
+					for i, env := range envs {
+						envs[i].Time = env.Time.Round(0)
+					}
+
 					m.Expect(envs).To(m.ConsistOf(m2))
 				})
 			})
