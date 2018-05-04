@@ -22,15 +22,15 @@ func (d *Deduplicator) Initialize(ctx context.Context, t bus.Transport) error {
 	return d.Next.Initialize(ctx, t)
 }
 
-// DeliverMessage passes m to the next pipeline stage only if it has not been
+// Accept passes m to the next pipeline stage only if it has not been
 // delivered previously.
 //
 // If it has been delivered previously, the messages that were produced the
 // first time are sent using s.
-func (d *Deduplicator) DeliverMessage(
+func (d *Deduplicator) Accept(
 	ctx context.Context,
-	s bus.MessageSender,
-	m bus.InboundEnvelope,
+	s bus.MessageSink,
+	env bus.InboundEnvelope,
 ) error {
 	ds, ok := persistence.GetDataStore(ctx)
 	if !ok {
@@ -40,14 +40,14 @@ func (d *Deduplicator) DeliverMessage(
 	messages, ok, err := d.Repository.LoadOutbox(
 		ctx,
 		ds,
-		m.Envelope.MessageID,
+		env.MessageID,
 	)
 	if err != nil {
 		return err
 	}
 
 	if !ok {
-		messages, err = d.deliver(ctx, m)
+		messages, err = d.forward(ctx, env)
 		if err != nil {
 			return err
 		}
@@ -62,21 +62,21 @@ func (d *Deduplicator) DeliverMessage(
 	return nil
 }
 
-// deliver passes m to the next pipeline stage and captures and persists the
+// forward passes m to the next pipeline stage and captures and persists the
 // messages it produces.
-func (d *Deduplicator) deliver(ctx context.Context, m bus.InboundEnvelope) ([]bus.OutboundEnvelope, error) {
+func (d *Deduplicator) forward(ctx context.Context, env bus.InboundEnvelope) ([]bus.OutboundEnvelope, error) {
 	tx, com, err := persistence.BeginTx(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer com.Rollback()
 
-	var s bus.MessageBuffer
+	var s bus.BufferedSink
 
-	if err := d.Next.DeliverMessage(
+	if err := d.Next.Accept(
 		persistence.WithTx(ctx, tx),
 		&s,
-		m,
+		env,
 	); err != nil {
 		return nil, err
 	}
@@ -84,23 +84,23 @@ func (d *Deduplicator) deliver(ctx context.Context, m bus.InboundEnvelope) ([]bu
 	if err := d.Repository.SaveOutbox(
 		ctx,
 		tx,
-		m.Envelope.MessageID,
-		s.Messages,
+		env.MessageID,
+		s.Envelopes,
 	); err != nil {
 		return nil, err
 	}
 
-	return s.Messages, com.Commit()
+	return s.Envelopes, com.Commit()
 }
 
 // send uses s to send a message that was previously persisted before marking it
 // as sent.
 func (d *Deduplicator) send(
 	ctx context.Context,
-	s bus.MessageSender,
+	s bus.MessageSink,
 	m bus.OutboundEnvelope,
 ) error {
-	if err := s.SendMessage(ctx, m); err != nil {
+	if err := s.Accept(ctx, m); err != nil {
 		return err
 	}
 

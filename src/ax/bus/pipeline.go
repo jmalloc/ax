@@ -10,13 +10,13 @@ import (
 // A "stage" within the pipeline is simply an implementation of the
 // InboundPipeline interface that forwards messages to another pipeline.
 type InboundPipeline interface {
-	// Initialize is called during endpoint initialization, after the transport
-	// has been initialized.
+	// Initialize is called after the transport is initialized. It can be used
+	// to inspect or configure the transport as per the needs of the pipeline.
 	Initialize(ctx context.Context, t Transport) error
 
-	// DeliverMessage forwards an inbound message through the pipeline until
+	// Accept forwards an inbound message through the pipeline until
 	// it is handled by some application-defined message handler(s).
-	DeliverMessage(ctx context.Context, s MessageSender, m InboundEnvelope) error
+	Accept(ctx context.Context, s MessageSink, m InboundEnvelope) error
 }
 
 // OutboundPipeline is an interface for a message pipeline that processes
@@ -25,7 +25,7 @@ type InboundPipeline interface {
 // A "stage" within the pipeline is simply an implementation of the
 // OutboundPipeline interface that forwards messages to another pipeline.
 type OutboundPipeline interface {
-	MessageSender
+	MessageSink
 
 	// Initialize is called during endpoint initialization, after the transport
 	// has been initialized.

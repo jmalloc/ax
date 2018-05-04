@@ -15,7 +15,7 @@ import (
 var _ = Describe("Dispatcher", func() {
 	var (
 		h1, h2, h3 *bustest.MessageHandlerMock
-		sender     *bustest.MessageSenderMock
+		sink       *BufferedSink
 		dispatcher *Dispatcher
 	)
 
@@ -52,7 +52,7 @@ var _ = Describe("Dispatcher", func() {
 		t, err := NewDispatchTable(h1, h2, h3)
 		Expect(err).ShouldNot(HaveOccurred())
 
-		sender = &bustest.MessageSenderMock{}
+		sink = &BufferedSink{}
 		dispatcher = &Dispatcher{Routes: t}
 	})
 
@@ -74,19 +74,16 @@ var _ = Describe("Dispatcher", func() {
 		})
 	})
 
-	Describe("DeliverMessage", func() {
-		message := InboundEnvelope{
+	Describe("Accept", func() {
+		ctx := context.Background()
+		env := InboundEnvelope{
 			Envelope: ax.NewEnvelope(
 				&messagetest.Message{},
 			),
 		}
 
 		It("passes the message to each handler", func() {
-			_ = dispatcher.DeliverMessage(
-				context.Background(),
-				sender,
-				message,
-			)
+			_ = dispatcher.Accept(ctx, sink, env)
 
 			Expect(h1.HandleMessageCalls()).To(HaveLen(1))
 			Expect(h2.HandleMessageCalls()).To(HaveLen(1))
@@ -94,27 +91,17 @@ var _ = Describe("Dispatcher", func() {
 		})
 
 		It("uses bus.MessageContext", func() {
-			ctx := context.Background()
-
-			_ = dispatcher.DeliverMessage(
-				ctx,
-				sender,
-				message,
-			)
+			_ = dispatcher.Accept(ctx, sink, env)
 
 			Expect(h1.HandleMessageCalls()).To(HaveLen(1))
 
 			mc := h1.HandleMessageCalls()[0].Ctx.(*MessageContext)
-			Expect(mc.Envelope).To(Equal(message.Envelope))
-			Expect(mc.Sender).To(BeIdenticalTo(sender))
+			Expect(mc.Envelope).To(Equal(env.Envelope))
+			Expect(mc.Sink).To(BeIdenticalTo(sink))
 		})
 
 		It("returns nil if all handlers succeed", func() {
-			err := dispatcher.DeliverMessage(
-				context.Background(),
-				sender,
-				message,
-			)
+			err := dispatcher.Accept(ctx, sink, env)
 
 			Expect(err).ShouldNot(HaveOccurred())
 		})
@@ -124,11 +111,7 @@ var _ = Describe("Dispatcher", func() {
 				return errors.New("<error>")
 			}
 
-			err := dispatcher.DeliverMessage(
-				context.Background(),
-				sender,
-				message,
-			)
+			err := dispatcher.Accept(ctx, sink, env)
 
 			Expect(err).To(MatchError("<error>"))
 		})

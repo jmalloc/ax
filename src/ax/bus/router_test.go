@@ -19,8 +19,8 @@ var _ = Describe("Router", func() {
 
 	BeforeEach(func() {
 		next = &bustest.OutboundPipelineMock{
-			InitializeFunc:  func(context.Context, Transport) error { return nil },
-			SendMessageFunc: func(context.Context, OutboundEnvelope) error { return nil },
+			InitializeFunc: func(context.Context, Transport) error { return nil },
+			AcceptFunc:     func(context.Context, OutboundEnvelope) error { return nil },
 		}
 		router = &Router{
 			Next: next,
@@ -38,7 +38,7 @@ var _ = Describe("Router", func() {
 		})
 	})
 
-	Describe("SendMessage", func() {
+	Describe("Accept", func() {
 		Context("when there is a routing table", func() {
 			BeforeEach(func() {
 				t, err := NewRoutingTable(
@@ -50,36 +50,36 @@ var _ = Describe("Router", func() {
 			})
 
 			It("routes the message to the endpoint according to the routing table", func() {
-				m := OutboundEnvelope{
+				env := OutboundEnvelope{
 					Operation: OpSendUnicast,
 					Envelope: ax.Envelope{
 						Message: &messagetest.Message{},
 					},
 				}
 
-				err := router.SendMessage(context.Background(), m)
+				err := router.Accept(context.Background(), env)
 				Expect(err).ShouldNot(HaveOccurred())
-				Expect(next.SendMessageCalls()).To(HaveLen(1))
-				Expect(next.SendMessageCalls()[0].M.DestinationEndpoint).To(Equal("route-from-table"))
+				Expect(next.AcceptCalls()).To(HaveLen(1))
+				Expect(next.AcceptCalls()[0].Env.DestinationEndpoint).To(Equal("route-from-table"))
 			})
 
 			It("returns the same result for subsequent messages (coverage of cache hit)", func() {
-				m := OutboundEnvelope{
+				env := OutboundEnvelope{
 					Operation: OpSendUnicast,
 					Envelope: ax.Envelope{
 						Message: &messagetest.Message{},
 					},
 				}
 
-				err := router.SendMessage(context.Background(), m)
+				err := router.Accept(context.Background(), env)
 				Expect(err).ShouldNot(HaveOccurred())
 
-				err = router.SendMessage(context.Background(), m)
+				err = router.Accept(context.Background(), env)
 				Expect(err).ShouldNot(HaveOccurred())
-				Expect(next.SendMessageCalls()).To(HaveLen(2))
+				Expect(next.AcceptCalls()).To(HaveLen(2))
 
-				a := next.SendMessageCalls()[0].M.DestinationEndpoint
-				b := next.SendMessageCalls()[1].M.DestinationEndpoint
+				a := next.AcceptCalls()[0].Env.DestinationEndpoint
+				b := next.AcceptCalls()[1].Env.DestinationEndpoint
 
 				Expect(a).To(Equal(b))
 			})
@@ -87,51 +87,51 @@ var _ = Describe("Router", func() {
 
 		Context("when there is no routing table", func() {
 			It("routes the message to the endpoint named after the protocol buffers package name", func() {
-				m := OutboundEnvelope{
+				env := OutboundEnvelope{
 					Operation: OpSendUnicast,
 					Envelope: ax.Envelope{
 						Message: &messagetest.Message{},
 					},
 				}
 
-				err := router.SendMessage(context.Background(), m)
+				err := router.Accept(context.Background(), env)
 				Expect(err).ShouldNot(HaveOccurred())
-				Expect(next.SendMessageCalls()).To(HaveLen(1))
-				Expect(next.SendMessageCalls()[0].M.DestinationEndpoint).To(Equal("ax.internal.messagetest"))
+				Expect(next.AcceptCalls()).To(HaveLen(1))
+				Expect(next.AcceptCalls()[0].Env.DestinationEndpoint).To(Equal("ax.internal.messagetest"))
 			})
 
 			It("returns an error if the message does not have a protocol buffers package name", func() {
-				m := OutboundEnvelope{
+				env := OutboundEnvelope{
 					Operation: OpSendUnicast,
 					Envelope: ax.Envelope{
 						Message: &messagetest.NoPackage{},
 					},
 				}
 
-				err := router.SendMessage(context.Background(), m)
+				err := router.Accept(context.Background(), env)
 				Expect(err).Should(HaveOccurred())
 			})
 		})
 
 		It("does not replace the destination endpoint if it is already set", func() {
-			m := OutboundEnvelope{
+			env := OutboundEnvelope{
 				Operation:           OpSendUnicast,
 				DestinationEndpoint: "<endpoint>",
 			}
 
-			err := router.SendMessage(context.Background(), m)
+			err := router.Accept(context.Background(), env)
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(next.SendMessageCalls()).To(HaveLen(1))
-			Expect(next.SendMessageCalls()[0].M).To(Equal(m))
+			Expect(next.AcceptCalls()).To(HaveLen(1))
+			Expect(next.AcceptCalls()[0].Env).To(Equal(env))
 		})
 
 		It("does not set the destination endpoint for multicast messages", func() {
-			m := OutboundEnvelope{Operation: OpSendMulticast}
+			env := OutboundEnvelope{Operation: OpSendMulticast}
 
-			err := router.SendMessage(context.Background(), m)
+			err := router.Accept(context.Background(), env)
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(next.SendMessageCalls()).To(HaveLen(1))
-			Expect(next.SendMessageCalls()[0].M).To(Equal(m))
+			Expect(next.AcceptCalls()).To(HaveLen(1))
+			Expect(next.AcceptCalls()[0].Env).To(Equal(env))
 		})
 	})
 })

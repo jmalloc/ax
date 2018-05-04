@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	lockInboundPipelineMockDeliverMessage sync.RWMutex
-	lockInboundPipelineMockInitialize     sync.RWMutex
+	lockInboundPipelineMockAccept     sync.RWMutex
+	lockInboundPipelineMockInitialize sync.RWMutex
 )
 
 // InboundPipelineMock is a mock implementation of InboundPipeline.
@@ -20,8 +20,8 @@ var (
 //
 //         // make and configure a mocked InboundPipeline
 //         mockedInboundPipeline := &InboundPipelineMock{
-//             DeliverMessageFunc: func(ctx context.Context, s bus.MessageSender, m bus.InboundEnvelope) error {
-// 	               panic("TODO: mock out the DeliverMessage method")
+//             AcceptFunc: func(ctx context.Context, s bus.MessageSink, m bus.InboundEnvelope) error {
+// 	               panic("TODO: mock out the Accept method")
 //             },
 //             InitializeFunc: func(ctx context.Context, t bus.Transport) error {
 // 	               panic("TODO: mock out the Initialize method")
@@ -33,20 +33,20 @@ var (
 //
 //     }
 type InboundPipelineMock struct {
-	// DeliverMessageFunc mocks the DeliverMessage method.
-	DeliverMessageFunc func(ctx context.Context, s bus.MessageSender, m bus.InboundEnvelope) error
+	// AcceptFunc mocks the Accept method.
+	AcceptFunc func(ctx context.Context, s bus.MessageSink, m bus.InboundEnvelope) error
 
 	// InitializeFunc mocks the Initialize method.
 	InitializeFunc func(ctx context.Context, t bus.Transport) error
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// DeliverMessage holds details about calls to the DeliverMessage method.
-		DeliverMessage []struct {
+		// Accept holds details about calls to the Accept method.
+		Accept []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// S is the s argument value.
-			S bus.MessageSender
+			S bus.MessageSink
 			// M is the m argument value.
 			M bus.InboundEnvelope
 		}
@@ -60,42 +60,42 @@ type InboundPipelineMock struct {
 	}
 }
 
-// DeliverMessage calls DeliverMessageFunc.
-func (mock *InboundPipelineMock) DeliverMessage(ctx context.Context, s bus.MessageSender, m bus.InboundEnvelope) error {
-	if mock.DeliverMessageFunc == nil {
-		panic("moq: InboundPipelineMock.DeliverMessageFunc is nil but InboundPipeline.DeliverMessage was just called")
+// Accept calls AcceptFunc.
+func (mock *InboundPipelineMock) Accept(ctx context.Context, s bus.MessageSink, m bus.InboundEnvelope) error {
+	if mock.AcceptFunc == nil {
+		panic("moq: InboundPipelineMock.AcceptFunc is nil but InboundPipeline.Accept was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
-		S   bus.MessageSender
+		S   bus.MessageSink
 		M   bus.InboundEnvelope
 	}{
 		Ctx: ctx,
 		S:   s,
 		M:   m,
 	}
-	lockInboundPipelineMockDeliverMessage.Lock()
-	mock.calls.DeliverMessage = append(mock.calls.DeliverMessage, callInfo)
-	lockInboundPipelineMockDeliverMessage.Unlock()
-	return mock.DeliverMessageFunc(ctx, s, m)
+	lockInboundPipelineMockAccept.Lock()
+	mock.calls.Accept = append(mock.calls.Accept, callInfo)
+	lockInboundPipelineMockAccept.Unlock()
+	return mock.AcceptFunc(ctx, s, m)
 }
 
-// DeliverMessageCalls gets all the calls that were made to DeliverMessage.
+// AcceptCalls gets all the calls that were made to Accept.
 // Check the length with:
-//     len(mockedInboundPipeline.DeliverMessageCalls())
-func (mock *InboundPipelineMock) DeliverMessageCalls() []struct {
+//     len(mockedInboundPipeline.AcceptCalls())
+func (mock *InboundPipelineMock) AcceptCalls() []struct {
 	Ctx context.Context
-	S   bus.MessageSender
+	S   bus.MessageSink
 	M   bus.InboundEnvelope
 } {
 	var calls []struct {
 		Ctx context.Context
-		S   bus.MessageSender
+		S   bus.MessageSink
 		M   bus.InboundEnvelope
 	}
-	lockInboundPipelineMockDeliverMessage.RLock()
-	calls = mock.calls.DeliverMessage
-	lockInboundPipelineMockDeliverMessage.RUnlock()
+	lockInboundPipelineMockAccept.RLock()
+	calls = mock.calls.Accept
+	lockInboundPipelineMockAccept.RUnlock()
 	return calls
 }
 
@@ -135,8 +135,8 @@ func (mock *InboundPipelineMock) InitializeCalls() []struct {
 }
 
 var (
-	lockOutboundPipelineMockInitialize  sync.RWMutex
-	lockOutboundPipelineMockSendMessage sync.RWMutex
+	lockOutboundPipelineMockAccept     sync.RWMutex
+	lockOutboundPipelineMockInitialize sync.RWMutex
 )
 
 // OutboundPipelineMock is a mock implementation of OutboundPipeline.
@@ -145,11 +145,11 @@ var (
 //
 //         // make and configure a mocked OutboundPipeline
 //         mockedOutboundPipeline := &OutboundPipelineMock{
+//             AcceptFunc: func(ctx context.Context, env bus.OutboundEnvelope) error {
+// 	               panic("TODO: mock out the Accept method")
+//             },
 //             InitializeFunc: func(ctx context.Context, t bus.Transport) error {
 // 	               panic("TODO: mock out the Initialize method")
-//             },
-//             SendMessageFunc: func(ctx context.Context, m bus.OutboundEnvelope) error {
-// 	               panic("TODO: mock out the SendMessage method")
 //             },
 //         }
 //
@@ -158,14 +158,21 @@ var (
 //
 //     }
 type OutboundPipelineMock struct {
+	// AcceptFunc mocks the Accept method.
+	AcceptFunc func(ctx context.Context, env bus.OutboundEnvelope) error
+
 	// InitializeFunc mocks the Initialize method.
 	InitializeFunc func(ctx context.Context, t bus.Transport) error
 
-	// SendMessageFunc mocks the SendMessage method.
-	SendMessageFunc func(ctx context.Context, m bus.OutboundEnvelope) error
-
 	// calls tracks calls to the methods.
 	calls struct {
+		// Accept holds details about calls to the Accept method.
+		Accept []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Env is the env argument value.
+			Env bus.OutboundEnvelope
+		}
 		// Initialize holds details about calls to the Initialize method.
 		Initialize []struct {
 			// Ctx is the ctx argument value.
@@ -173,14 +180,42 @@ type OutboundPipelineMock struct {
 			// T is the t argument value.
 			T bus.Transport
 		}
-		// SendMessage holds details about calls to the SendMessage method.
-		SendMessage []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// M is the m argument value.
-			M bus.OutboundEnvelope
-		}
 	}
+}
+
+// Accept calls AcceptFunc.
+func (mock *OutboundPipelineMock) Accept(ctx context.Context, env bus.OutboundEnvelope) error {
+	if mock.AcceptFunc == nil {
+		panic("moq: OutboundPipelineMock.AcceptFunc is nil but OutboundPipeline.Accept was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Env bus.OutboundEnvelope
+	}{
+		Ctx: ctx,
+		Env: env,
+	}
+	lockOutboundPipelineMockAccept.Lock()
+	mock.calls.Accept = append(mock.calls.Accept, callInfo)
+	lockOutboundPipelineMockAccept.Unlock()
+	return mock.AcceptFunc(ctx, env)
+}
+
+// AcceptCalls gets all the calls that were made to Accept.
+// Check the length with:
+//     len(mockedOutboundPipeline.AcceptCalls())
+func (mock *OutboundPipelineMock) AcceptCalls() []struct {
+	Ctx context.Context
+	Env bus.OutboundEnvelope
+} {
+	var calls []struct {
+		Ctx context.Context
+		Env bus.OutboundEnvelope
+	}
+	lockOutboundPipelineMockAccept.RLock()
+	calls = mock.calls.Accept
+	lockOutboundPipelineMockAccept.RUnlock()
+	return calls
 }
 
 // Initialize calls InitializeFunc.
@@ -215,40 +250,5 @@ func (mock *OutboundPipelineMock) InitializeCalls() []struct {
 	lockOutboundPipelineMockInitialize.RLock()
 	calls = mock.calls.Initialize
 	lockOutboundPipelineMockInitialize.RUnlock()
-	return calls
-}
-
-// SendMessage calls SendMessageFunc.
-func (mock *OutboundPipelineMock) SendMessage(ctx context.Context, m bus.OutboundEnvelope) error {
-	if mock.SendMessageFunc == nil {
-		panic("moq: OutboundPipelineMock.SendMessageFunc is nil but OutboundPipeline.SendMessage was just called")
-	}
-	callInfo := struct {
-		Ctx context.Context
-		M   bus.OutboundEnvelope
-	}{
-		Ctx: ctx,
-		M:   m,
-	}
-	lockOutboundPipelineMockSendMessage.Lock()
-	mock.calls.SendMessage = append(mock.calls.SendMessage, callInfo)
-	lockOutboundPipelineMockSendMessage.Unlock()
-	return mock.SendMessageFunc(ctx, m)
-}
-
-// SendMessageCalls gets all the calls that were made to SendMessage.
-// Check the length with:
-//     len(mockedOutboundPipeline.SendMessageCalls())
-func (mock *OutboundPipelineMock) SendMessageCalls() []struct {
-	Ctx context.Context
-	M   bus.OutboundEnvelope
-} {
-	var calls []struct {
-		Ctx context.Context
-		M   bus.OutboundEnvelope
-	}
-	lockOutboundPipelineMockSendMessage.RLock()
-	calls = mock.calls.SendMessage
-	lockOutboundPipelineMockSendMessage.RUnlock()
 	return calls
 }

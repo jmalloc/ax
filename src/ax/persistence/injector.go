@@ -20,13 +20,13 @@ func (i *Injector) Initialize(ctx context.Context, t bus.Transport) error {
 	return i.Next.Initialize(ctx, t)
 }
 
-// DeliverMessage calls i.Next.DeliverMessage() with a context derived from ctx
+// Accept calls i.Next.Accept() with a context derived from ctx
 // and containing i.DataStore.
-func (i *Injector) DeliverMessage(
+func (i *Injector) Accept(
 	ctx context.Context,
-	s bus.MessageSender,
+	s bus.MessageSink,
 	m bus.InboundEnvelope,
 ) error {
 	ctx = WithDataStore(ctx, i.DataStore)
-	return i.Next.DeliverMessage(ctx, s, m)
+	return i.Next.Accept(ctx, s, m)
 }

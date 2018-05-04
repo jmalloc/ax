@@ -8,17 +8,17 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("MessageBuffer", func() {
-	b := &MessageBuffer{}
+var _ = Describe("BufferedSink", func() {
+	b := &BufferedSink{}
 
-	Describe("SendMessage", func() {
+	Describe("Accept", func() {
 		It("adds the message to the internal slice", func() {
-			m := OutboundEnvelope{}
-			m.MessageID.GenerateUUID()
+			env := OutboundEnvelope{}
+			env.MessageID.GenerateUUID()
 
-			err := b.SendMessage(context.Background(), m)
+			err := b.Accept(context.Background(), env)
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(b.Messages).To(ConsistOf(m))
+			Expect(b.Envelopes).To(ConsistOf(env))
 		})
 	})
 })

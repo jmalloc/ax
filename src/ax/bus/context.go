@@ -7,12 +7,12 @@ import (
 )
 
 // MessageContext is an implementation of ax.MessageContext that sends messages
-// using a MessageSender.
+// via a MessageSink.
 type MessageContext struct {
 	context.Context
 
 	Envelope ax.Envelope
-	Sender   MessageSender
+	Sink     MessageSink
 }
 
 // MessageEnvelope returns the envelope containing the message being handled.
@@ -25,7 +25,7 @@ func (c *MessageContext) MessageEnvelope() ax.Envelope {
 // Commands are routed to a single endpoint as per the routing rules of the
 // outbound message pipeline.
 func (c *MessageContext) ExecuteCommand(m ax.Command) error {
-	return c.Sender.SendMessage(c, OutboundEnvelope{
+	return c.Sink.Accept(c, OutboundEnvelope{
 		Operation: OpSendUnicast,
 		Envelope:  c.Envelope.NewChild(m),
 	})
@@ -35,7 +35,7 @@ func (c *MessageContext) ExecuteCommand(m ax.Command) error {
 //
 // Events are routed to endpoints that subscribe to messages of that type.
 func (c *MessageContext) PublishEvent(m ax.Event) error {
-	return c.Sender.SendMessage(c, OutboundEnvelope{
+	return c.Sink.Accept(c, OutboundEnvelope{
 		Operation: OpSendMulticast,
 		Envelope:  c.Envelope.NewChild(m),
 	})

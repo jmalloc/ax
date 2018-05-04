@@ -11,10 +11,10 @@ import (
 )
 
 var (
-	lockTransportMockInitialize     sync.RWMutex
-	lockTransportMockReceiveMessage sync.RWMutex
-	lockTransportMockSendMessage    sync.RWMutex
-	lockTransportMockSubscribe      sync.RWMutex
+	lockTransportMockAccept     sync.RWMutex
+	lockTransportMockInitialize sync.RWMutex
+	lockTransportMockProduce    sync.RWMutex
+	lockTransportMockSubscribe  sync.RWMutex
 )
 
 // TransportMock is a mock implementation of Transport.
@@ -23,14 +23,14 @@ var (
 //
 //         // make and configure a mocked Transport
 //         mockedTransport := &TransportMock{
+//             AcceptFunc: func(ctx context.Context, env bus.OutboundEnvelope) error {
+// 	               panic("TODO: mock out the Accept method")
+//             },
 //             InitializeFunc: func(ctx context.Context, ep string) error {
 // 	               panic("TODO: mock out the Initialize method")
 //             },
-//             ReceiveMessageFunc: func(ctx context.Context) (bus.InboundEnvelope, error) {
-// 	               panic("TODO: mock out the ReceiveMessage method")
-//             },
-//             SendMessageFunc: func(ctx context.Context, m bus.OutboundEnvelope) error {
-// 	               panic("TODO: mock out the SendMessage method")
+//             ProduceFunc: func(ctx context.Context) (bus.InboundEnvelope, error) {
+// 	               panic("TODO: mock out the Produce method")
 //             },
 //             SubscribeFunc: func(ctx context.Context, mt ax.MessageTypeSet) error {
 // 	               panic("TODO: mock out the Subscribe method")
@@ -42,20 +42,27 @@ var (
 //
 //     }
 type TransportMock struct {
+	// AcceptFunc mocks the Accept method.
+	AcceptFunc func(ctx context.Context, env bus.OutboundEnvelope) error
+
 	// InitializeFunc mocks the Initialize method.
 	InitializeFunc func(ctx context.Context, ep string) error
 
-	// ReceiveMessageFunc mocks the ReceiveMessage method.
-	ReceiveMessageFunc func(ctx context.Context) (bus.InboundEnvelope, error)
-
-	// SendMessageFunc mocks the SendMessage method.
-	SendMessageFunc func(ctx context.Context, m bus.OutboundEnvelope) error
+	// ProduceFunc mocks the Produce method.
+	ProduceFunc func(ctx context.Context) (bus.InboundEnvelope, error)
 
 	// SubscribeFunc mocks the Subscribe method.
 	SubscribeFunc func(ctx context.Context, mt ax.MessageTypeSet) error
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// Accept holds details about calls to the Accept method.
+		Accept []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Env is the env argument value.
+			Env bus.OutboundEnvelope
+		}
 		// Initialize holds details about calls to the Initialize method.
 		Initialize []struct {
 			// Ctx is the ctx argument value.
@@ -63,17 +70,10 @@ type TransportMock struct {
 			// Ep is the ep argument value.
 			Ep string
 		}
-		// ReceiveMessage holds details about calls to the ReceiveMessage method.
-		ReceiveMessage []struct {
+		// Produce holds details about calls to the Produce method.
+		Produce []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-		}
-		// SendMessage holds details about calls to the SendMessage method.
-		SendMessage []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// M is the m argument value.
-			M bus.OutboundEnvelope
 		}
 		// Subscribe holds details about calls to the Subscribe method.
 		Subscribe []struct {
@@ -83,6 +83,41 @@ type TransportMock struct {
 			Mt ax.MessageTypeSet
 		}
 	}
+}
+
+// Accept calls AcceptFunc.
+func (mock *TransportMock) Accept(ctx context.Context, env bus.OutboundEnvelope) error {
+	if mock.AcceptFunc == nil {
+		panic("moq: TransportMock.AcceptFunc is nil but Transport.Accept was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Env bus.OutboundEnvelope
+	}{
+		Ctx: ctx,
+		Env: env,
+	}
+	lockTransportMockAccept.Lock()
+	mock.calls.Accept = append(mock.calls.Accept, callInfo)
+	lockTransportMockAccept.Unlock()
+	return mock.AcceptFunc(ctx, env)
+}
+
+// AcceptCalls gets all the calls that were made to Accept.
+// Check the length with:
+//     len(mockedTransport.AcceptCalls())
+func (mock *TransportMock) AcceptCalls() []struct {
+	Ctx context.Context
+	Env bus.OutboundEnvelope
+} {
+	var calls []struct {
+		Ctx context.Context
+		Env bus.OutboundEnvelope
+	}
+	lockTransportMockAccept.RLock()
+	calls = mock.calls.Accept
+	lockTransportMockAccept.RUnlock()
+	return calls
 }
 
 // Initialize calls InitializeFunc.
@@ -120,69 +155,34 @@ func (mock *TransportMock) InitializeCalls() []struct {
 	return calls
 }
 
-// ReceiveMessage calls ReceiveMessageFunc.
-func (mock *TransportMock) ReceiveMessage(ctx context.Context) (bus.InboundEnvelope, error) {
-	if mock.ReceiveMessageFunc == nil {
-		panic("moq: TransportMock.ReceiveMessageFunc is nil but Transport.ReceiveMessage was just called")
+// Produce calls ProduceFunc.
+func (mock *TransportMock) Produce(ctx context.Context) (bus.InboundEnvelope, error) {
+	if mock.ProduceFunc == nil {
+		panic("moq: TransportMock.ProduceFunc is nil but Transport.Produce was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
 	}{
 		Ctx: ctx,
 	}
-	lockTransportMockReceiveMessage.Lock()
-	mock.calls.ReceiveMessage = append(mock.calls.ReceiveMessage, callInfo)
-	lockTransportMockReceiveMessage.Unlock()
-	return mock.ReceiveMessageFunc(ctx)
+	lockTransportMockProduce.Lock()
+	mock.calls.Produce = append(mock.calls.Produce, callInfo)
+	lockTransportMockProduce.Unlock()
+	return mock.ProduceFunc(ctx)
 }
 
-// ReceiveMessageCalls gets all the calls that were made to ReceiveMessage.
+// ProduceCalls gets all the calls that were made to Produce.
 // Check the length with:
-//     len(mockedTransport.ReceiveMessageCalls())
-func (mock *TransportMock) ReceiveMessageCalls() []struct {
+//     len(mockedTransport.ProduceCalls())
+func (mock *TransportMock) ProduceCalls() []struct {
 	Ctx context.Context
 } {
 	var calls []struct {
 		Ctx context.Context
 	}
-	lockTransportMockReceiveMessage.RLock()
-	calls = mock.calls.ReceiveMessage
-	lockTransportMockReceiveMessage.RUnlock()
-	return calls
-}
-
-// SendMessage calls SendMessageFunc.
-func (mock *TransportMock) SendMessage(ctx context.Context, m bus.OutboundEnvelope) error {
-	if mock.SendMessageFunc == nil {
-		panic("moq: TransportMock.SendMessageFunc is nil but Transport.SendMessage was just called")
-	}
-	callInfo := struct {
-		Ctx context.Context
-		M   bus.OutboundEnvelope
-	}{
-		Ctx: ctx,
-		M:   m,
-	}
-	lockTransportMockSendMessage.Lock()
-	mock.calls.SendMessage = append(mock.calls.SendMessage, callInfo)
-	lockTransportMockSendMessage.Unlock()
-	return mock.SendMessageFunc(ctx, m)
-}
-
-// SendMessageCalls gets all the calls that were made to SendMessage.
-// Check the length with:
-//     len(mockedTransport.SendMessageCalls())
-func (mock *TransportMock) SendMessageCalls() []struct {
-	Ctx context.Context
-	M   bus.OutboundEnvelope
-} {
-	var calls []struct {
-		Ctx context.Context
-		M   bus.OutboundEnvelope
-	}
-	lockTransportMockSendMessage.RLock()
-	calls = mock.calls.SendMessage
-	lockTransportMockSendMessage.RUnlock()
+	lockTransportMockProduce.RLock()
+	calls = mock.calls.Produce
+	lockTransportMockProduce.RUnlock()
 	return calls
 }
 
