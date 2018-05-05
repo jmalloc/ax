@@ -96,7 +96,7 @@ func UnmarshalJSONParams(ctn string, p map[string]string, data []byte) (proto.Me
 	}
 
 	um := jsonpb.Unmarshaler{
-		AllowUnknownFields: false,
+		AllowUnknownFields: true,
 	}
 
 	m := reflect.New(
