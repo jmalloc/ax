@@ -14,8 +14,11 @@ import (
 // Router is an outbound pipeline stage that choses a destination endpoint for
 // unicast messages based on the message type.
 type Router struct {
+	// Routes is the table used to determine the destination endpoint.
 	Routes RoutingTable
-	Next   OutboundPipeline
+
+	// Next is the next stage in the pipeline.
+	Next OutboundPipeline
 
 	// cache is a map of message type to endpoint, used to bypass scanning the
 	// routing rules once a route has already been established.

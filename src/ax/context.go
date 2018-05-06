@@ -1,6 +1,8 @@
 package ax
 
-import "context"
+import (
+	"context"
+)
 
 // MessageContext is a specialization of context.Context used to send messages
 // within the context of handling a message.
@@ -23,4 +25,30 @@ type MessageContext interface {
 	//
 	// Events are routed to endpoints that subscribe to messages of that type.
 	PublishEvent(Event) error
+}
+
+// BindContext returns a new MessageContext that forwards messages to mc,
+// but uses ctx for context.Context related operations.
+func BindContext(ctx context.Context, mc MessageContext) MessageContext {
+	return boundContext{ctx, mc}
+}
+
+// boundContext is an implementation of MessageContext that replaces the
+// context.Context features of an existing MessageContext with a specific
+// context.Context instance.
+type boundContext struct {
+	context.Context
+	parent MessageContext
+}
+
+func (c boundContext) MessageEnvelope() Envelope {
+	return c.parent.MessageEnvelope()
+}
+
+func (c boundContext) ExecuteCommand(m Command) error {
+	return c.parent.ExecuteCommand(m)
+}
+
+func (c boundContext) PublishEvent(m Event) error {
+	return c.parent.PublishEvent(m)
 }

@@ -1,4 +1,11 @@
 language: go
 go: '1.10'
+addons:
+  mariadb: '10.2'
+env:
+- AX_MYSQL_DSN="travis@tcp(127.0.0.1:3306)/ax"
+before_install:
+- mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql mysql
+- mysql -e 'CREATE DATABASE ax;'
 script: make ci
 after_script: bash <(curl -s https://codecov.io/bash)

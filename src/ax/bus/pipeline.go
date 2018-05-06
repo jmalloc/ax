@@ -10,7 +10,8 @@ import (
 // A "stage" within the pipeline is simply an implementation of the
 // InboundPipeline interface that forwards messages to another pipeline.
 type InboundPipeline interface {
-	// Initialize is called when the transport is initialized.
+	// Initialize is called during endpoint initialization, after the transport
+	// has been initialized.
 	Initialize(ctx context.Context, t Transport) error
 
 	// DeliverMessage forwards an inbound message through the pipeline until
@@ -26,6 +27,7 @@ type InboundPipeline interface {
 type OutboundPipeline interface {
 	MessageSender
 
-	// Initialize is called when the transport is initialized.
+	// Initialize is called during endpoint initialization, after the transport
+	// has been initialized.
 	Initialize(ctx context.Context, t Transport) error
 }

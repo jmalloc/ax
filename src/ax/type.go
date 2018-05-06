@@ -27,10 +27,10 @@ func TypeOf(m Message) MessageType {
 	}
 }
 
-// TypeByName returns the message type for n, a fully-qualified Protocol Buffers
+// TypeByName returns the message type for a fully-qualified Protocol Buffers
 // message name.
 //
-// If the message type is registered, mt is the message type for n, and ok is
+// If the message type is registered, mt is the message type of n, and ok is
 // true; otherwise, ok is false.
 //
 // Note that messages are only added to the registry when their respective Go

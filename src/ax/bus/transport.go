@@ -22,8 +22,8 @@ type Transport interface {
 	ReceiveMessage(ctx context.Context) (InboundEnvelope, error)
 }
 
-// TransportStage is an outbound pipeline stage that passes a message to a
-// transport for publishing.
+// TransportStage is an outbound pipeline stage that forwards messages to a
+// transport. It is typically used as the last stage in an outbound pipeline.
 type TransportStage struct {
 	transport Transport
 }
@@ -34,7 +34,7 @@ func (s *TransportStage) Initialize(ctx context.Context, t Transport) error {
 	return nil
 }
 
-// SendMessage passes the m to the transport to be sent.
+// SendMessage sends m via the transport.
 func (s *TransportStage) SendMessage(ctx context.Context, m OutboundEnvelope) error {
 	return s.transport.SendMessage(ctx, m)
 }

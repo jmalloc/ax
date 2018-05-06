@@ -5,7 +5,7 @@ import "context"
 // DataStore is an interface for accessing a transactional data store.
 type DataStore interface {
 	// BeginTx starts a new transaction.
-	BeginTx(ctx context.Context) (Tx, error)
+	BeginTx(ctx context.Context) (Tx, Committer, error)
 }
 
 // WithDataStore returns a new context derived from parent that contains

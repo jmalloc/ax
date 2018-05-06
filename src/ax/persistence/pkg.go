@@ -1,3 +1,2 @@
-// Package persistence defines interfaces persistence systems by various Ax
-// components.
+// Package persistence defines the interfaces Ax uses to persist data.
 package persistence

@@ -54,8 +54,8 @@ type Envelope struct {
 
 // NewEnvelope creates a new message envelope containing m.
 //
-// It generates a UUID-based message message ID and configures the envelope such
-// that m is at the root of a new tree of messages.
+// It generates a UUID-based message ID and configures the envelope such that m
+// is at the root of a new tree of messages.
 func NewEnvelope(m Message) Envelope {
 	env := Envelope{
 		Time:    time.Now(),
