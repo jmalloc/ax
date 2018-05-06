@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/jmalloc/ax/src/ax/internal/messagetest"
 	. "github.com/jmalloc/ax/src/ax/marshaling"
+	"github.com/jmalloc/ax/src/internal/messagetest"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
