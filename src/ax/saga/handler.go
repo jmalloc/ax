@@ -1,6 +1,8 @@
 package saga
 
 import (
+	"context"
+
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/persistence"
 )
@@ -25,14 +27,14 @@ func (h *MessageHandler) MessageTypes() ax.MessageTypeSet {
 	return triggers.Union(others)
 }
 
-// HandleMessage loads a saga instance, passes m to the saga to be handled, and
+// HandleMessage loads a saga instance, passes env to the saga to be handled, and
 // saves the changes to the saga instance.
 //
 // Changes to the saga are persisted within the outbox transaction if one is
-// present in ctx. Otherwise, a new transaction is started using h.Storage.
-func (h *MessageHandler) HandleMessage(ctx ax.MessageContext, m ax.Message) error {
-	mt := ax.TypeOf(m)
-	mk := h.Saga.MapMessage(m)
+// present in ctx. Otherwise, a new transaction is started.
+func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope) error {
+	mt := env.Type()
+	mk := h.Saga.MapMessage(env.Message)
 	si := h.Saga.InitialState()
 
 	// attempt to find an existing saga instance from the message mapping key.
@@ -47,19 +49,16 @@ func (h *MessageHandler) HandleMessage(ctx ax.MessageContext, m ax.Message) erro
 	}
 	defer com.Rollback()
 
-	hctx := ax.BindContext(
-		persistence.WithTx(ctx, tx),
-		ctx,
-	)
+	hctx := persistence.WithTx(ctx, tx)
 
 	// if no existing instance is found, and this message type does not produce
 	// new instances, then the not-found handler is called.
 	if !ok && !h.triggers.Has(mt) {
-		return h.Saga.HandleNotFound(hctx, m)
+		return h.Saga.HandleNotFound(hctx, s, env)
 	}
 
 	// pass the message to the saga for handling.
-	if err := h.Saga.HandleMessage(hctx, m, si); err != nil {
+	if err := h.Saga.HandleMessage(hctx, s, env, si); err != nil {
 		return err
 	}
 

@@ -40,22 +40,22 @@ func (r *Router) Accept(ctx context.Context, m OutboundEnvelope) error {
 	return r.Next.Accept(ctx, m)
 }
 
-// ensureDestintion ensures that m.DestinationEndpoint is set if required.
-func (r *Router) ensureDestination(m *OutboundEnvelope) error {
-	if m.Operation != OpSendUnicast || m.DestinationEndpoint != "" {
+// ensureDestintion ensures that env.DestinationEndpoint is set if required.
+func (r *Router) ensureDestination(env *OutboundEnvelope) error {
+	if env.Operation != OpSendUnicast || env.DestinationEndpoint != "" {
 		return nil
 	}
 
-	mt := ax.TypeOf(m.Message)
+	mt := env.Type()
 
 	if ep, ok := r.cache.Load(mt.Name); ok {
-		m.DestinationEndpoint = ep.(string)
+		env.DestinationEndpoint = ep.(string)
 		return nil
 	}
 
 	if ep, ok := r.lookupDestination(mt); ok {
 		r.cache.Store(mt.Name, ep)
-		m.DestinationEndpoint = ep
+		env.DestinationEndpoint = ep
 		return nil
 	}
 

@@ -85,3 +85,8 @@ func (e Envelope) NewChild(m Message) Envelope {
 
 	return env
 }
+
+// Type returns the message type of the message contained in the envelope.
+func (e Envelope) Type() MessageType {
+	return TypeOf(e.Message)
+}

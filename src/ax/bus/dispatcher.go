@@ -31,18 +31,17 @@ func (d *Dispatcher) Initialize(ctx context.Context, t Transport) error {
 // Accept dispatches env to zero or more message handlers as per the d.Routes.
 // Each message handler is invoked on its own goroutine.
 func (d *Dispatcher) Accept(ctx context.Context, s MessageSink, env InboundEnvelope) error {
+	ctx = WithEnvelope(ctx, env.Envelope)
 	wg, ctx := errgroup.WithContext(ctx)
-	mt := ax.TypeOf(env.Message)
-	mc := &MessageContext{
-		Context:  ctx,
-		Envelope: env.Envelope,
-		Sink:     s,
-	}
 
-	for _, h := range d.Routes.Lookup(mt) {
+	for _, h := range d.Routes.Lookup(env.Type()) {
 		func(h MessageHandler) {
 			wg.Go(func() error {
-				return h.HandleMessage(mc, env.Message)
+				return h.HandleMessage(
+					ctx,
+					SinkSender{s},
+					env.Envelope,
+				)
 			})
 		}(h)
 	}

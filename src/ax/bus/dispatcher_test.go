@@ -20,7 +20,7 @@ var _ = Describe("Dispatcher", func() {
 	)
 
 	BeforeEach(func() {
-		noOp := func(ax.MessageContext, ax.Message) error { return nil }
+		noOp := func(context.Context, ax.Sender, ax.Envelope) error { return nil }
 
 		h1 = &bustest.MessageHandlerMock{
 			MessageTypesFunc: func() ax.MessageTypeSet {
@@ -90,14 +90,32 @@ var _ = Describe("Dispatcher", func() {
 			Expect(h3.HandleMessageCalls()).To(HaveLen(0))
 		})
 
-		It("uses bus.MessageContext", func() {
+		It("uses a context that contains the message envelope", func() {
+			h1.HandleMessageFunc = func(ctx context.Context, _ ax.Sender, _ ax.Envelope) error {
+				defer GinkgoRecover()
+
+				e, ok := GetEnvelope(ctx)
+
+				Expect(ok).To(BeTrue())
+				Expect(e).To(BeIdenticalTo(env.Envelope))
+
+				return nil
+			}
+
 			_ = dispatcher.Accept(ctx, sink, env)
 
 			Expect(h1.HandleMessageCalls()).To(HaveLen(1))
+		})
 
-			mc := h1.HandleMessageCalls()[0].Ctx.(*MessageContext)
-			Expect(mc.Envelope).To(Equal(env.Envelope))
-			Expect(mc.Sink).To(BeIdenticalTo(sink))
+		It("passes a sender that directly via the message sink", func() {
+			h1.HandleMessageFunc = func(ctx context.Context, s ax.Sender, _ ax.Envelope) error {
+				return s.ExecuteCommand(ctx, &messagetest.Command{})
+			}
+
+			_ = dispatcher.Accept(ctx, sink, env)
+
+			Expect(h1.HandleMessageCalls()).To(HaveLen(1))
+			Expect(sink.Envelopes).To(HaveLen(1))
 		})
 
 		It("returns nil if all handlers succeed", func() {
@@ -107,7 +125,7 @@ var _ = Describe("Dispatcher", func() {
 		})
 
 		It("returns an error if any handler fails", func() {
-			h2.HandleMessageFunc = func(ax.MessageContext, ax.Message) error {
+			h2.HandleMessageFunc = func(context.Context, ax.Sender, ax.Envelope) error {
 				return errors.New("<error>")
 			}
 

@@ -1,6 +1,8 @@
 package saga
 
 import (
+	"context"
+
 	"github.com/jmalloc/ax/src/ax"
 )
 
@@ -25,9 +27,9 @@ type Saga interface {
 	InitialState() Instance
 
 	// HandleMessage handles a message for a particular saga instance.
-	HandleMessage(ax.MessageContext, ax.Message, Instance) error
+	HandleMessage(context.Context, ax.Sender, ax.Envelope, Instance) error
 
 	// HandleNotFound handles a message that is intended for a saga instance
 	// that could not be found.
-	HandleNotFound(ax.MessageContext, ax.Message) error
+	HandleNotFound(context.Context, ax.Sender, ax.Envelope) error
 }
