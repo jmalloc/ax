@@ -20,7 +20,7 @@ var (
 //
 //         // make and configure a mocked InboundPipeline
 //         mockedInboundPipeline := &InboundPipelineMock{
-//             AcceptFunc: func(ctx context.Context, s bus.MessageSink, m bus.InboundEnvelope) error {
+//             AcceptFunc: func(in1 context.Context, in2 bus.MessageSink, in3 bus.InboundEnvelope) error {
 // 	               panic("TODO: mock out the Accept method")
 //             },
 //             InitializeFunc: func(ctx context.Context, t bus.Transport) error {
@@ -34,7 +34,7 @@ var (
 //     }
 type InboundPipelineMock struct {
 	// AcceptFunc mocks the Accept method.
-	AcceptFunc func(ctx context.Context, s bus.MessageSink, m bus.InboundEnvelope) error
+	AcceptFunc func(in1 context.Context, in2 bus.MessageSink, in3 bus.InboundEnvelope) error
 
 	// InitializeFunc mocks the Initialize method.
 	InitializeFunc func(ctx context.Context, t bus.Transport) error
@@ -43,12 +43,12 @@ type InboundPipelineMock struct {
 	calls struct {
 		// Accept holds details about calls to the Accept method.
 		Accept []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// S is the s argument value.
-			S bus.MessageSink
-			// M is the m argument value.
-			M bus.InboundEnvelope
+			// In1 is the in1 argument value.
+			In1 context.Context
+			// In2 is the in2 argument value.
+			In2 bus.MessageSink
+			// In3 is the in3 argument value.
+			In3 bus.InboundEnvelope
 		}
 		// Initialize holds details about calls to the Initialize method.
 		Initialize []struct {
@@ -61,37 +61,37 @@ type InboundPipelineMock struct {
 }
 
 // Accept calls AcceptFunc.
-func (mock *InboundPipelineMock) Accept(ctx context.Context, s bus.MessageSink, m bus.InboundEnvelope) error {
+func (mock *InboundPipelineMock) Accept(in1 context.Context, in2 bus.MessageSink, in3 bus.InboundEnvelope) error {
 	if mock.AcceptFunc == nil {
 		panic("moq: InboundPipelineMock.AcceptFunc is nil but InboundPipeline.Accept was just called")
 	}
 	callInfo := struct {
-		Ctx context.Context
-		S   bus.MessageSink
-		M   bus.InboundEnvelope
+		In1 context.Context
+		In2 bus.MessageSink
+		In3 bus.InboundEnvelope
 	}{
-		Ctx: ctx,
-		S:   s,
-		M:   m,
+		In1: in1,
+		In2: in2,
+		In3: in3,
 	}
 	lockInboundPipelineMockAccept.Lock()
 	mock.calls.Accept = append(mock.calls.Accept, callInfo)
 	lockInboundPipelineMockAccept.Unlock()
-	return mock.AcceptFunc(ctx, s, m)
+	return mock.AcceptFunc(in1, in2, in3)
 }
 
 // AcceptCalls gets all the calls that were made to Accept.
 // Check the length with:
 //     len(mockedInboundPipeline.AcceptCalls())
 func (mock *InboundPipelineMock) AcceptCalls() []struct {
-	Ctx context.Context
-	S   bus.MessageSink
-	M   bus.InboundEnvelope
+	In1 context.Context
+	In2 bus.MessageSink
+	In3 bus.InboundEnvelope
 } {
 	var calls []struct {
-		Ctx context.Context
-		S   bus.MessageSink
-		M   bus.InboundEnvelope
+		In1 context.Context
+		In2 bus.MessageSink
+		In3 bus.InboundEnvelope
 	}
 	lockInboundPipelineMockAccept.RLock()
 	calls = mock.calls.Accept

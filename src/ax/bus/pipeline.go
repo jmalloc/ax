@@ -16,7 +16,7 @@ type InboundPipeline interface {
 
 	// Accept forwards an inbound message through the pipeline until
 	// it is handled by some application-defined message handler(s).
-	Accept(ctx context.Context, s MessageSink, m InboundEnvelope) error
+	Accept(context.Context, MessageSink, InboundEnvelope) error
 }
 
 // OutboundPipeline is an interface for a message pipeline that processes
@@ -27,7 +27,7 @@ type InboundPipeline interface {
 type OutboundPipeline interface {
 	MessageSink
 
-	// Initialize is called during endpoint initialization, after the transport
-	// has been initialized.
+	// Initialize is called adter the transport is initialized. It can be used
+	// to inspect or configure the transport as per the needs of the pipeline.
 	Initialize(ctx context.Context, t Transport) error
 }

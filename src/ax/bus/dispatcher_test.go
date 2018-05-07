@@ -141,15 +141,17 @@ var _ = Describe("DispatchTable", func() {
 
 	Describe("NewDispatchTable", func() {
 		It("returns an error when multiple handlers accept the same command", func() {
-			h1 := MessageHandlerFunc(
-				ax.TypesOf(&messagetest.Command{}),
-				nil,
-			)
+			h1 := &bustest.MessageHandlerMock{
+				MessageTypesFunc: func() ax.MessageTypeSet {
+					return ax.TypesOf(&messagetest.Command{})
+				},
+			}
 
-			h2 := MessageHandlerFunc(
-				ax.TypesOf(&messagetest.Command{}),
-				nil,
-			)
+			h2 := &bustest.MessageHandlerMock{
+				MessageTypesFunc: func() ax.MessageTypeSet {
+					return ax.TypesOf(&messagetest.Command{})
+				},
+			}
 
 			_, err := NewDispatchTable(h1, h2)
 			Expect(err).Should(HaveOccurred())
@@ -157,20 +159,23 @@ var _ = Describe("DispatchTable", func() {
 	})
 
 	Describe("Lookup", func() {
-		h1 := MessageHandlerFunc(
-			ax.TypesOf(&messagetest.Command{}),
-			nil,
-		)
+		h1 := &bustest.MessageHandlerMock{
+			MessageTypesFunc: func() ax.MessageTypeSet {
+				return ax.TypesOf(&messagetest.Command{})
+			},
+		}
 
-		h2 := MessageHandlerFunc(
-			ax.TypesOf(&messagetest.Event{}),
-			nil,
-		)
+		h2 := &bustest.MessageHandlerMock{
+			MessageTypesFunc: func() ax.MessageTypeSet {
+				return ax.TypesOf(&messagetest.Event{})
+			},
+		}
 
-		h3 := MessageHandlerFunc(
-			ax.TypesOf(&messagetest.Event{}),
-			nil,
-		)
+		h3 := &bustest.MessageHandlerMock{
+			MessageTypesFunc: func() ax.MessageTypeSet {
+				return ax.TypesOf(&messagetest.Event{})
+			},
+		}
 
 		BeforeEach(func() {
 			t, err := NewDispatchTable(h1, h2, h3)

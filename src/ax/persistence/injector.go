@@ -25,8 +25,8 @@ func (i *Injector) Initialize(ctx context.Context, t bus.Transport) error {
 func (i *Injector) Accept(
 	ctx context.Context,
 	s bus.MessageSink,
-	m bus.InboundEnvelope,
+	env bus.InboundEnvelope,
 ) error {
 	ctx = WithDataStore(ctx, i.DataStore)
-	return i.Next.Accept(ctx, s, m)
+	return i.Next.Accept(ctx, s, env)
 }

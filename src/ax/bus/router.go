@@ -30,14 +30,14 @@ func (r *Router) Initialize(ctx context.Context, t Transport) error {
 	return r.Next.Initialize(ctx, t)
 }
 
-// Accept populates the m.DestinationEndpoint field of unicast messages that
+// Accept populates the evn.DestinationEndpoint field of unicast messages that
 // do not already have a DestinationEndpoint specified.
-func (r *Router) Accept(ctx context.Context, m OutboundEnvelope) error {
-	if err := r.ensureDestination(&m); err != nil {
+func (r *Router) Accept(ctx context.Context, env OutboundEnvelope) error {
+	if err := r.ensureDestination(&env); err != nil {
 		return err
 	}
 
-	return r.Next.Accept(ctx, m)
+	return r.Next.Accept(ctx, env)
 }
 
 // ensureDestintion ensures that env.DestinationEndpoint is set if required.

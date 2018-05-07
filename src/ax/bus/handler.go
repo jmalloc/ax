@@ -27,26 +27,26 @@ type MessageHandler interface {
 	HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope) error
 }
 
-// MessageHandlerFunc returns a MessageHandler that calls fn when a message
-// in the type set mt is delivered.
-func MessageHandlerFunc(
-	mt ax.MessageTypeSet,
-	fn func(context.Context, ax.Sender, ax.Envelope) error,
-) MessageHandler {
-	return messageHandlerFunc{mt, fn}
-}
+// // MessageHandlerFunc returns a MessageHandler that calls fn when a message
+// // in the type set mt is delivered.
+// func MessageHandlerFunc(
+// 	mt ax.MessageTypeSet,
+// 	fn func(context.Context, ax.Sender, ax.Envelope) error,
+// ) MessageHandler {
+// 	return messageHandlerFunc{mt, fn}
+// }
 
-// messageHandlerFunc is an implementation of MessageHandler that dispatches to
-// a function.
-type messageHandlerFunc struct {
-	mt ax.MessageTypeSet
-	fn func(context.Context, ax.Sender, ax.Envelope) error
-}
+// // messageHandlerFunc is an implementation of MessageHandler that dispatches to
+// // a function.
+// type messageHandlerFunc struct {
+// 	mt ax.MessageTypeSet
+// 	fn func(context.Context, ax.Sender, ax.Envelope) error
+// }
 
-func (h messageHandlerFunc) MessageTypes() ax.MessageTypeSet {
-	return h.mt
-}
+// func (h messageHandlerFunc) MessageTypes() ax.MessageTypeSet {
+// 	return h.mt
+// }
 
-func (h messageHandlerFunc) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope) error {
-	return h.fn(ctx, s, env)
-}
+// func (h messageHandlerFunc) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope) error {
+// 	return h.fn(ctx, s, env)
+// }

@@ -86,21 +86,21 @@ func (t *Transport) Subscribe(ctx context.Context, mt ax.MessageTypeSet) error {
 }
 
 // SendMessage sends a message.
-func (t *Transport) SendMessage(ctx context.Context, m bus.OutboundEnvelope) error {
+func (t *Transport) SendMessage(ctx context.Context, env bus.OutboundEnvelope) error {
 	var pub amqp.Publishing
 
-	if err := marshalMessage(t.ep, m, &pub); err != nil {
+	if err := marshalMessage(t.ep, env, &pub); err != nil {
 		fmt.Println(err)
 		return err
 	}
 
-	switch m.Operation {
+	switch env.Operation {
 	case bus.OpSendUnicast:
-		return t.sendUnicast(ctx, m.DestinationEndpoint, pub)
+		return t.sendUnicast(ctx, env.DestinationEndpoint, pub)
 	case bus.OpSendMulticast:
 		return t.sendMulticast(ctx, pub)
 	default:
-		panic(fmt.Sprintf("unrecognized outbound operation: %d", m.Operation))
+		panic(fmt.Sprintf("unrecognized outbound operation: %d", env.Operation))
 	}
 }
 
@@ -110,9 +110,9 @@ func (t *Transport) ReceiveMessage(ctx context.Context) (bus.InboundEnvelope, er
 	for {
 		select {
 		case del := <-t.msgs:
-			m, ok, err := t.receive(ctx, del)
+			env, ok, err := t.receive(ctx, del)
 			if ok || err != nil {
-				return m, err
+				return env, err
 			}
 		case err := <-t.close:
 			return bus.InboundEnvelope{}, err
@@ -126,7 +126,7 @@ func (t *Transport) receive(
 	ctx context.Context,
 	del amqp.Delivery,
 ) (bus.InboundEnvelope, bool, error) {
-	m := bus.InboundEnvelope{
+	env := bus.InboundEnvelope{
 		Done: func(_ context.Context, op bus.InboundOperation) error {
 			switch op {
 			case bus.OpAck:
@@ -141,12 +141,12 @@ func (t *Transport) receive(
 		},
 	}
 
-	if err := unmarshalMessage(del, &m); err != nil {
+	if err := unmarshalMessage(del, &env); err != nil {
 		// TODO: sentry, etc?
 		return bus.InboundEnvelope{}, false, del.Reject(false)
 	}
 
-	return m, true, nil
+	return env, true, nil
 }
 
 // sendUnicast sends a unicast message directly to a specific endpoint.

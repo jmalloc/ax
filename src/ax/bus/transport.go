@@ -31,7 +31,7 @@ func (s *TransportStage) Initialize(ctx context.Context, t Transport) error {
 	return nil
 }
 
-// Accept sends m via the transport.
-func (s *TransportStage) Accept(ctx context.Context, m OutboundEnvelope) error {
-	return s.transport.Accept(ctx, m)
+// Accept sends env via the transport.
+func (s *TransportStage) Accept(ctx context.Context, env OutboundEnvelope) error {
+	return s.transport.Accept(ctx, env)
 }

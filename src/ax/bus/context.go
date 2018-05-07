@@ -6,9 +6,8 @@ import (
 	"github.com/jmalloc/ax/src/ax"
 )
 
-// WithEnvelope returns a new context derived from p that contains the message
-// envelope env. The envelope can be retreived from the contet with
-// GetEnvelope().
+// WithEnvelope returns a new context derived from p that contains env.
+// The envelope can be retreived from the contet with GetEnvelope().
 func WithEnvelope(p context.Context, env ax.Envelope) context.Context {
 	return context.WithValue(
 		p,

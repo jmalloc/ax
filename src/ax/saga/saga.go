@@ -8,6 +8,10 @@ import (
 
 // Saga is an interface for handling messages associated with a particular saga
 // instance.
+//
+// A Saga is essentially a stateful message handler where persistence of the
+// saga state is managed by the framework. The state is represented by the
+// Instance interface. Each saga may produce many instances.
 type Saga interface {
 	// MessageTypes returns the set of messages that are routed to this saga.
 	//

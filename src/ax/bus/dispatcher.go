@@ -8,8 +8,8 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// Dispatcher is an inbound pipeline stage that routes messages to
-// the appropriate MessageHandler instances according to a "dispatch table".
+// Dispatcher is an inbound pipeline stage that routes messages to the
+// appropriate MessageHandler instances according to a "dispatch table".
 type Dispatcher struct {
 	Routes DispatchTable
 }
@@ -28,7 +28,12 @@ func (d *Dispatcher) Initialize(ctx context.Context, t Transport) error {
 	return t.Subscribe(ctx, events)
 }
 
-// Accept dispatches env to zero or more message handlers as per the d.Routes.
+// Accept dispatches env to zero or more message handlers as per the dispatch
+// table.
+//
+// The context passed to each handler contains the message envelope, such that
+// any messages sent using s within that context are configured as children of env.
+//
 // Each message handler is invoked on its own goroutine.
 func (d *Dispatcher) Accept(ctx context.Context, s MessageSink, env InboundEnvelope) error {
 	ctx = WithEnvelope(ctx, env.Envelope)

@@ -7,15 +7,16 @@ import (
 )
 
 // InboundEnvelope is a specialization of ax.Envelope for messages that are
-// received by "this" endpoint.
+// received by an endpoint.
+//
+// Inbound envelopes traverse an InboundPipeline.
 type InboundEnvelope struct {
 	ax.Envelope
 
 	// SourceEndpoint is the endpoint that sent the message.
 	SourceEndpoint string
 
-	// DeliveryCount is the number of times that this message has been delivered
-	// to the endpoint.
+	// DeliveryCount is the number of times that this message has been delivered.
 	//
 	// Messages may be redelivered after a failure handling the message, or if
 	// an endpoint crashes, for example. Not all transports support a delivery
@@ -49,7 +50,9 @@ const (
 )
 
 // OutboundEnvelope is a specialization of ax.Envelope for messages that are
-// sent by "this" endpoint.
+// sent by an endpoint.
+//
+// Outbound envelopes traverse an OutboundPipeline.
 type OutboundEnvelope struct {
 	ax.Envelope
 

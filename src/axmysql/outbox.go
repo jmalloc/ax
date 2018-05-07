@@ -79,7 +79,7 @@ func (r *OutboxRepository) SaveOutbox(
 	ctx context.Context,
 	tx persistence.Tx,
 	id ax.MessageID,
-	m []bus.OutboundEnvelope,
+	envs []bus.OutboundEnvelope,
 ) error {
 	stx := tx.(*Tx).tx
 
@@ -91,7 +91,7 @@ func (r *OutboxRepository) SaveOutbox(
 		return err
 	}
 
-	for _, env := range m {
+	for _, env := range envs {
 		if err := insertOutboxMessage(ctx, stx, env); err != nil {
 			return err
 		}
@@ -104,12 +104,12 @@ func (r *OutboxRepository) SaveOutbox(
 func (r *OutboxRepository) MarkAsSent(
 	ctx context.Context,
 	tx persistence.Tx,
-	m bus.OutboundEnvelope,
+	env bus.OutboundEnvelope,
 ) error {
 	_, err := tx.(*Tx).tx.ExecContext(
 		ctx,
 		`DELETE FROM outbox_message WHERE message_id = ?`,
-		m.MessageID,
+		env.MessageID,
 	)
 	return err
 }
@@ -153,9 +153,9 @@ func scanOutboxMessage(rows *sql.Rows, causationID ax.MessageID) (bus.OutboundEn
 func insertOutboxMessage(
 	ctx context.Context,
 	tx *sql.Tx,
-	m bus.OutboundEnvelope,
+	env bus.OutboundEnvelope,
 ) error {
-	ct, body, err := marshaling.MarshalMessage(m.Message)
+	ct, body, err := marshaling.MarshalMessage(env.Message)
 	if err != nil {
 		return err
 	}
@@ -171,14 +171,14 @@ func insertOutboxMessage(
 			body = ?,
 			operation = ?,
 			destination = ?`,
-		m.MessageID,
-		m.CausationID,
-		m.CorrelationID,
-		m.Time.Format(time.RFC3339Nano),
+		env.MessageID,
+		env.CausationID,
+		env.CorrelationID,
+		env.Time.Format(time.RFC3339Nano),
 		ct,
 		body,
-		m.Operation,
-		m.DestinationEndpoint,
+		env.Operation,
+		env.DestinationEndpoint,
 	)
 
 	return err

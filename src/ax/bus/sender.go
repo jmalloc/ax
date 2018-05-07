@@ -14,15 +14,16 @@ type SinkSender struct {
 
 // ExecuteCommand sends a command message.
 //
-// Commands are routed to a single endpoint as per the routing rules of the
-// outbound message pipeline.
+// If ctx contains a message envelope, m is sent as a child of the message in
+// that envelope.
 func (s SinkSender) ExecuteCommand(ctx context.Context, m ax.Command) error {
 	return s.send(ctx, OpSendUnicast, m)
 }
 
 // PublishEvent sends an event message.
 //
-// Events are routed to endpoints that subscribe to messages of that type.
+// If ctx contains a message envelope, m is sent as a child of the message in
+// that envelope.
 func (s SinkSender) PublishEvent(ctx context.Context, m ax.Event) error {
 	return s.send(ctx, OpSendMulticast, m)
 }

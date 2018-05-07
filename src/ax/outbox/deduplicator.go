@@ -22,16 +22,12 @@ func (d *Deduplicator) Initialize(ctx context.Context, t bus.Transport) error {
 	return d.Next.Initialize(ctx, t)
 }
 
-// Accept passes m to the next pipeline stage only if it has not been
+// Accept passes env to the next pipeline stage only if it has not been
 // delivered previously.
 //
 // If it has been delivered previously, the messages that were produced the
 // first time are sent using s.
-func (d *Deduplicator) Accept(
-	ctx context.Context,
-	s bus.MessageSink,
-	env bus.InboundEnvelope,
-) error {
+func (d *Deduplicator) Accept(ctx context.Context, s bus.MessageSink, env bus.InboundEnvelope) error {
 	ds, ok := persistence.GetDataStore(ctx)
 	if !ok {
 		return errors.New("no data store is available in ctx")
@@ -62,7 +58,7 @@ func (d *Deduplicator) Accept(
 	return nil
 }
 
-// forward passes m to the next pipeline stage and captures and persists the
+// forward passes env to the next pipeline stage and captures and persists the
 // messages it produces.
 func (d *Deduplicator) forward(ctx context.Context, env bus.InboundEnvelope) ([]bus.OutboundEnvelope, error) {
 	tx, com, err := persistence.BeginTx(ctx)
@@ -98,9 +94,9 @@ func (d *Deduplicator) forward(ctx context.Context, env bus.InboundEnvelope) ([]
 func (d *Deduplicator) send(
 	ctx context.Context,
 	s bus.MessageSink,
-	m bus.OutboundEnvelope,
+	env bus.OutboundEnvelope,
 ) error {
-	if err := s.Accept(ctx, m); err != nil {
+	if err := s.Accept(ctx, env); err != nil {
 		return err
 	}
 
@@ -110,7 +106,7 @@ func (d *Deduplicator) send(
 	}
 	defer com.Rollback()
 
-	if err := d.Repository.MarkAsSent(ctx, tx, m); err != nil {
+	if err := d.Repository.MarkAsSent(ctx, tx, env); err != nil {
 		return err
 	}
 
