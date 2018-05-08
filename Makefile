@@ -1,6 +1,6 @@
 REQ += $(shell find src -name "*.proto")
 REQ += src/internal/bustest/handlermock.go
-REQ += src/internal/bustest/sendermock.go
+REQ += src/internal/bustest/sinkmock.go
 REQ += src/internal/bustest/transportmock.go
 REQ += src/internal/bustest/pipelinemock.go
 REQ += src/internal/persistencetest/datastoremock.go
@@ -18,10 +18,10 @@ $(MOQ):
 src/internal/bustest/handlermock.go: src/ax/bus/handler.go | $(MOQ)
 	$(MOQ) -out "$@" -pkg "bustest" src/ax/bus MessageHandler
 
-src/internal/bustest/sendermock.go: src/ax/bus/sender.go | $(MOQ)
-	$(MOQ) -out "$@" -pkg "bustest" src/ax/bus MessageSender
+src/internal/bustest/sinkmock.go: src/ax/bus/sink.go | $(MOQ)
+	$(MOQ) -out "$@" -pkg "bustest" src/ax/bus MessageSink
 
-src/internal/bustest/transportmock.go: src/ax/bus/transport.go src/ax/bus/sender.go | $(MOQ)
+src/internal/bustest/transportmock.go: src/ax/bus/transport.go src/ax/bus/sink.go | $(MOQ)
 	$(MOQ) -out "$@" -pkg "bustest" src/ax/bus Transport
 
 src/internal/bustest/pipelinemock.go: src/ax/bus/pipeline.go | $(MOQ)

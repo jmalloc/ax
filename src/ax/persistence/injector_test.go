@@ -40,18 +40,18 @@ var _ = Describe("Injector", func() {
 		})
 	})
 
-	Describe("DeliverMessage", func() {
+	Describe("Accept", func() {
 		It("calls the next pipeline with the data store in the context", func() {
-			next.DeliverMessageFunc = func(ctx context.Context, _ bus.MessageSender, _ bus.InboundEnvelope) error {
+			next.AcceptFunc = func(ctx context.Context, _ bus.MessageSink, _ bus.InboundEnvelope) error {
 				ds, ok := GetDataStore(ctx)
 				Expect(ok).To(BeTrue())
 				Expect(ds).To(Equal(inj.DataStore))
 				return nil
 			}
 
-			inj.DeliverMessage(context.Background(), nil /* sender */, bus.InboundEnvelope{})
+			inj.Accept(context.Background(), nil /* sink */, bus.InboundEnvelope{})
 
-			Expect(next.DeliverMessageCalls()).To(HaveLen(1))
+			Expect(next.AcceptCalls()).To(HaveLen(1))
 		})
 	})
 })
