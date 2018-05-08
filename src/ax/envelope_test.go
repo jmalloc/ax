@@ -58,4 +58,13 @@ var _ = Describe("Envelope", func() {
 			Expect(leaf.CorrelationID).To(Equal(root.MessageID))
 		})
 	})
+
+	Describe("Type", func() {
+		message := &messagetest.Message{}
+		env := NewEnvelope(message)
+
+		It("returns the type of the message in the envelope", func() {
+			Expect(env.Type()).To(Equal(TypeOf(message)))
+		})
+	})
 })

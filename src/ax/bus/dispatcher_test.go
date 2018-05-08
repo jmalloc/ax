@@ -15,12 +15,12 @@ import (
 var _ = Describe("Dispatcher", func() {
 	var (
 		h1, h2, h3 *bustest.MessageHandlerMock
-		sender     *bustest.MessageSenderMock
+		sink       *BufferedSink
 		dispatcher *Dispatcher
 	)
 
 	BeforeEach(func() {
-		noOp := func(ax.MessageContext, ax.Message) error { return nil }
+		noOp := func(context.Context, ax.Sender, ax.Envelope) error { return nil }
 
 		h1 = &bustest.MessageHandlerMock{
 			MessageTypesFunc: func() ax.MessageTypeSet {
@@ -52,7 +52,7 @@ var _ = Describe("Dispatcher", func() {
 		t, err := NewDispatchTable(h1, h2, h3)
 		Expect(err).ShouldNot(HaveOccurred())
 
-		sender = &bustest.MessageSenderMock{}
+		sink = &BufferedSink{}
 		dispatcher = &Dispatcher{Routes: t}
 	})
 
@@ -74,61 +74,62 @@ var _ = Describe("Dispatcher", func() {
 		})
 	})
 
-	Describe("DeliverMessage", func() {
-		message := InboundEnvelope{
+	Describe("Accept", func() {
+		ctx := context.Background()
+		env := InboundEnvelope{
 			Envelope: ax.NewEnvelope(
 				&messagetest.Message{},
 			),
 		}
 
 		It("passes the message to each handler", func() {
-			_ = dispatcher.DeliverMessage(
-				context.Background(),
-				sender,
-				message,
-			)
+			_ = dispatcher.Accept(ctx, sink, env)
 
 			Expect(h1.HandleMessageCalls()).To(HaveLen(1))
 			Expect(h2.HandleMessageCalls()).To(HaveLen(1))
 			Expect(h3.HandleMessageCalls()).To(HaveLen(0))
 		})
 
-		It("uses bus.MessageContext", func() {
-			ctx := context.Background()
+		It("uses a context that contains the message envelope", func() {
+			h1.HandleMessageFunc = func(ctx context.Context, _ ax.Sender, _ ax.Envelope) error {
+				defer GinkgoRecover()
 
-			_ = dispatcher.DeliverMessage(
-				ctx,
-				sender,
-				message,
-			)
+				e, ok := GetEnvelope(ctx)
+
+				Expect(ok).To(BeTrue())
+				Expect(e).To(BeIdenticalTo(env.Envelope))
+
+				return nil
+			}
+
+			_ = dispatcher.Accept(ctx, sink, env)
 
 			Expect(h1.HandleMessageCalls()).To(HaveLen(1))
+		})
 
-			mc := h1.HandleMessageCalls()[0].Ctx.(*MessageContext)
-			Expect(mc.Envelope).To(Equal(message.Envelope))
-			Expect(mc.Sender).To(BeIdenticalTo(sender))
+		It("passes a sender that sends messages via the message sink", func() {
+			h1.HandleMessageFunc = func(ctx context.Context, s ax.Sender, _ ax.Envelope) error {
+				return s.ExecuteCommand(ctx, &messagetest.Command{})
+			}
+
+			_ = dispatcher.Accept(ctx, sink, env)
+
+			Expect(h1.HandleMessageCalls()).To(HaveLen(1))
+			Expect(sink.Envelopes).To(HaveLen(1))
 		})
 
 		It("returns nil if all handlers succeed", func() {
-			err := dispatcher.DeliverMessage(
-				context.Background(),
-				sender,
-				message,
-			)
+			err := dispatcher.Accept(ctx, sink, env)
 
 			Expect(err).ShouldNot(HaveOccurred())
 		})
 
 		It("returns an error if any handler fails", func() {
-			h2.HandleMessageFunc = func(ax.MessageContext, ax.Message) error {
+			h2.HandleMessageFunc = func(context.Context, ax.Sender, ax.Envelope) error {
 				return errors.New("<error>")
 			}
 
-			err := dispatcher.DeliverMessage(
-				context.Background(),
-				sender,
-				message,
-			)
+			err := dispatcher.Accept(ctx, sink, env)
 
 			Expect(err).To(MatchError("<error>"))
 		})
@@ -140,15 +141,17 @@ var _ = Describe("DispatchTable", func() {
 
 	Describe("NewDispatchTable", func() {
 		It("returns an error when multiple handlers accept the same command", func() {
-			h1 := MessageHandlerFunc(
-				ax.TypesOf(&messagetest.Command{}),
-				nil,
-			)
+			h1 := &bustest.MessageHandlerMock{
+				MessageTypesFunc: func() ax.MessageTypeSet {
+					return ax.TypesOf(&messagetest.Command{})
+				},
+			}
 
-			h2 := MessageHandlerFunc(
-				ax.TypesOf(&messagetest.Command{}),
-				nil,
-			)
+			h2 := &bustest.MessageHandlerMock{
+				MessageTypesFunc: func() ax.MessageTypeSet {
+					return ax.TypesOf(&messagetest.Command{})
+				},
+			}
 
 			_, err := NewDispatchTable(h1, h2)
 			Expect(err).Should(HaveOccurred())
@@ -156,20 +159,23 @@ var _ = Describe("DispatchTable", func() {
 	})
 
 	Describe("Lookup", func() {
-		h1 := MessageHandlerFunc(
-			ax.TypesOf(&messagetest.Command{}),
-			nil,
-		)
+		h1 := &bustest.MessageHandlerMock{
+			MessageTypesFunc: func() ax.MessageTypeSet {
+				return ax.TypesOf(&messagetest.Command{})
+			},
+		}
 
-		h2 := MessageHandlerFunc(
-			ax.TypesOf(&messagetest.Event{}),
-			nil,
-		)
+		h2 := &bustest.MessageHandlerMock{
+			MessageTypesFunc: func() ax.MessageTypeSet {
+				return ax.TypesOf(&messagetest.Event{})
+			},
+		}
 
-		h3 := MessageHandlerFunc(
-			ax.TypesOf(&messagetest.Event{}),
-			nil,
-		)
+		h3 := &bustest.MessageHandlerMock{
+			MessageTypesFunc: func() ax.MessageTypeSet {
+				return ax.TypesOf(&messagetest.Event{})
+			},
+		}
 
 		BeforeEach(func() {
 			t, err := NewDispatchTable(h1, h2, h3)

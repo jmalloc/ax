@@ -4,6 +4,7 @@
 package bustest
 
 import (
+	"context"
 	"github.com/jmalloc/ax/src/ax"
 	"sync"
 )
@@ -19,7 +20,7 @@ var (
 //
 //         // make and configure a mocked MessageHandler
 //         mockedMessageHandler := &MessageHandlerMock{
-//             HandleMessageFunc: func(ctx ax.MessageContext, m ax.Message) error {
+//             HandleMessageFunc: func(ctx context.Context, s ax.Sender, env ax.Envelope) error {
 // 	               panic("TODO: mock out the HandleMessage method")
 //             },
 //             MessageTypesFunc: func() ax.MessageTypeSet {
@@ -33,7 +34,7 @@ var (
 //     }
 type MessageHandlerMock struct {
 	// HandleMessageFunc mocks the HandleMessage method.
-	HandleMessageFunc func(ctx ax.MessageContext, m ax.Message) error
+	HandleMessageFunc func(ctx context.Context, s ax.Sender, env ax.Envelope) error
 
 	// MessageTypesFunc mocks the MessageTypes method.
 	MessageTypesFunc func() ax.MessageTypeSet
@@ -43,9 +44,11 @@ type MessageHandlerMock struct {
 		// HandleMessage holds details about calls to the HandleMessage method.
 		HandleMessage []struct {
 			// Ctx is the ctx argument value.
-			Ctx ax.MessageContext
-			// M is the m argument value.
-			M ax.Message
+			Ctx context.Context
+			// S is the s argument value.
+			S ax.Sender
+			// Env is the env argument value.
+			Env ax.Envelope
 		}
 		// MessageTypes holds details about calls to the MessageTypes method.
 		MessageTypes []struct {
@@ -54,33 +57,37 @@ type MessageHandlerMock struct {
 }
 
 // HandleMessage calls HandleMessageFunc.
-func (mock *MessageHandlerMock) HandleMessage(ctx ax.MessageContext, m ax.Message) error {
+func (mock *MessageHandlerMock) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope) error {
 	if mock.HandleMessageFunc == nil {
 		panic("moq: MessageHandlerMock.HandleMessageFunc is nil but MessageHandler.HandleMessage was just called")
 	}
 	callInfo := struct {
-		Ctx ax.MessageContext
-		M   ax.Message
+		Ctx context.Context
+		S   ax.Sender
+		Env ax.Envelope
 	}{
 		Ctx: ctx,
-		M:   m,
+		S:   s,
+		Env: env,
 	}
 	lockMessageHandlerMockHandleMessage.Lock()
 	mock.calls.HandleMessage = append(mock.calls.HandleMessage, callInfo)
 	lockMessageHandlerMockHandleMessage.Unlock()
-	return mock.HandleMessageFunc(ctx, m)
+	return mock.HandleMessageFunc(ctx, s, env)
 }
 
 // HandleMessageCalls gets all the calls that were made to HandleMessage.
 // Check the length with:
 //     len(mockedMessageHandler.HandleMessageCalls())
 func (mock *MessageHandlerMock) HandleMessageCalls() []struct {
-	Ctx ax.MessageContext
-	M   ax.Message
+	Ctx context.Context
+	S   ax.Sender
+	Env ax.Envelope
 } {
 	var calls []struct {
-		Ctx ax.MessageContext
-		M   ax.Message
+		Ctx context.Context
+		S   ax.Sender
+		Env ax.Envelope
 	}
 	lockMessageHandlerMockHandleMessage.RLock()
 	calls = mock.calls.HandleMessage

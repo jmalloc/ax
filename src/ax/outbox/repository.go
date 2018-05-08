@@ -19,7 +19,7 @@ type Repository interface {
 		ctx context.Context,
 		ds persistence.DataStore,
 		id ax.MessageID,
-	) (m []bus.OutboundEnvelope, ok bool, err error)
+	) (envs []bus.OutboundEnvelope, ok bool, err error)
 
 	// SaveOutbox saves a set of unsent outbound messages that were produced
 	// when the message identified by id was delivered.
@@ -27,13 +27,13 @@ type Repository interface {
 		ctx context.Context,
 		tx persistence.Tx,
 		id ax.MessageID,
-		m []bus.OutboundEnvelope,
+		envs []bus.OutboundEnvelope,
 	) error
 
 	// MarkAsSent marks a message as sent, removing it from the outbox.
 	MarkAsSent(
 		ctx context.Context,
 		tx persistence.Tx,
-		m bus.OutboundEnvelope,
+		env bus.OutboundEnvelope,
 	) error
 }

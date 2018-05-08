@@ -30,32 +30,32 @@ func (r *Router) Initialize(ctx context.Context, t Transport) error {
 	return r.Next.Initialize(ctx, t)
 }
 
-// SendMessage populates the m.DestinationEndpoint field of unicast messages that
+// Accept populates the evn.DestinationEndpoint field of unicast messages that
 // do not already have a DestinationEndpoint specified.
-func (r *Router) SendMessage(ctx context.Context, m OutboundEnvelope) error {
-	if err := r.ensureDestination(&m); err != nil {
+func (r *Router) Accept(ctx context.Context, env OutboundEnvelope) error {
+	if err := r.ensureDestination(&env); err != nil {
 		return err
 	}
 
-	return r.Next.SendMessage(ctx, m)
+	return r.Next.Accept(ctx, env)
 }
 
-// ensureDestintion ensures that m.DestinationEndpoint is set if required.
-func (r *Router) ensureDestination(m *OutboundEnvelope) error {
-	if m.Operation != OpSendUnicast || m.DestinationEndpoint != "" {
+// ensureDestintion ensures that env.DestinationEndpoint is set if required.
+func (r *Router) ensureDestination(env *OutboundEnvelope) error {
+	if env.Operation != OpSendUnicast || env.DestinationEndpoint != "" {
 		return nil
 	}
 
-	mt := ax.TypeOf(m.Message)
+	mt := env.Type()
 
 	if ep, ok := r.cache.Load(mt.Name); ok {
-		m.DestinationEndpoint = ep.(string)
+		env.DestinationEndpoint = ep.(string)
 		return nil
 	}
 
 	if ep, ok := r.lookupDestination(mt); ok {
 		r.cache.Store(mt.Name, ep)
-		m.DestinationEndpoint = ep
+		env.DestinationEndpoint = ep
 		return nil
 	}
 
