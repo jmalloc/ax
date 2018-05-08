@@ -83,7 +83,7 @@ func main() {
 	go send(out)
 
 	for {
-		env, err := xport.ReceiveMessage(ctx)
+		env, err := xport.Produce(ctx)
 		if err != nil {
 			panic(err)
 		}
