@@ -7,14 +7,15 @@ import (
 // RetryPolicy returns true if the message should be retried.
 type RetryPolicy func(InboundEnvelope) bool
 
-// DefaultRetryPolicy is a RetryPolicy that rejects a messages after it has been
+// DefaultRetryPolicy is a RetryPolicy that rejects a message after it has been
 // attempted three (3) times.
 func DefaultRetryPolicy(m InboundEnvelope) bool {
 	return m.DeliveryCount < 3
 }
 
-// Acknowledger is an implementation of InboundPipeline that forwards a message
-// on to the next stage and then acknowledges the message.
+// Acknowledger is an inbound pipeline stage that acknowledges messages that are
+// successfully handled by the next pipeline stage. In the event of an error,
+// the message is either retried or rejected as per a configurable retry policy.
 type Acknowledger struct {
 	RetryPolicy RetryPolicy
 	Next        InboundPipeline
