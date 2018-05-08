@@ -85,8 +85,8 @@ func (t *Transport) Subscribe(ctx context.Context, mt ax.MessageTypeSet) error {
 	return setupMulticastBindings(t.ch, t.ep, mt)
 }
 
-// SendMessage sends a message.
-func (t *Transport) SendMessage(ctx context.Context, env bus.OutboundEnvelope) error {
+// Accept sends a message.
+func (t *Transport) Accept(ctx context.Context, env bus.OutboundEnvelope) error {
 	var pub amqp.Publishing
 
 	if err := marshalMessage(t.ep, env, &pub); err != nil {
@@ -104,9 +104,8 @@ func (t *Transport) SendMessage(ctx context.Context, env bus.OutboundEnvelope) e
 	}
 }
 
-// ReceiveMessage returns the next message that has been delivered to the
-// endpoint.
-func (t *Transport) ReceiveMessage(ctx context.Context) (bus.InboundEnvelope, error) {
+// Produce returns the next message that has been delivered to the endpoint.
+func (t *Transport) Produce(ctx context.Context) (bus.InboundEnvelope, error) {
 	for {
 		select {
 		case del := <-t.msgs:
