@@ -2,7 +2,7 @@ hash: 56a98a0d4d9ff7101aba4096809f3d715dfc3d4e9820d0cb87b031a3d0237fdf
 updated: 2018-05-06T00:31:25.469629+10:00
 imports:
 - name: github.com/go-sql-driver/mysql
-  version: a0583e0143b1624142adab07e0e97fe106d99561
+  version: 3287d94d4c6a48a63e16fffaabf27ab20203af2a
 - name: github.com/golang/protobuf
   version: 925541529c1fa6821df4e44ce2723319eb2be768
   subpackages:
