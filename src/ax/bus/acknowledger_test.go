@@ -51,7 +51,7 @@ var _ = Describe("Acknowledger", func() {
 			Expect(next.AcceptCalls()).To(HaveLen(1))
 		})
 
-		It("marks message as acknowledged if no error occured", func() {
+		It("marks message as acknowledged if no error occurred", func() {
 			next.AcceptFunc = func(ctx context.Context, _ MessageSink, _ InboundEnvelope) error {
 				return nil
 			}
@@ -68,7 +68,7 @@ var _ = Describe("Acknowledger", func() {
 			Expect(next.AcceptCalls()).To(HaveLen(1))
 		})
 
-		It("marks message for retry if an error occured and retry policy approves retry", func() {
+		It("marks message for retry if an error occurred and retry policy approves retry", func() {
 			next.AcceptFunc = func(ctx context.Context, _ MessageSink, _ InboundEnvelope) error {
 				return errors.New("something went wrong")
 			}
@@ -87,7 +87,7 @@ var _ = Describe("Acknowledger", func() {
 			Expect(next.AcceptCalls()).To(HaveLen(1))
 		})
 
-		It("marks message as rejected if an error occured and retry policy denies retry", func() {
+		It("marks message as rejected if an error occurred and retry policy denies retry", func() {
 			next.AcceptFunc = func(ctx context.Context, _ MessageSink, _ InboundEnvelope) error {
 				return errors.New("something went wrong")
 			}
@@ -106,7 +106,7 @@ var _ = Describe("Acknowledger", func() {
 			Expect(next.AcceptCalls()).To(HaveLen(1))
 		})
 
-		It("marks message for retry if an error occured and default retry policy approves retry", func() {
+		It("marks message for retry if an error occurred and default retry policy approves retry", func() {
 			next.AcceptFunc = func(ctx context.Context, _ MessageSink, _ InboundEnvelope) error {
 				return errors.New("something went wrong")
 			}
