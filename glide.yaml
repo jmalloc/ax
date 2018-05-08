@@ -4,7 +4,9 @@ import:
 - package: github.com/satori/go.uuid
 - package: github.com/streadway/amqp
 - package: github.com/go-sql-driver/mysql
+  vcs: git
   version: master
+  repo: git@github.com:go-sql-driver/mysql.git  
 - package: go.uber.org/multierr
   version: ~1.1.0
 - package: golang.org/x/sync
