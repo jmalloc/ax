@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"os"
 
+	"github.com/davecgh/go-spew/spew"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmalloc/ax/examples/banking/messages"
 	"github.com/jmalloc/ax/src/ax"
@@ -15,12 +16,16 @@ import (
 	"github.com/streadway/amqp"
 )
 
-var handler = bus.MessageHandlerFunc(
-	ax.TypesOf(&messages.OpenAccount{}),
-	func(ctx ax.MessageContext, m ax.Message) error {
-		return nil
-	},
-)
+type handler struct{}
+
+func (handler) MessageTypes() ax.MessageTypeSet {
+	return ax.TypesOf(&messages.OpenAccount{})
+}
+
+func (handler) HandleMessage(_ context.Context, _ ax.Sender, env ax.Envelope) error {
+	spew.Dump(env)
+	return nil
+}
 
 func main() {
 	db, err := sql.Open("mysql", os.Getenv("AX_MYSQL_DSN"))
@@ -35,7 +40,7 @@ func main() {
 	}
 	defer rmq.Close()
 
-	dtable, err := bus.NewDispatchTable(handler)
+	dtable, err := bus.NewDispatchTable(handler{})
 	if err != nil {
 		panic(err)
 	}
@@ -75,24 +80,32 @@ func main() {
 		panic(err)
 	}
 
+	go send(out)
+
 	for {
-		m, err := xport.ReceiveMessage(ctx)
+		env, err := xport.ReceiveMessage(ctx)
 		if err != nil {
 			panic(err)
 		}
 
-		err = in.DeliverMessage(ctx, out, m)
+		err = in.Accept(ctx, out, env)
 		op := bus.OpAck
 		if err == nil {
-			if m.DeliveryCount < 3 {
+			if env.DeliveryCount < 3 {
 				op = bus.OpRetry
 			} else {
 				op = bus.OpReject
 			}
 		}
 
-		if err := m.Done(ctx, op); err != nil {
+		if err := env.Done(ctx, op); err != nil {
 			panic(err)
 		}
 	}
+}
+
+func send(s bus.MessageSink) {
+	// ctx := context.Background()
+
+	// snd := bus.SinkSender{Sink: s}
 }
