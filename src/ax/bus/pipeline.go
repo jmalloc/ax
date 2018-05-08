@@ -27,7 +27,7 @@ type InboundPipeline interface {
 type OutboundPipeline interface {
 	MessageSink
 
-	// Initialize is called adter the transport is initialized. It can be used
+	// Initialize is called after the transport is initialized. It can be used
 	// to inspect or configure the transport as per the needs of the pipeline.
 	Initialize(ctx context.Context, t Transport) error
 }
