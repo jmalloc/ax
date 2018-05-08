@@ -8,14 +8,14 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// Dispatcher is an inbound pipeline stage that delivers messages to
-// MessageHandler implementations.
+// Dispatcher is an inbound pipeline stage that routes messages to the
+// appropriate MessageHandler instances according to a "dispatch table".
 type Dispatcher struct {
 	Routes DispatchTable
 }
 
-// Initialize configures the transport to subscribe to the events that the
-// handlers can handle.
+// Initialize configures the subscribes t to events that the message handlers
+// intend to handle.
 func (d *Dispatcher) Initialize(ctx context.Context, t Transport) error {
 	var events ax.MessageTypeSet
 
@@ -28,25 +28,25 @@ func (d *Dispatcher) Initialize(ctx context.Context, t Transport) error {
 	return t.Subscribe(ctx, events)
 }
 
-// DeliverMessage passes m to zero or more message handlers according to the
-// dispatch table.
-func (d *Dispatcher) DeliverMessage(
-	ctx context.Context,
-	s MessageSender,
-	m InboundEnvelope,
-) error {
+// Accept dispatches env to zero or more message handlers as per the dispatch
+// table.
+//
+// The context passed to each handler contains the message envelope, such that
+// any messages sent using s within that context are configured as children of env.
+//
+// Each message handler is invoked on its own goroutine.
+func (d *Dispatcher) Accept(ctx context.Context, s MessageSink, env InboundEnvelope) error {
+	ctx = WithEnvelope(ctx, env.Envelope)
 	wg, ctx := errgroup.WithContext(ctx)
-	mt := ax.TypeOf(m.Envelope.Message)
-	mc := &MessageContext{
-		Context:  ctx,
-		Envelope: m.Envelope,
-		Sender:   s,
-	}
 
-	for _, h := range d.Routes.Lookup(mt) {
+	for _, h := range d.Routes.Lookup(env.Type()) {
 		func(h MessageHandler) {
 			wg.Go(func() error {
-				return h.HandleMessage(mc, m.Envelope.Message)
+				return h.HandleMessage(
+					ctx,
+					SinkSender{s},
+					env.Envelope,
+				)
 			})
 		}(h)
 	}

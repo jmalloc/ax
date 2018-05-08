@@ -1,11 +1,17 @@
 package saga
 
 import (
+	"context"
+
 	"github.com/jmalloc/ax/src/ax"
 )
 
 // Saga is an interface for handling messages associated with a particular saga
 // instance.
+//
+// A Saga is essentially a stateful message handler where persistence of the
+// saga state is managed by the framework. The state is represented by the
+// Instance interface. Each saga may produce many instances.
 type Saga interface {
 	// MessageTypes returns the set of messages that are routed to this saga.
 	//
@@ -25,9 +31,9 @@ type Saga interface {
 	InitialState() Instance
 
 	// HandleMessage handles a message for a particular saga instance.
-	HandleMessage(ax.MessageContext, ax.Message, Instance) error
+	HandleMessage(context.Context, ax.Sender, ax.Envelope, Instance) error
 
 	// HandleNotFound handles a message that is intended for a saga instance
 	// that could not be found.
-	HandleNotFound(ax.MessageContext, ax.Message) error
+	HandleNotFound(context.Context, ax.Sender, ax.Envelope) error
 }
