@@ -36,9 +36,9 @@ var _ = Describe("Acknowledger", func() {
 		})
 	})
 
-	Describe("DeliverMessage", func() {
+	Describe("Accept", func() {
 		It("calls the next pipeline", func() {
-			next.DeliverMessageFunc = func(ctx context.Context, _ MessageSender, _ InboundEnvelope) error {
+			next.AcceptFunc = func(ctx context.Context, _ MessageSink, _ InboundEnvelope) error {
 				return nil
 			}
 
@@ -46,13 +46,13 @@ var _ = Describe("Acknowledger", func() {
 				Done: func(context.Context, InboundOperation) error { return nil },
 			}
 
-			ack.DeliverMessage(context.Background(), nil /* sender */, inEnv)
+			ack.Accept(context.Background(), nil /* sender */, inEnv)
 
-			Expect(next.DeliverMessageCalls()).To(HaveLen(1))
+			Expect(next.AcceptCalls()).To(HaveLen(1))
 		})
 
 		It("marks message as acknowledged if no error occured", func() {
-			next.DeliverMessageFunc = func(ctx context.Context, _ MessageSender, _ InboundEnvelope) error {
+			next.AcceptFunc = func(ctx context.Context, _ MessageSink, _ InboundEnvelope) error {
 				return nil
 			}
 
@@ -63,13 +63,13 @@ var _ = Describe("Acknowledger", func() {
 				},
 			}
 
-			ack.DeliverMessage(context.Background(), nil /* sender */, inEnv)
+			ack.Accept(context.Background(), nil /* sender */, inEnv)
 
-			Expect(next.DeliverMessageCalls()).To(HaveLen(1))
+			Expect(next.AcceptCalls()).To(HaveLen(1))
 		})
 
 		It("marks message for retry if an error occured and retry policy approves retry", func() {
-			next.DeliverMessageFunc = func(ctx context.Context, _ MessageSender, _ InboundEnvelope) error {
+			next.AcceptFunc = func(ctx context.Context, _ MessageSink, _ InboundEnvelope) error {
 				return errors.New("something went wrong")
 			}
 
@@ -82,13 +82,13 @@ var _ = Describe("Acknowledger", func() {
 
 			ack.RetryPolicy = func(InboundEnvelope) bool { return true }
 
-			ack.DeliverMessage(context.Background(), nil /* sender */, inEnv)
+			ack.Accept(context.Background(), nil /* sender */, inEnv)
 
-			Expect(next.DeliverMessageCalls()).To(HaveLen(1))
+			Expect(next.AcceptCalls()).To(HaveLen(1))
 		})
 
 		It("marks message as rejected if an error occured and retry policy denies retry", func() {
-			next.DeliverMessageFunc = func(ctx context.Context, _ MessageSender, _ InboundEnvelope) error {
+			next.AcceptFunc = func(ctx context.Context, _ MessageSink, _ InboundEnvelope) error {
 				return errors.New("something went wrong")
 			}
 
@@ -101,13 +101,13 @@ var _ = Describe("Acknowledger", func() {
 
 			ack.RetryPolicy = func(InboundEnvelope) bool { return false }
 
-			ack.DeliverMessage(context.Background(), nil /* sender */, inEnv)
+			ack.Accept(context.Background(), nil /* sender */, inEnv)
 
-			Expect(next.DeliverMessageCalls()).To(HaveLen(1))
+			Expect(next.AcceptCalls()).To(HaveLen(1))
 		})
 
 		It("marks message for retry if an error occured and default retry policy approves retry", func() {
-			next.DeliverMessageFunc = func(ctx context.Context, _ MessageSender, _ InboundEnvelope) error {
+			next.AcceptFunc = func(ctx context.Context, _ MessageSink, _ InboundEnvelope) error {
 				return errors.New("something went wrong")
 			}
 
@@ -121,9 +121,9 @@ var _ = Describe("Acknowledger", func() {
 
 			ack.RetryPolicy = DefaultRetryPolicy
 
-			ack.DeliverMessage(context.Background(), nil /* sender */, inEnv)
+			ack.Accept(context.Background(), nil /* sender */, inEnv)
 
-			Expect(next.DeliverMessageCalls()).To(HaveLen(1))
+			Expect(next.AcceptCalls()).To(HaveLen(1))
 		})
 	})
 })

@@ -29,23 +29,23 @@ func (a *Acknowledger) Initialize(ctx context.Context, t Transport) error {
 	return a.Next.Initialize(ctx, t)
 }
 
-// DeliverMessage forwards the message on to the next stage and then marks it as
+// Accept forwards the message on to the next stage and then marks it as
 // done based on the result of that next stage.
-func (a *Acknowledger) DeliverMessage(
+func (a *Acknowledger) Accept(
 	ctx context.Context,
-	s MessageSender,
+	s MessageSink,
 	m InboundEnvelope,
 ) error {
-	op := a.deliver(ctx, s, m)
+	op := a.accept(ctx, s, m)
 	return m.Done(ctx, op)
 }
 
-func (a *Acknowledger) deliver(
+func (a *Acknowledger) accept(
 	ctx context.Context,
-	s MessageSender,
+	s MessageSink,
 	m InboundEnvelope,
 ) InboundOperation {
-	if err := a.Next.DeliverMessage(ctx, s, m); err != nil {
+	if err := a.Next.Accept(ctx, s, m); err != nil {
 		if a.RetryPolicy(m) {
 			return OpRetry
 		}
