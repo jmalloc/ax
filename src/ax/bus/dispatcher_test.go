@@ -107,7 +107,7 @@ var _ = Describe("Dispatcher", func() {
 			Expect(h1.HandleMessageCalls()).To(HaveLen(1))
 		})
 
-		It("passes a sender that directly via the message sink", func() {
+		It("passes a sender that sends messages via the message sink", func() {
 			h1.HandleMessageFunc = func(ctx context.Context, s ax.Sender, _ ax.Envelope) error {
 				return s.ExecuteCommand(ctx, &messagetest.Command{})
 			}
