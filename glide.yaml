@@ -19,3 +19,5 @@ import:
 - package: github.com/spf13/cobra
 - package: github.com/stoewer/go-strcase
   version: ^1.0.1
+- package: github.com/jmalloc/twelf
+  version: ^1.0.0
