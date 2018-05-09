@@ -8,7 +8,6 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/jmalloc/ax/examples/banking/messages"
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/bus"
@@ -29,9 +28,12 @@ func (handler) MessageTypes() ax.MessageTypeSet {
 	return ax.TypesOf(&messages.OpenAccount{})
 }
 
-func (handler) HandleMessage(_ context.Context, _ ax.Sender, env ax.Envelope) error {
-	spew.Dump(env)
-	return nil
+func (handler) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope) error {
+	m := env.Message.(*messages.OpenAccount)
+	return s.PublishEvent(ctx, &messages.AccountOpened{
+		AccountId: m.AccountId,
+		Name:      m.Name,
+	})
 }
 
 func main() {
@@ -66,7 +68,7 @@ func main() {
 		Transport: &axrmq.Transport{
 			Conn: rmq,
 		},
-		In: &observability.InboundObserverStage{
+		In: &observability.InboundHook{
 			Observers: observers,
 			Next: &persistence.Injector{
 				DataStore: &axmysql.DataStore{DB: db},
@@ -78,7 +80,7 @@ func main() {
 				},
 			},
 		},
-		Out: &observability.OutboundObserverStage{
+		Out: &observability.OutboundHook{
 			Observers: observers,
 			Next: &bus.Router{
 				Routes: rtable,

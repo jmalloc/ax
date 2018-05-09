@@ -17,7 +17,7 @@ func (o *LoggingObserver) BeforeInbound(ctx context.Context, env ax.Envelope) (c
 	mt := env.Type()
 
 	o.log(
-		"recv: %s  [%s msg:%s, cause:%s, corr:%s]",
+		"recv: %s  [%s msg:%s cause:%s corr:%s]",
 		env.Message.Description(),
 		mt,
 		env.MessageID,
@@ -35,7 +35,7 @@ func (o *LoggingObserver) AfterInbound(ctx context.Context, env ax.Envelope, acc
 	}
 
 	o.log(
-		"error: %s  [%s msg:%s, cause:%s, corr:%s]",
+		"error: %s  [%s msg:%s cause:%s corr:%s]",
 		env.Message.Description(),
 		acceptErr,
 		env.Type(),
@@ -54,7 +54,7 @@ func (o *LoggingObserver) AfterOutbound(ctx context.Context, env ax.Envelope, ac
 	}
 
 	o.log(
-		"send: %s  [%s msg:%s, cause:%s, corr:%s]",
+		"send: %s  [%s msg:%s cause:%s corr:%s]",
 		env.Message.Description(),
 		env.Type(),
 		env.MessageID,
