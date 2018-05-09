@@ -126,6 +126,23 @@ var _ = Describe("MessageType", func() {
 			Expect(mt.PackageName()).To(Equal(""))
 		})
 	})
+
+	Describe("String", func() {
+		It("suffixes a question mark on commands", func() {
+			mt := TypeOf(&messagetest.Command{})
+			Expect(mt.String()).To(Equal("ax.internal.messagetest.Command?"))
+		})
+
+		It("suffixes an exclamation mark on events", func() {
+			mt := TypeOf(&messagetest.Event{})
+			Expect(mt.String()).To(Equal("ax.internal.messagetest.Event!"))
+		})
+
+		It("does not add a suffix to generic messages", func() {
+			mt := TypeOf(&messagetest.Message{})
+			Expect(mt.String()).To(Equal("ax.internal.messagetest.Message"))
+		})
+	})
 })
 
 var _ = Describe("MessageTypeSet", func() {

@@ -97,6 +97,16 @@ func (mt MessageType) IsEvent() bool {
 	return reflect.PtrTo(mt.StructType).Implements(eventType)
 }
 
+func (mt MessageType) String() string {
+	if mt.IsCommand() {
+		return mt.Name + "?"
+	} else if mt.IsEvent() {
+		return mt.Name + "!"
+	}
+
+	return mt.Name
+}
+
 // MessageTypeSet is a collection of unique message types.
 type MessageTypeSet struct {
 	members map[MessageType]struct{}

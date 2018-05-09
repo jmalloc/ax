@@ -13,6 +13,7 @@ import (
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/bus"
 	"github.com/jmalloc/ax/src/ax/endpoint"
+	"github.com/jmalloc/ax/src/ax/observability"
 	"github.com/jmalloc/ax/src/ax/outbox"
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/axcli"
@@ -56,23 +57,33 @@ func main() {
 		panic(err)
 	}
 
+	observers := []interface{}{
+		&observability.LoggingObserver{},
+	}
+
 	ep := &endpoint.Endpoint{
 		Name: "ax.examples.banking",
 		Transport: &axrmq.Transport{
 			Conn: rmq,
 		},
-		In: &persistence.Injector{
-			DataStore: &axmysql.DataStore{DB: db},
-			Next: &outbox.Deduplicator{
-				Repository: &axmysql.OutboxRepository{},
-				Next: &bus.Dispatcher{
-					Routes: dtable,
+		In: &observability.InboundObserverStage{
+			Observers: observers,
+			Next: &persistence.Injector{
+				DataStore: &axmysql.DataStore{DB: db},
+				Next: &outbox.Deduplicator{
+					Repository: &axmysql.OutboxRepository{},
+					Next: &bus.Dispatcher{
+						Routes: dtable,
+					},
 				},
 			},
 		},
-		Out: &bus.Router{
-			Routes: rtable,
-			Next:   &bus.TransportStage{},
+		Out: &observability.OutboundObserverStage{
+			Observers: observers,
+			Next: &bus.Router{
+				Routes: rtable,
+				Next:   &bus.TransportStage{},
+			},
 		},
 	}
 
