@@ -1,6 +1,10 @@
-hash: 369cdca150053839d06dbfcf5d922b012b3a34728e723c85af2a39c8dcb0cbaa
-updated: 2018-05-09T08:56:48.397112427+10:00
+hash: f06ce5ec20103472173c741af5a2310e16011825ebb2d116a918a1137286845c
+updated: 2018-05-09T14:52:33.100467574+10:00
 imports:
+- name: github.com/davecgh/go-spew
+  version: 8991bc29aa16c548c550c7ff78260e27b9ab7c73
+  subpackages:
+  - spew
 - name: github.com/go-sql-driver/mysql
   version: 3287d94d4c6a48a63e16fffaabf27ab20203af2a
 - name: github.com/golang/protobuf
@@ -57,7 +61,7 @@ imports:
 - name: go.uber.org/multierr
   version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
 - name: golang.org/x/net
-  version: 6078986fec03a1dcc236c34816c71b0e05018fda
+  version: f73e4c9ed3b7ebdd5f699a16a880c2b1994e50dd
   subpackages:
   - context
   - html
@@ -68,11 +72,11 @@ imports:
   subpackages:
   - errgroup
 - name: golang.org/x/sys
-  version: 7dca6fe1f43775aa6d1334576870ff63f978f539
+  version: 7db1c3b1a98089d0071c84f646ff5c96aad43682
   subpackages:
   - unix
 - name: golang.org/x/text
-  version: b7ef84aaf62aa3e70962625c80a571ae7c17cb40
+  version: 7922cc490dd5a7dbaa7fd5d6196b49db59ac042f
   subpackages:
   - encoding
   - encoding/charmap
@@ -85,15 +89,16 @@ imports:
   - encoding/traditionalchinese
   - encoding/unicode
   - internal/language
+  - internal/language/compact
   - internal/tag
   - internal/utf8internal
   - language
   - runes
   - transform
-- name: gopkg.in/yaml.v2
-  version: 7f97868eec74b32b0982dd158a51a446d1da7eb5
-testImports:
 - name: google.golang.org/appengine
   version: 962cbd1200af94a5a35ba8d512e9f91271b4d01a
   subpackages:
   - cloudsql
+- name: gopkg.in/yaml.v2
+  version: 5420a8b6744d3b0345ab293f6fcba19c978f1183
+testImports: []
