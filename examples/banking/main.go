@@ -12,6 +12,7 @@ import (
 	"github.com/jmalloc/ax/examples/banking/messages"
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/bus"
+	"github.com/jmalloc/ax/src/ax/outbox"
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/axcli"
 	"github.com/jmalloc/ax/src/axmysql"
@@ -54,10 +55,15 @@ func main() {
 		panic(err)
 	}
 
-	in := &persistence.Injector{
-		DataStore: &axmysql.DataStore{DB: db},
-		Next: &bus.Dispatcher{
-			Routes: dtable,
+	in := &bus.Acknowledger{
+		Next: &persistence.Injector{
+			DataStore: &axmysql.DataStore{DB: db},
+			Next: &outbox.Deduplicator{
+				Repository: &axmysql.OutboxRepository{},
+				Next: &bus.Dispatcher{
+					Routes: dtable,
+				},
+			},
 		},
 	}
 
@@ -118,16 +124,7 @@ func main() {
 				}
 
 				err = in.Accept(ctx, out, env)
-				op := bus.OpAck
-				if err == nil {
-					if env.DeliveryCount < 3 {
-						op = bus.OpRetry
-					} else {
-						op = bus.OpReject
-					}
-				}
-
-				if err := env.Done(ctx, op); err != nil {
+				if err != nil {
 					return err
 				}
 			}
