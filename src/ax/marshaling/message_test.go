@@ -1,6 +1,9 @@
 package marshaling_test
 
 import (
+	"bytes"
+
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	. "github.com/jmalloc/ax/src/ax/marshaling"
 	"github.com/jmalloc/ax/src/internal/messagetest"
@@ -38,24 +41,30 @@ var _ = Describe("UnmarshalMessage", func() {
 		Value: "<value>",
 	}
 
-	nonaxmsg := &messagetest.NonAxMessage{}
+	nonAxMessage := &messagetest.NonAxMessage{}
 
-	pbdata, err := proto.Marshal(message)
+	axMessagePB, err := proto.Marshal(message)
 	if err != nil {
 		panic(err)
 	}
 
-	_, jsondata, err := MarshalJSON(message)
+	jsonMarshaler := jsonpb.Marshaler{
+		EmitDefaults: false,
+		EnumsAsInts:  false,
+		Indent:       "  ",
+		OrigName:     false,
+	}
+
+	buf := new(bytes.Buffer)
+
+	err = jsonMarshaler.Marshal(buf, message)
 	if err != nil {
 		panic(err)
 	}
 
-	nonaxmsgpbdata, err := proto.Marshal(nonaxmsg)
-	if err != nil {
-		panic(err)
-	}
+	axMessageJSON := buf.Bytes()
 
-	_, nonaxmsgjsondata, err := MarshalJSON(nonaxmsg)
+	nonAxMessagePB, err := proto.Marshal(nonAxMessage)
 	if err != nil {
 		panic(err)
 	}
@@ -71,21 +80,21 @@ var _ = Describe("UnmarshalMessage", func() {
 			Expect(proto.Equal(m, message)).To(BeTrue())
 		},
 		Entry(
-			"unmarshals the message using the protocol specified in the content-type",
+			"protobuf",
 			"application/vnd.google.protobuf; proto=ax.internal.messagetest.Message",
-			pbdata,
+			axMessagePB,
 			message,
 		),
 		Entry(
-			"unmarshals the message using JSON specified in the content-type",
+			"JSON",
 			"application/json; proto=ax.internal.messagetest.Message",
-			jsondata,
+			axMessageJSON,
 			message,
 		),
 	)
 
 	DescribeTable(
-		"execution of UnmarshalMessage errodes",
+		"execution of UnmarshalMessage errors",
 		func(ct string, data []byte) {
 			_, err := UnmarshalMessage(ct, data)
 			Expect(err).Should(HaveOccurred())
@@ -93,42 +102,27 @@ var _ = Describe("UnmarshalMessage", func() {
 		Entry(
 			"returns an error if the content-type is invalid",
 			"",
-			pbdata,
-		),
-		Entry(
-			"returns an error if the content-type is invalid",
-			"",
-			jsondata,
+			axMessagePB,
 		),
 		Entry(
 			"returns an error if the content-type is not supported",
 			"application/x-unknown",
-			pbdata,
-		),
-		Entry(
-			"returns an error if the content-type is not supported",
-			"application/x-unknown",
-			jsondata,
+			axMessagePB,
 		),
 		Entry(
 			"returns an error if an error occurs unmarshaling the protocol buffers message",
 			"application/vnd.google.protobuf; proto=ax.internal.messagetest.Unknown", // note unknown message type
-			pbdata,
+			axMessagePB,
 		),
 		Entry(
-			"returns an error if an error occurs unmarshaling JSON message",
+			"returns an error if an error occurs unmarshaling the JSON message",
 			"application/json; proto=ax.internal.messagetest.Unknown", // note unknown message type
-			jsondata,
+			axMessageJSON,
 		),
 		Entry(
 			"returns an error if the buffer contains a protocol buffer message that is not an ax.Message",
 			"application/vnd.google.protobuf; proto=ax.internal.messagetest.NonAxMessage",
-			nonaxmsgpbdata,
-		),
-		Entry(
-			"returns an error if the buffer contains a protocol buffer message that is not an ax.Message",
-			"application/vnd.google.protobuf; proto=ax.internal.messagetest.NonAxMessage",
-			nonaxmsgjsondata,
+			nonAxMessagePB,
 		),
 	)
 })
