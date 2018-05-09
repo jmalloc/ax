@@ -2,6 +2,8 @@ package observability
 
 import (
 	"context"
+	"fmt"
+	"reflect"
 
 	"github.com/jmalloc/ax/src/ax/bus"
 )
@@ -11,40 +13,52 @@ import (
 type InboundHook struct {
 	Observers []interface{}
 	Next      bus.InboundPipeline
+
+	before []BeforeInboundObserver
+	after  []AfterInboundObserver
 }
 
 // Initialize is called after the transport is initialized. It can be used
 // to inspect or configure the transport as per the needs of the pipeline.
 func (o *InboundHook) Initialize(ctx context.Context, t bus.Transport) error {
+	for _, v := range o.Observers {
+		used := false
+
+		if ob, ok := v.(BeforeInboundObserver); ok {
+			used = true
+			o.before = append(o.before, ob)
+		}
+
+		if ob, ok := v.(AfterInboundObserver); ok {
+			used = true
+			o.after = append(o.after, ob)
+		}
+
+		if !used {
+			panic(fmt.Sprintf(
+				"%s does not implement either of BeforeInboundObserver or AfterInboundObserver",
+				reflect.TypeOf(v),
+			))
+		}
+	}
+
 	return o.Next.Initialize(ctx, t)
 }
 
 // Accept forwards an inbound message through the pipeline until
 // it is handled by some application-defined message handler(s).
 func (o *InboundHook) Accept(ctx context.Context, s bus.MessageSink, env bus.InboundEnvelope) error {
-	var err error
-
-	for _, v := range o.Observers {
-		if ob, ok := v.(BeforeInboundObserver); ok {
-			ctx, err = ob.BeforeInbound(ctx, env.Envelope)
-			if err != nil {
-				return err
-			}
-		}
+	for _, ob := range o.before {
+		ctx = ob.BeforeInbound(ctx, env.Envelope)
 	}
 
-	acceptErr := o.Next.Accept(ctx, s, env)
+	err := o.Next.Accept(ctx, s, env)
 
-	for _, v := range o.Observers {
-		if ob, ok := v.(AfterInboundObserver); ok {
-			err = ob.AfterInbound(ctx, env.Envelope, acceptErr)
-			if err != nil {
-				return err
-			}
-		}
+	for _, ob := range o.after {
+		ob.AfterInbound(ctx, env.Envelope, err)
 	}
 
-	return acceptErr
+	return err
 }
 
 // OutboundHook is an outbound pipeline stage that invokes hook methods
@@ -52,37 +66,49 @@ func (o *InboundHook) Accept(ctx context.Context, s bus.MessageSink, env bus.Inb
 type OutboundHook struct {
 	Observers []interface{}
 	Next      bus.OutboundPipeline
+
+	before []BeforeOutboundObserver
+	after  []AfterOutboundObserver
 }
 
 // Initialize is called after the transport is initialized. It can be used
 // to inspect or configure the transport as per the needs of the pipeline.
 func (o *OutboundHook) Initialize(ctx context.Context, t bus.Transport) error {
+	for _, v := range o.Observers {
+		used := false
+
+		if ob, ok := v.(BeforeOutboundObserver); ok {
+			used = true
+			o.before = append(o.before, ob)
+		}
+
+		if ob, ok := v.(AfterOutboundObserver); ok {
+			used = true
+			o.after = append(o.after, ob)
+		}
+
+		if !used {
+			panic(fmt.Sprintf(
+				"%s does not implement either of BeforeOutboundObserver or AfterOutboundObserver",
+				reflect.TypeOf(v),
+			))
+		}
+	}
+
 	return o.Next.Initialize(ctx, t)
 }
 
 // Accept processes the message encapsulated in env.
 func (o *OutboundHook) Accept(ctx context.Context, env bus.OutboundEnvelope) error {
-	var err error
-
-	for _, v := range o.Observers {
-		if ob, ok := v.(BeforeOutboundObserver); ok {
-			ctx, err = ob.BeforeOutbound(ctx, env.Envelope)
-			if err != nil {
-				return err
-			}
-		}
+	for _, ob := range o.before {
+		ctx = ob.BeforeOutbound(ctx, env.Envelope)
 	}
 
-	acceptErr := o.Next.Accept(ctx, env)
+	err := o.Next.Accept(ctx, env)
 
-	for _, v := range o.Observers {
-		if ob, ok := v.(AfterOutboundObserver); ok {
-			err = ob.AfterOutbound(ctx, env.Envelope, acceptErr)
-			if err != nil {
-				return err
-			}
-		}
+	for _, ob := range o.after {
+		ob.AfterOutbound(ctx, env.Envelope, err)
 	}
 
-	return acceptErr
+	return err
 }

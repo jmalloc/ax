@@ -13,7 +13,7 @@ type LoggingObserver struct {
 }
 
 // BeforeInbound logs information about an inbound message.
-func (o *LoggingObserver) BeforeInbound(ctx context.Context, env ax.Envelope) (context.Context, error) {
+func (o *LoggingObserver) BeforeInbound(ctx context.Context, env ax.Envelope) context.Context {
 	mt := env.Type()
 
 	o.log(
@@ -25,44 +25,36 @@ func (o *LoggingObserver) BeforeInbound(ctx context.Context, env ax.Envelope) (c
 		env.CorrelationID,
 	)
 
-	return ctx, nil
+	return ctx
 }
 
 // AfterInbound logs information about errors that occur processing an inbound message.
-func (o *LoggingObserver) AfterInbound(ctx context.Context, env ax.Envelope, acceptErr error) error {
-	if acceptErr == nil {
-		return nil
+func (o *LoggingObserver) AfterInbound(ctx context.Context, env ax.Envelope, err error) {
+	if err != nil {
+		o.log(
+			"error: %s  [%s msg:%s cause:%s corr:%s]",
+			env.Message.Description(),
+			err,
+			env.Type(),
+			env.MessageID,
+			env.CausationID,
+			env.CorrelationID,
+		)
 	}
-
-	o.log(
-		"error: %s  [%s msg:%s cause:%s corr:%s]",
-		env.Message.Description(),
-		acceptErr,
-		env.Type(),
-		env.MessageID,
-		env.CausationID,
-		env.CorrelationID,
-	)
-
-	return nil
 }
 
 // AfterOutbound logs information about an outbound message.
-func (o *LoggingObserver) AfterOutbound(ctx context.Context, env ax.Envelope, acceptErr error) error {
-	if acceptErr != nil {
-		return nil
+func (o *LoggingObserver) AfterOutbound(ctx context.Context, env ax.Envelope, err error) {
+	if err == nil {
+		o.log(
+			"send: %s  [%s msg:%s cause:%s corr:%s]",
+			env.Message.Description(),
+			env.Type(),
+			env.MessageID,
+			env.CausationID,
+			env.CorrelationID,
+		)
 	}
-
-	o.log(
-		"send: %s  [%s msg:%s cause:%s corr:%s]",
-		env.Message.Description(),
-		env.Type(),
-		env.MessageID,
-		env.CausationID,
-		env.CorrelationID,
-	)
-
-	return nil
 }
 
 func (o *LoggingObserver) log(f string, v ...interface{}) {
