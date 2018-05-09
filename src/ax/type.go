@@ -60,6 +60,16 @@ func (mt MessageType) New() Message {
 	return reflect.New(mt.StructType).Interface().(Message)
 }
 
+// MessageName returns the Protocol Buffers message name without the package name.
+func (mt MessageType) MessageName() string {
+	i := strings.LastIndexByte(mt.Name, '.')
+	if i == -1 {
+		return mt.Name
+	}
+
+	return mt.Name[i+1:]
+}
+
 // PackageName returns the Protocol Buffers package name for this message type.
 func (mt MessageType) PackageName() string {
 	i := strings.LastIndexByte(mt.Name, '.')

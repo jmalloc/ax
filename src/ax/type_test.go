@@ -100,6 +100,17 @@ var _ = Describe("MessageType", func() {
 	})
 
 	Describe("PackageName", func() {
+		It("returns the protocol buffers message name", func() {
+			Expect(message.MessageName()).To(Equal("Message"))
+		})
+
+		It("returns the message name if the message is not in a package", func() {
+			mt := TypeOf(&messagetest.NoPackage{})
+			Expect(mt.MessageName()).To(Equal("NoPackage"))
+		})
+	})
+
+	Describe("PackageName", func() {
 		It("returns the protocol buffers package name", func() {
 			Expect(message.PackageName()).To(Equal("ax.internal.messagetest"))
 		})
