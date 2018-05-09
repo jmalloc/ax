@@ -1,3 +1,4 @@
+sudo: required
 language: go
 go: '1.10'
 addons:
@@ -7,5 +8,7 @@ env:
 before_install:
 - mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql mysql
 - mysql -e 'CREATE DATABASE ax;'
+- go get -u github.com/golang/protobuf/protoc-gen-go
+- bash .travis/install-protobuf.sh
 script: make ci
 after_script: bash <(curl -s https://codecov.io/bash)
