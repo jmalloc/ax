@@ -94,7 +94,7 @@ var _ = Describe("UnmarshalMessage", func() {
 	)
 
 	DescribeTable(
-		"execution of UnmarshalMessage errors",
+		"execution of UnmarshalMessage errors out",
 		func(ct string, data []byte) {
 			_, err := UnmarshalMessage(ct, data)
 			Expect(err).Should(HaveOccurred())
