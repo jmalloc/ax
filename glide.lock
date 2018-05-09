@@ -1,10 +1,5 @@
-<<<<<<< HEAD
-hash: 56a98a0d4d9ff7101aba4096809f3d715dfc3d4e9820d0cb87b031a3d0237fdf
-updated: 2018-05-06T00:31:25.469629+10:00
-=======
 hash: f06ce5ec20103472173c741af5a2310e16011825ebb2d116a918a1137286845c
 updated: 2018-05-09T14:52:33.100467574+10:00
->>>>>>> master
 imports:
 - name: github.com/davecgh/go-spew
   version: 8991bc29aa16c548c550c7ff78260e27b9ab7c73
@@ -17,30 +12,8 @@ imports:
   subpackages:
   - jsonpb
   - proto
-<<<<<<< HEAD
-  - ptypes/struct
-- name: github.com/satori/go.uuid
-  version: f58768cc1a7a7e77a3bd49e98cdd21419399b6a3
-- name: github.com/streadway/amqp
-  version: 8e4aba63da9fc5571e01c6a45dc809a58cbc5a68
-- name: go.uber.org/multierr
-  version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
-- name: golang.org/x/net
-  version: 5f9ae10d9af5b1c89ae6904293b14b064d4ada23
-  subpackages:
-  - context
-  - html
-  - html/atom
-  - html/charset
-- name: golang.org/x/sync
-  version: 1d60e4601c6fd243af51cc01ddf169918a5407ca
-  subpackages:
-  - errgroup
-testImports:
-=======
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
->>>>>>> master
 - name: github.com/onsi/ginkgo
   version: 9eda700730cba42af70d53180f9dcce9266bc2bc
   subpackages:
@@ -76,8 +49,6 @@ testImports:
   - matchers/support/goraph/node
   - matchers/support/goraph/util
   - types
-<<<<<<< HEAD
-=======
 - name: github.com/satori/go.uuid
   version: f58768cc1a7a7e77a3bd49e98cdd21419399b6a3
 - name: github.com/spf13/cobra
@@ -101,7 +72,6 @@ testImports:
   version: 1d60e4601c6fd243af51cc01ddf169918a5407ca
   subpackages:
   - errgroup
->>>>>>> master
 - name: golang.org/x/sys
   version: 7db1c3b1a98089d0071c84f646ff5c96aad43682
   subpackages:
