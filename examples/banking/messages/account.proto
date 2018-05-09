@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package ax.examples.banking;
+option go_package = "messages";
+
+// OpenAccount is a command that opens a new bank account.
+message OpenAccount {
+    string account_id = 1;
+    string name = 2;
+}
+
+// AccountOpened is an event that occurs when a new account is opened.
+message AccountOpened {
+    string account_id = 1;
+    string name = 2;
+}

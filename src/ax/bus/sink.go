@@ -9,7 +9,6 @@ type MessageSink interface {
 }
 
 // BufferedSink is a MessageSink that buffers message envelopes in memory.
-// in memory.
 type BufferedSink struct {
 	Envelopes []OutboundEnvelope
 }

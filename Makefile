@@ -8,6 +8,13 @@ REQ += src/internal/persistencetest/transactionmock.go
 
 -include artifacts/make/go/Makefile
 
+.PHONY: banking
+banking:
+	protoc --go_out=. examples/banking/messages/*.proto
+	AX_RMQ_DSN="amqp://localhost" \
+	AX_MYSQL_DSN="ax:ax@tcp(127.0.0.1:3306)/ax" \
+		go run examples/banking/main.go $(RUN_ARGS)
+
 %.pb.go: %.proto
 	protoc --go_out=. $(@D)/*.proto
 

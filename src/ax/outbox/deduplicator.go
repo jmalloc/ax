@@ -58,8 +58,8 @@ func (d *Deduplicator) Accept(ctx context.Context, s bus.MessageSink, env bus.In
 	return nil
 }
 
-// forward passes env to the next pipeline stage and captures and persists the
-// messages it produces.
+// forward passes env to the next pipeline stage and persists the messages it produces to the outbox.
+// The messages are also returned to be sent via the transport immediately.
 func (d *Deduplicator) forward(ctx context.Context, env bus.InboundEnvelope) ([]bus.OutboundEnvelope, error) {
 	tx, com, err := persistence.BeginTx(ctx)
 	if err != nil {

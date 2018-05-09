@@ -14,8 +14,7 @@ type Dispatcher struct {
 	Routes DispatchTable
 }
 
-// Initialize configures the subscribes t to events that the message handlers
-// intend to handle.
+// Initialize subscribes t to events that the message handlers intend to handle.
 func (d *Dispatcher) Initialize(ctx context.Context, t Transport) error {
 	var events ax.MessageTypeSet
 

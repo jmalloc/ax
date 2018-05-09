@@ -7,7 +7,7 @@ import (
 )
 
 // WithEnvelope returns a new context derived from p that contains env.
-// The envelope can be retreived from the contet with GetEnvelope().
+// The envelope can be retreived from the context with GetEnvelope().
 func WithEnvelope(p context.Context, env ax.Envelope) context.Context {
 	return context.WithValue(
 		p,
