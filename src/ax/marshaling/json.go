@@ -16,7 +16,7 @@ const (
 	JSONContentType = "application/json"
 )
 
-// MarshalJSON marshals a ProtocolBuffers messages to its JSON
+// MarshalJSON marshals a ProtocolBuffers message to its JSON
 // representation and returns a MIME content-type that identifies the particular
 // message protocol.
 func MarshalJSON(msg proto.Message) (ct string, data []byte, err error) {
@@ -65,7 +65,7 @@ func UnmarshalJSON(ct string, data []byte) (proto.Message, error) {
 }
 
 // UnmarshalJSONParams unmarshals a JSON-encoded message using
-// a pre-parsed MIME content-type to identify the particlar
+// a pre-parsed MIME content-type to identify the particular
 // message protocol.
 //
 // ctn is the MIME content-type name, p is the set of pre-parsed content-type
