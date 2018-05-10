@@ -1,10 +1,14 @@
 package marshaling_test
 
 import (
+	"bytes"
+
+	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	. "github.com/jmalloc/ax/src/ax/marshaling"
 	"github.com/jmalloc/ax/src/internal/messagetest"
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
@@ -32,49 +36,93 @@ var _ = Describe("MarshalMessage", func() {
 })
 
 var _ = Describe("UnmarshalMessage", func() {
+
 	message := &messagetest.Message{
 		Value: "<value>",
 	}
-	data, err := proto.Marshal(message)
+
+	nonAxMessage := &messagetest.NonAxMessage{}
+
+	axMessagePB, err := proto.Marshal(message)
 	if err != nil {
 		panic(err)
 	}
 
-	It("unmarshals the message using the protocol specified in the content-type", func() {
-		m, err := UnmarshalMessage(
+	jsonMarshaler := jsonpb.Marshaler{
+		EmitDefaults: false,
+		EnumsAsInts:  false,
+		Indent:       "  ",
+		OrigName:     false,
+	}
+
+	buf := new(bytes.Buffer)
+
+	err = jsonMarshaler.Marshal(buf, message)
+	if err != nil {
+		panic(err)
+	}
+
+	axMessageJSON := buf.Bytes()
+
+	nonAxMessagePB, err := proto.Marshal(nonAxMessage)
+	if err != nil {
+		panic(err)
+	}
+
+	DescribeTable(
+		"unmarshals the message using the protocol specified in the content-type",
+		func(ct string, data []byte, expected *messagetest.Message) {
+			m, err := UnmarshalMessage(
+				ct,
+				data,
+			)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(proto.Equal(m, message)).To(BeTrue())
+		},
+		Entry(
+			"protobuf",
 			"application/vnd.google.protobuf; proto=ax.internal.messagetest.Message",
-			data,
-		)
-		Expect(err).ShouldNot(HaveOccurred())
-		Expect(proto.Equal(m, message)).To(BeTrue())
-	})
+			axMessagePB,
+			message,
+		),
+		Entry(
+			"JSON",
+			"application/json; proto=ax.internal.messagetest.Message",
+			axMessageJSON,
+			message,
+		),
+	)
 
-	It("returns an error if the content-type is invalid", func() {
-		_, err := UnmarshalMessage("", data)
-		Expect(err).Should(HaveOccurred())
-	})
-
-	It("returns an error if the content-type is not supported", func() {
-		_, err := UnmarshalMessage("application/x-unknown", data)
-		Expect(err).Should(HaveOccurred())
-	})
-
-	It("returns an error if an error occurs unmarshaling the protocol buffers message", func() {
-		_, err := UnmarshalMessage(
+	DescribeTable(
+		"execution of UnmarshalMessage errors out",
+		func(ct string, data []byte) {
+			_, err := UnmarshalMessage(ct, data)
+			Expect(err).Should(HaveOccurred())
+		},
+		Entry(
+			"returns an error if the content-type is invalid",
+			"",
+			axMessagePB,
+		),
+		Entry(
+			"returns an error if the content-type is not supported",
+			"application/x-unknown",
+			axMessagePB,
+		),
+		Entry(
+			"returns an error if an error occurs unmarshaling the protocol buffers message",
 			"application/vnd.google.protobuf; proto=ax.internal.messagetest.Unknown", // note unknown message type
-			data,
-		)
-		Expect(err).Should(HaveOccurred())
-	})
-
-	It("returns an error if the buffer contains a protocol buffer message that is not an ax.Message", func() {
-		data, err := proto.Marshal(&messagetest.NonAxMessage{})
-		Expect(err).ShouldNot(HaveOccurred())
-
-		_, err = UnmarshalMessage(
+			axMessagePB,
+		),
+		Entry(
+			"returns an error if an error occurs unmarshaling the JSON message",
+			"application/json; proto=ax.internal.messagetest.Unknown", // note unknown message type
+			axMessageJSON,
+		),
+		Entry(
+			"returns an error if the buffer contains a protocol buffer message that is not an ax.Message",
 			"application/vnd.google.protobuf; proto=ax.internal.messagetest.NonAxMessage",
-			data,
-		)
-		Expect(err).Should(HaveOccurred())
-	})
+			nonAxMessagePB,
+		),
+	)
 })

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"mime"
 
+	"github.com/golang/protobuf/proto"
+
 	"github.com/jmalloc/ax/src/ax"
 )
 
@@ -15,21 +17,30 @@ func MarshalMessage(m ax.Message) (contentType string, data []byte, err error) {
 // UnmarshalMessage unmarshals a message from a binary representation.
 // ct is the MIME content-type for the binary data.
 func UnmarshalMessage(ct string, data []byte) (ax.Message, error) {
+
 	ctn, p, err := mime.ParseMediaType(ct)
 	if err != nil {
 		return nil, err
 	}
 
-	if ctn != ProtobufContentType {
+	var pb proto.Message
+
+	switch ctn {
+	case ProtobufContentType:
+		pb, err = UnmarshalProtobufParams(ctn, p, data)
+		if err != nil {
+			return nil, err
+		}
+	case JSONContentType:
+		pb, err = UnmarshalJSONParams(ctn, p, data)
+		if err != nil {
+			return nil, err
+		}
+	default:
 		return nil, fmt.Errorf(
 			"can not unmarshal '%s', content-type is not supported",
 			ct,
 		)
-	}
-
-	pb, err := UnmarshalProtobufParams(ctn, p, data)
-	if err != nil {
-		return nil, err
 	}
 
 	if m, ok := pb.(ax.Message); ok {
