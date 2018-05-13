@@ -30,8 +30,8 @@ func TypeOf(m Message) MessageType {
 // TypeByName returns the message type for a fully-qualified Protocol Buffers
 // message name.
 //
-// If the message type is registered and mt is the message type of `ax.Message`,
-// ok is true; otherwise, ok is false.
+// If n is the name of a registered implementation of Message,
+// then mt is the type of that message, and ok is true; otherwise, ok is false.
 //
 // Note that messages are only added to the registry when their respective Go
 // package is imported.
