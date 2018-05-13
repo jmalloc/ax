@@ -23,6 +23,7 @@ var _ = Describe("MessageType", func() {
 	})
 
 	Describe("TypeByName", func() {
+
 		It("returns a message type with the correct name", func() {
 			mt, ok := TypeByName("ax.internal.messagetest.Message")
 			Expect(ok).To(BeTrue())
@@ -37,6 +38,11 @@ var _ = Describe("MessageType", func() {
 
 		It("returns false if the message name is not registered", func() {
 			_, ok := TypeByName("ax.internal.messagetest.Unknown")
+			Expect(ok).To(BeFalse())
+		})
+
+		It("returns false if the message name is registered, but the message type is not of ax.Message", func() {
+			_, ok := TypeByName("ax.internal.messagetest.NonAxMessage")
 			Expect(ok).To(BeFalse())
 		})
 	})
