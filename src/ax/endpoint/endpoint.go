@@ -17,7 +17,7 @@ func DefaultRetryPolicy(env bus.InboundEnvelope, _ error) bool {
 	return env.DeliveryCount < 3
 }
 
-// Endpoint TODO
+// Endpoint is a named source and recipient of messages.
 type Endpoint struct {
 	Name        string
 	Transport   bus.Transport
@@ -43,7 +43,7 @@ func (ep *Endpoint) StartReceiving(ctx context.Context) error {
 		return err
 	}
 
-	recv := &Receiver{
+	recv := &receiver{
 		Transport:   ep.Transport,
 		In:          ep.In,
 		Out:         ep.Out,

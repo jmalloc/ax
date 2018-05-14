@@ -7,9 +7,9 @@ import (
 	"github.com/jmalloc/ax/src/internal/servicegroup"
 )
 
-// Receiver receives a message from a transport, forwards it to the inbound
+// receiver receives a message from a transport, forwards it to the inbound
 // pipeline, then acknowledges the message.
-type Receiver struct {
+type receiver struct {
 	Transport   bus.Transport
 	In          bus.InboundPipeline
 	Out         bus.OutboundPipeline
@@ -19,7 +19,7 @@ type Receiver struct {
 }
 
 // Run processes inbound messages until ctx is canceled or an error occurrs.
-func (r *Receiver) Run(ctx context.Context) error {
+func (r *receiver) Run(ctx context.Context) error {
 	if r.RetryPolicy == nil {
 		r.RetryPolicy = DefaultRetryPolicy
 	}
@@ -34,7 +34,7 @@ func (r *Receiver) Run(ctx context.Context) error {
 }
 
 // receive starts a new goroutine to process each inbound message.
-func (r *Receiver) receive(ctx context.Context) error {
+func (r *receiver) receive(ctx context.Context) error {
 	for {
 		env, ack, err := r.Transport.Receive(ctx)
 		if err != nil {
@@ -47,7 +47,7 @@ func (r *Receiver) receive(ctx context.Context) error {
 	}
 }
 
-func (r *Receiver) process(
+func (r *receiver) process(
 	ctx context.Context,
 	env bus.InboundEnvelope,
 	ack bus.Acknowledger,
