@@ -2,6 +2,7 @@ package observability_test
 
 import (
 	"context"
+	"errors"
 
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/bus"
@@ -15,150 +16,196 @@ import (
 
 var _ = Describe("InboundHook", func() {
 	var (
-		next *bustest.InboundPipelineMock
-		hook *InboundHook
+		before    *observabilitytest.BeforeInboundObserverMock
+		after     *observabilitytest.AfterInboundObserverMock
+		transport *bustest.TransportMock
+		next      *bustest.InboundPipelineMock
+		env       bus.InboundEnvelope
+		hook      *InboundHook
 	)
 
 	BeforeEach(func() {
+		transport = &bustest.TransportMock{}
+		before = &observabilitytest.BeforeInboundObserverMock{
+			BeforeInboundFunc: func(context.Context, bus.InboundEnvelope) {},
+		}
+		after = &observabilitytest.AfterInboundObserverMock{
+			AfterInboundFunc: func(context.Context, bus.InboundEnvelope, error) {},
+		}
 		next = &bustest.InboundPipelineMock{
 			InitializeFunc: func(context.Context, bus.Transport) error { return nil },
 			AcceptFunc:     func(context.Context, bus.MessageSink, bus.InboundEnvelope) error { return nil },
 		}
+		env = bus.InboundEnvelope{
+			Envelope: ax.NewEnvelope(
+				&messagetest.Message{},
+			),
+		}
 		hook = &InboundHook{
-			Next: next,
+			Next:      next,
+			Observers: []Observer{before, after},
 		}
 	})
 
 	Describe("Initialize", func() {
 		It("initializes the next stage", func() {
-			t := &bustest.TransportMock{}
-
-			err := hook.Initialize(context.Background(), t)
+			err := hook.Initialize(context.Background(), transport)
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(next.InitializeCalls()).To(HaveLen(1))
-			Expect(next.InitializeCalls()[0].T).To(Equal(t))
+			Expect(next.InitializeCalls()[0].T).To(Equal(transport))
+		})
+
+		It("panics if an observer does not implement either of the inbound observer interfaces", func() {
+			// outbound observer instead of inbound
+			hook.Observers = append(hook.Observers, &observabilitytest.BeforeOutboundObserverMock{})
+
+			Expect(func() {
+				hook.Initialize(context.Background(), transport)
+			}).To(Panic())
 		})
 	})
 
 	Describe("Accept", func() {
-		Context("when the observer implements BeforeInboundObserver", func() {
-			var observer *observabilitytest.BeforeInboundObserverMock
-
-			BeforeEach(func() {
-				observer = &observabilitytest.BeforeInboundObserverMock{}
-
-				hook.Observers = []Observer{observer}
-
-				if err := hook.Initialize(
-					context.Background(),
-					&bustest.TransportMock{},
-				); err != nil {
-					panic(err)
-				}
-			})
-
-			It("invokes the observer before invoking the next pipeline stage", func() {
-				env := bus.InboundEnvelope{
-					Envelope: ax.NewEnvelope(
-						&messagetest.Message{},
-					),
-				}
-
-				observer.BeforeInboundFunc = func(
-					_ context.Context,
-					e bus.InboundEnvelope,
-				) {
-					Expect(e).To(Equal(env))
-					Expect(next.AcceptCalls()).To(BeEmpty())
-				}
-
-				err := hook.Accept(context.Background(), nil /*sink*/, env)
-				Expect(err).ShouldNot(HaveOccurred())
-				Expect(observer.BeforeInboundCalls()).To(HaveLen(1))
-			})
+		BeforeEach(func() {
+			if err := hook.Initialize(context.Background(), transport); err != nil {
+				panic(err)
+			}
 		})
 
-		Context("when the observer implements AfterInboundObserver", func() {
-			XIt("invokes the observer after invoking the next pipeline stage", func() {
-			})
+		It("invokes the before-observer before processing the message", func() {
+			before.BeforeInboundFunc = func(_ context.Context, e bus.InboundEnvelope) {
+				Expect(e).To(Equal(env))
+				Expect(next.AcceptCalls()).To(BeEmpty()) // ensure message has not been processed yet
+			}
 
-			XIt("passes the error returned by the next pipeline stage to the observer", func() {
-			})
+			err := hook.Accept(context.Background(), nil /*sink*/, env)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(before.BeforeInboundCalls()).To(HaveLen(1)) // ensure observer is actually called
+		})
+
+		It("invokes the after-observer after processing the message", func() {
+			after.AfterInboundFunc = func(_ context.Context, e bus.InboundEnvelope, err error) {
+				Expect(e).To(Equal(env))
+				Expect(err).To(BeNil())
+				Expect(next.AcceptCalls()).To(HaveLen(1)) // ensure message has already been processed
+			}
+
+			err := hook.Accept(context.Background(), nil /*sink*/, env)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(after.AfterInboundCalls()).To(HaveLen(1)) // ensure observer is actually called
+		})
+
+		XIt("provides the after-observer with the message processing error", func() {
+			expected := errors.New("<error>")
+			next.AcceptFunc = func(context.Context, bus.MessageSink, bus.InboundEnvelope) error {
+				return expected
+			}
+
+			after.AfterInboundFunc = func(_ context.Context, e bus.InboundEnvelope, err error) {
+				Expect(err).To(Equal(expected))
+			}
+
+			err := hook.Accept(context.Background(), nil /*sink*/, env)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(after.AfterInboundCalls()).To(HaveLen(1)) // ensure observer is actually called
 		})
 	})
 })
 
 var _ = Describe("OutboundHook", func() {
 	var (
-		next *bustest.OutboundPipelineMock
-		hook *OutboundHook
+		before    *observabilitytest.BeforeOutboundObserverMock
+		after     *observabilitytest.AfterOutboundObserverMock
+		transport *bustest.TransportMock
+		next      *bustest.OutboundPipelineMock
+		env       bus.OutboundEnvelope
+		hook      *OutboundHook
 	)
 
 	BeforeEach(func() {
+		transport = &bustest.TransportMock{}
+		before = &observabilitytest.BeforeOutboundObserverMock{
+			BeforeOutboundFunc: func(context.Context, bus.OutboundEnvelope) {},
+		}
+		after = &observabilitytest.AfterOutboundObserverMock{
+			AfterOutboundFunc: func(context.Context, bus.OutboundEnvelope, error) {},
+		}
 		next = &bustest.OutboundPipelineMock{
 			InitializeFunc: func(context.Context, bus.Transport) error { return nil },
 			AcceptFunc:     func(context.Context, bus.OutboundEnvelope) error { return nil },
 		}
+		env = bus.OutboundEnvelope{
+			Envelope: ax.NewEnvelope(
+				&messagetest.Message{},
+			),
+		}
 		hook = &OutboundHook{
-			Next: next,
+			Next:      next,
+			Observers: []Observer{before, after},
 		}
 	})
 
 	Describe("Initialize", func() {
 		It("initializes the next stage", func() {
-			t := &bustest.TransportMock{}
-
-			err := hook.Initialize(context.Background(), t)
+			err := hook.Initialize(context.Background(), transport)
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(next.InitializeCalls()).To(HaveLen(1))
-			Expect(next.InitializeCalls()[0].T).To(Equal(t))
+			Expect(next.InitializeCalls()[0].T).To(Equal(transport))
+		})
+
+		It("panics if an observer does not implement either of the outbound observer interfaces", func() {
+			// inbound observer instead of outbound
+			hook.Observers = append(hook.Observers, &observabilitytest.BeforeInboundObserverMock{})
+
+			Expect(func() {
+				hook.Initialize(context.Background(), transport)
+			}).To(Panic())
 		})
 	})
 
 	Describe("Accept", func() {
-		var observer *observabilitytest.BeforeOutboundObserverMock
-
 		BeforeEach(func() {
-			observer = &observabilitytest.BeforeOutboundObserverMock{}
-
-			hook.Observers = []Observer{observer}
-
-			if err := hook.Initialize(
-				context.Background(),
-				&bustest.TransportMock{},
-			); err != nil {
+			if err := hook.Initialize(context.Background(), transport); err != nil {
 				panic(err)
 			}
 		})
 
-		Context("when the observer implements BeforeOutboundObserver", func() {
-			It("invokes the observer before invoking the next pipeline stage", func() {
-				env := bus.OutboundEnvelope{
-					Envelope: ax.NewEnvelope(
-						&messagetest.Message{},
-					),
-				}
+		It("invokes the before-observer before processing the message", func() {
+			before.BeforeOutboundFunc = func(_ context.Context, e bus.OutboundEnvelope) {
+				Expect(e).To(Equal(env))
+				Expect(next.AcceptCalls()).To(BeEmpty()) // ensure message has not been processed yet
+			}
 
-				observer.BeforeOutboundFunc = func(
-					_ context.Context,
-					e bus.OutboundEnvelope,
-				) {
-					Expect(e).To(Equal(env))
-					Expect(next.AcceptCalls()).To(BeEmpty())
-				}
-
-				err := hook.Accept(context.Background(), env)
-				Expect(err).ShouldNot(HaveOccurred())
-				Expect(observer.BeforeOutboundCalls()).To(HaveLen(1))
-			})
+			err := hook.Accept(context.Background(), env)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(before.BeforeOutboundCalls()).To(HaveLen(1)) // ensure observer is actually called
 		})
 
-		Context("when the observer implements AfterOutboundObserver", func() {
-			XIt("invokes the observer after invoking the next pipeline stage", func() {
-			})
+		It("invokes the after-observer after processing the message", func() {
+			after.AfterOutboundFunc = func(_ context.Context, e bus.OutboundEnvelope, err error) {
+				Expect(e).To(Equal(env))
+				Expect(err).To(BeNil())
+				Expect(next.AcceptCalls()).To(HaveLen(1)) // ensure message has already been processed
+			}
 
-			XIt("passes the error returned by the next pipeline stage to the observer", func() {
-			})
+			err := hook.Accept(context.Background(), env)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(after.AfterOutboundCalls()).To(HaveLen(1)) // ensure observer is actually called
+		})
+
+		XIt("provides the after-observer with the message processing error", func() {
+			expected := errors.New("<error>")
+			next.AcceptFunc = func(context.Context, bus.OutboundEnvelope) error {
+				return expected
+			}
+
+			after.AfterOutboundFunc = func(_ context.Context, e bus.OutboundEnvelope, err error) {
+				Expect(err).To(Equal(expected))
+			}
+
+			err := hook.Accept(context.Background(), env)
+			Expect(err).ShouldNot(HaveOccurred())
+			Expect(after.AfterOutboundCalls()).To(HaveLen(1)) // ensure observer is actually called
 		})
 	})
 })
