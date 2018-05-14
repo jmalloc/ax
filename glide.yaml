@@ -17,4 +17,4 @@ import:
 - package: github.com/stoewer/go-strcase
   version: ^1.0.1
 - package: github.com/jmalloc/twelf
-  version: ^1.0.0
+  version: ^1.1.0

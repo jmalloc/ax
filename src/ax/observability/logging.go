@@ -30,7 +30,7 @@ func (o *LoggingObserver) BeforeInbound(ctx context.Context, env bus.InboundEnve
 func (o *LoggingObserver) AfterInbound(ctx context.Context, env bus.InboundEnvelope, err error) {
 	if err != nil {
 		o.log(
-			"error: %s  [%s msg:%s cause:%s corr:%s]",
+			"error: %s  %s  [%s msg:%s cause:%s corr:%s]",
 			env.Message.Description(),
 			err,
 			env.Type(),
@@ -55,6 +55,7 @@ func (o *LoggingObserver) AfterOutbound(ctx context.Context, env bus.OutboundEnv
 	}
 }
 
+// log writes a message to o.Logger. If o.Logger is nil, it uses twelf.DefaultLogger.
 func (o *LoggingObserver) log(f string, v ...interface{}) {
 	l := o.Logger
 
