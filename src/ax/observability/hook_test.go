@@ -95,7 +95,7 @@ var _ = Describe("InboundHook", func() {
 			Expect(after.AfterInboundCalls()).To(HaveLen(1)) // ensure observer is actually called
 		})
 
-		XIt("provides the after-observer with the message processing error", func() {
+		It("provides the after-observer with the message processing error", func() {
 			expected := errors.New("<error>")
 			next.AcceptFunc = func(context.Context, bus.MessageSink, bus.InboundEnvelope) error {
 				return expected
@@ -106,7 +106,7 @@ var _ = Describe("InboundHook", func() {
 			}
 
 			err := hook.Accept(context.Background(), nil /*sink*/, env)
-			Expect(err).ShouldNot(HaveOccurred())
+			Expect(err).To(Equal(err))
 			Expect(after.AfterInboundCalls()).To(HaveLen(1)) // ensure observer is actually called
 		})
 	})
@@ -193,7 +193,7 @@ var _ = Describe("OutboundHook", func() {
 			Expect(after.AfterOutboundCalls()).To(HaveLen(1)) // ensure observer is actually called
 		})
 
-		XIt("provides the after-observer with the message processing error", func() {
+		It("provides the after-observer with the message processing error", func() {
 			expected := errors.New("<error>")
 			next.AcceptFunc = func(context.Context, bus.OutboundEnvelope) error {
 				return expected
@@ -204,7 +204,7 @@ var _ = Describe("OutboundHook", func() {
 			}
 
 			err := hook.Accept(context.Background(), env)
-			Expect(err).ShouldNot(HaveOccurred())
+			Expect(err).To(Equal(err))
 			Expect(after.AfterOutboundCalls()).To(HaveLen(1)) // ensure observer is actually called
 		})
 	})
