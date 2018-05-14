@@ -15,7 +15,6 @@ type Observer interface {
 // the inbound pipeline accepts a message.
 type BeforeInboundObserver interface {
 	// BeforeInbound is called before a message is passed to the next pipeline stage.
-	// The returned context replaces ctx in calls to other observers and the next pipeline stage.
 	BeforeInbound(ctx context.Context, env bus.InboundEnvelope)
 }
 
@@ -31,7 +30,6 @@ type AfterInboundObserver interface {
 // the outbound pipeline accepts a message.
 type BeforeOutboundObserver interface {
 	// BeforeOutbound is called before a message is passed to the next pipeline stage.
-	// The returned context replaces ctx in calls to other observers and the next pipeline stage.
 	BeforeOutbound(ctx context.Context, env bus.OutboundEnvelope)
 }
 
