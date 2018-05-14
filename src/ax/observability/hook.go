@@ -11,7 +11,7 @@ import (
 // InboundHook is an inbound pipeline stage that invokes hook methods
 // on a set of observers.
 type InboundHook struct {
-	Observers []interface{}
+	Observers []Observer
 	Next      bus.InboundPipeline
 
 	before []BeforeInboundObserver
@@ -49,13 +49,13 @@ func (o *InboundHook) Initialize(ctx context.Context, t bus.Transport) error {
 // it is handled by some application-defined message handler(s).
 func (o *InboundHook) Accept(ctx context.Context, s bus.MessageSink, env bus.InboundEnvelope) error {
 	for _, ob := range o.before {
-		ctx = ob.BeforeInbound(ctx, env.Envelope)
+		ob.BeforeInbound(ctx, env)
 	}
 
 	err := o.Next.Accept(ctx, s, env)
 
 	for _, ob := range o.after {
-		ob.AfterInbound(ctx, env.Envelope, err)
+		ob.AfterInbound(ctx, env, err)
 	}
 
 	return err
@@ -64,7 +64,7 @@ func (o *InboundHook) Accept(ctx context.Context, s bus.MessageSink, env bus.Inb
 // OutboundHook is an outbound pipeline stage that invokes hook methods
 // on a set of observers.
 type OutboundHook struct {
-	Observers []interface{}
+	Observers []Observer
 	Next      bus.OutboundPipeline
 
 	before []BeforeOutboundObserver
@@ -101,13 +101,13 @@ func (o *OutboundHook) Initialize(ctx context.Context, t bus.Transport) error {
 // Accept processes the message encapsulated in env.
 func (o *OutboundHook) Accept(ctx context.Context, env bus.OutboundEnvelope) error {
 	for _, ob := range o.before {
-		ctx = ob.BeforeOutbound(ctx, env.Envelope)
+		ob.BeforeOutbound(ctx, env)
 	}
 
 	err := o.Next.Accept(ctx, env)
 
 	for _, ob := range o.after {
-		ob.AfterOutbound(ctx, env.Envelope, err)
+		ob.AfterOutbound(ctx, env, err)
 	}
 
 	return err

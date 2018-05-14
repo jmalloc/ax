@@ -3,9 +3,12 @@ package observability_test
 import (
 	"context"
 
+	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/bus"
 	. "github.com/jmalloc/ax/src/ax/observability"
 	"github.com/jmalloc/ax/src/internal/bustest"
+	"github.com/jmalloc/ax/src/internal/messagetest"
+	"github.com/jmalloc/ax/src/internal/observabilitytest"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -37,23 +40,49 @@ var _ = Describe("InboundHook", func() {
 		})
 	})
 
-	XDescribe("Accept", func() {
+	Describe("Accept", func() {
 		Context("when the observer implements BeforeInboundObserver", func() {
+			var observer *observabilitytest.BeforeInboundObserverMock
+
+			BeforeEach(func() {
+				observer = &observabilitytest.BeforeInboundObserverMock{}
+
+				hook.Observers = []Observer{observer}
+
+				if err := hook.Initialize(
+					context.Background(),
+					&bustest.TransportMock{},
+				); err != nil {
+					panic(err)
+				}
+			})
+
 			It("invokes the observer before invoking the next pipeline stage", func() {
-			})
+				env := bus.InboundEnvelope{
+					Envelope: ax.NewEnvelope(
+						&messagetest.Message{},
+					),
+				}
 
-			It("passes the context returned by the observer to the next pipeline stage", func() {
-			})
+				observer.BeforeInboundFunc = func(
+					_ context.Context,
+					e bus.InboundEnvelope,
+				) {
+					Expect(e).To(Equal(env))
+					Expect(next.AcceptCalls()).To(BeEmpty())
+				}
 
-			It("passes the context returned by the observer to subsequent observers", func() {
+				err := hook.Accept(context.Background(), nil /*sink*/, env)
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(observer.BeforeInboundCalls()).To(HaveLen(1))
 			})
 		})
 
 		Context("when the observer implements AfterInboundObserver", func() {
-			It("invokes the observer after invoking the next pipeline stage", func() {
+			XIt("invokes the observer after invoking the next pipeline stage", func() {
 			})
 
-			It("passes the error returned by the next pipeline stage to the observer", func() {
+			XIt("passes the error returned by the next pipeline stage to the observer", func() {
 			})
 		})
 	})
@@ -86,23 +115,49 @@ var _ = Describe("OutboundHook", func() {
 		})
 	})
 
-	XDescribe("Accept", func() {
+	Describe("Accept", func() {
+		var observer *observabilitytest.BeforeOutboundObserverMock
+
+		BeforeEach(func() {
+			observer = &observabilitytest.BeforeOutboundObserverMock{}
+
+			hook.Observers = []Observer{observer}
+
+			if err := hook.Initialize(
+				context.Background(),
+				&bustest.TransportMock{},
+			); err != nil {
+				panic(err)
+			}
+		})
+
 		Context("when the observer implements BeforeOutboundObserver", func() {
 			It("invokes the observer before invoking the next pipeline stage", func() {
-			})
+				env := bus.OutboundEnvelope{
+					Envelope: ax.NewEnvelope(
+						&messagetest.Message{},
+					),
+				}
 
-			It("passes the context returned by the observer to the next pipeline stage", func() {
-			})
+				observer.BeforeOutboundFunc = func(
+					_ context.Context,
+					e bus.OutboundEnvelope,
+				) {
+					Expect(e).To(Equal(env))
+					Expect(next.AcceptCalls()).To(BeEmpty())
+				}
 
-			It("passes the context returned by the observer to subsequent observers", func() {
+				err := hook.Accept(context.Background(), env)
+				Expect(err).ShouldNot(HaveOccurred())
+				Expect(observer.BeforeOutboundCalls()).To(HaveLen(1))
 			})
 		})
 
 		Context("when the observer implements AfterOutboundObserver", func() {
-			It("invokes the observer after invoking the next pipeline stage", func() {
+			XIt("invokes the observer after invoking the next pipeline stage", func() {
 			})
 
-			It("passes the error returned by the next pipeline stage to the observer", func() {
+			XIt("passes the error returned by the next pipeline stage to the observer", func() {
 			})
 		})
 	})

@@ -3,7 +3,7 @@ package observability
 import (
 	"context"
 
-	"github.com/jmalloc/ax/src/ax"
+	"github.com/jmalloc/ax/src/ax/bus"
 	"github.com/jmalloc/twelf/src/twelf"
 )
 
@@ -13,7 +13,7 @@ type LoggingObserver struct {
 }
 
 // BeforeInbound logs information about an inbound message.
-func (o *LoggingObserver) BeforeInbound(ctx context.Context, env ax.Envelope) context.Context {
+func (o *LoggingObserver) BeforeInbound(ctx context.Context, env bus.InboundEnvelope) {
 	mt := env.Type()
 
 	o.log(
@@ -24,12 +24,10 @@ func (o *LoggingObserver) BeforeInbound(ctx context.Context, env ax.Envelope) co
 		env.CausationID,
 		env.CorrelationID,
 	)
-
-	return ctx
 }
 
 // AfterInbound logs information about errors that occur processing an inbound message.
-func (o *LoggingObserver) AfterInbound(ctx context.Context, env ax.Envelope, err error) {
+func (o *LoggingObserver) AfterInbound(ctx context.Context, env bus.InboundEnvelope, err error) {
 	if err != nil {
 		o.log(
 			"error: %s  [%s msg:%s cause:%s corr:%s]",
@@ -44,7 +42,7 @@ func (o *LoggingObserver) AfterInbound(ctx context.Context, env ax.Envelope, err
 }
 
 // AfterOutbound logs information about an outbound message.
-func (o *LoggingObserver) AfterOutbound(ctx context.Context, env ax.Envelope, err error) {
+func (o *LoggingObserver) AfterOutbound(ctx context.Context, env bus.OutboundEnvelope, err error) {
 	if err == nil {
 		o.log(
 			"send: %s  [%s msg:%s cause:%s corr:%s]",

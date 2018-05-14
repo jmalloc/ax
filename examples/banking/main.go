@@ -59,7 +59,7 @@ func main() {
 		panic(err)
 	}
 
-	observers := []interface{}{
+	observers := []observability.Observer{
 		&observability.LoggingObserver{},
 	}
 
