@@ -57,19 +57,42 @@ var _ = Describe("Dispatcher", func() {
 	})
 
 	Describe("Initialize", func() {
-		It("subscribes the transport to all handled event types", func() {
+		It("subscribes the transport to all handled message types", func() {
 			t := &bustest.TransportMock{
-				SubscribeFunc: func(_ context.Context, _ ax.MessageTypeSet) error {
+				SubscribeFunc: func(_ context.Context, _ Operation, _ ax.MessageTypeSet) error {
 					return nil
 				},
 			}
 
-			err := dispatcher.Initialize(context.Background(), t)
+			ctx := context.Background()
+			err := dispatcher.Initialize(ctx, t)
 			Expect(err).ShouldNot(HaveOccurred())
 
-			Expect(t.SubscribeCalls()).To(HaveLen(1))
-			Expect(t.SubscribeCalls()[0].Mt.Members()).To(ConsistOf(
-				ax.TypeOf(&messagetest.Event{}),
+			Expect(t.SubscribeCalls()).To(ConsistOf(
+				struct {
+					Ctx context.Context
+					Op  Operation
+					Mt  ax.MessageTypeSet
+				}{
+					ctx,
+					OpSendUnicast,
+					ax.TypesOf(
+						&messagetest.Command{},
+						&messagetest.Message{},
+					),
+				},
+				struct {
+					Ctx context.Context
+					Op  Operation
+					Mt  ax.MessageTypeSet
+				}{
+					ctx,
+					OpSendMulticast,
+					ax.TypesOf(
+						&messagetest.Event{},
+						&messagetest.Message{},
+					),
+				},
 			))
 		})
 	})

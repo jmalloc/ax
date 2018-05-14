@@ -16,7 +16,7 @@ var _ = Describe("TransportStage", func() {
 
 			ctx := context.Background()
 			tr := &bustest.TransportMock{
-				AcceptFunc: func(context.Context, OutboundEnvelope) error {
+				SendFunc: func(context.Context, OutboundEnvelope) error {
 					return nil
 				},
 			}
@@ -27,8 +27,8 @@ var _ = Describe("TransportStage", func() {
 			env.MessageID.GenerateUUID()
 			stage.Accept(ctx, env)
 
-			Expect(tr.AcceptCalls()).To(HaveLen(1))
-			Expect(tr.AcceptCalls()[0].Env).To(Equal(env))
+			Expect(tr.SendCalls()).To(HaveLen(1))
+			Expect(tr.SendCalls()[0].Env).To(Equal(env))
 		})
 	})
 })

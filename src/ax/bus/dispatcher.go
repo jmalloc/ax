@@ -16,15 +16,24 @@ type Dispatcher struct {
 
 // Initialize subscribes t to events that the message handlers intend to handle.
 func (d *Dispatcher) Initialize(ctx context.Context, t Transport) error {
-	var events ax.MessageTypeSet
+	var unicast, multicast ax.MessageTypeSet
 
 	for mt := range d.Routes {
-		if mt.IsEvent() {
-			events = events.Add(mt)
+		if mt.IsCommand() {
+			unicast = unicast.Add(mt)
+		} else if mt.IsEvent() {
+			multicast = multicast.Add(mt)
+		} else {
+			unicast = unicast.Add(mt)
+			multicast = multicast.Add(mt)
 		}
 	}
 
-	return t.Subscribe(ctx, events)
+	if err := t.Subscribe(ctx, OpSendUnicast, unicast); err != nil {
+		return err
+	}
+
+	return t.Subscribe(ctx, OpSendMulticast, multicast)
 }
 
 // Accept dispatches env to zero or more message handlers as per the dispatch

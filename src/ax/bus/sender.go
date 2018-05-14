@@ -30,7 +30,7 @@ func (s SinkSender) PublishEvent(ctx context.Context, m ax.Event) error {
 
 // send wraps m in an envelope and passes that envelope to s.Sink.
 // The new envelope is configured as a child of the envelope in ctx, if any.
-func (s SinkSender) send(ctx context.Context, op OutboundOperation, m ax.Message) error {
+func (s SinkSender) send(ctx context.Context, op Operation, m ax.Message) error {
 	env, ok := GetEnvelope(ctx)
 
 	if ok {

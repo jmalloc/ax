@@ -7,21 +7,27 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// Publisher publishes AMQP messages reliably using AMQP "publisher confirms".
+// publisher publishes AMQP messages reliably using AMQP "publisher confirms".
 // https://www.rabbitmq.com/confirms.html#publisher-confirms
 //
 // It maintains a capped-size pool of AMQP channels which are placed into
 // "confirm mode" when they are first created.
-type Publisher struct {
-	conn     *amqp.Connection
+type publisher struct {
+	conn *amqp.Connection
+	// ep       string
 	channels chan *channel
 }
 
-// NewPublisher returns a new publisher with a channel pool
-func NewPublisher(conn *amqp.Connection, n int) *Publisher {
-	return &Publisher{
+// newPublisher returns a new publisher with a channel pool
+func newPublisher(
+	conn *amqp.Connection,
+	// ep string,
+	poolSize int,
+) *publisher {
+	return &publisher{
 		conn,
-		make(chan *channel, n),
+		// ep,
+		make(chan *channel, poolSize),
 	}
 }
 
@@ -35,12 +41,34 @@ type channel struct {
 	Confirm chan amqp.Confirmation
 }
 
-// Publish sends a message to the broker, and blocks until a confirmation is
+// PublishUnicast sends a unicast message directly to a specific endpoint.
+func (p *publisher) PublishUnicast(ctx context.Context, pub amqp.Publishing, ep string) error {
+	return p.publish(
+		ctx,
+		unicastExchange,
+		unicastRoutingKey(pub.Type, ep),
+		true, // mandatory
+		pub,
+	)
+}
+
+// PublishMulticast sends a multicast message to the its subscribers.
+func (p *publisher) PublishMulticast(ctx context.Context, pub amqp.Publishing) error {
+	return p.publish(
+		ctx,
+		multicastExchange,
+		multicastRoutingKey(pub.Type),
+		false, // mandatory
+		pub,
+	)
+}
+
+// publish sends a message to the broker, and blocks until a confirmation is
 // received.
 //
 // It returns an error if the broker does not acknowledge publication of the
 // message. Otherwise it has the same behavior as amqp.Channel.Publish().
-func (p *Publisher) Publish(
+func (p *publisher) publish(
 	ctx context.Context,
 	exchange string,
 	key string,
@@ -99,7 +127,7 @@ func (p *Publisher) Publish(
 
 // acquire gets a channel from the pool, or opens a new channel and places it
 // into "confirm mode" if the pool is empty.
-func (p *Publisher) acquire() (*channel, error) {
+func (p *publisher) acquire() (*channel, error) {
 	select {
 	case ch := <-p.channels:
 		return ch, nil
@@ -130,7 +158,7 @@ func (p *Publisher) acquire() (*channel, error) {
 }
 
 // release returns a channel to the pool, or closes it if the pool is full.
-func (p *Publisher) release(ch *channel) {
+func (p *publisher) release(ch *channel) {
 	select {
 	case p.channels <- ch:
 	default:
@@ -141,7 +169,7 @@ func (p *Publisher) release(ch *channel) {
 // confirmThenRelease waits for the next confirm on ch before returning it to
 // the pool. This ensures that some future publisher doesn't see a previous
 // call's confirmation message as its own.
-func (p *Publisher) confirmThenRelease(ch *channel) {
+func (p *publisher) confirmThenRelease(ch *channel) {
 	select {
 	case <-ch.Confirm:
 		p.release(ch)
