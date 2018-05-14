@@ -10,20 +10,23 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// DefaultConcurrency is the default number of messages to handle concurrently.
-var DefaultConcurrency = runtime.NumCPU() * 2
+// DefaultReceiveConcurrency is the default number of messages to process concurrently.
+var DefaultReceiveConcurrency = runtime.NumCPU() * 2
+
+// DefaultSendConcurrency is the default number of messages to send concurrently.
+var DefaultSendConcurrency = runtime.NumCPU() * 10
 
 // Transport is an implementation of bus.Transport that uses RabbitMQ to
 // communicate messages between endpoints.
 type Transport struct {
-	Conn        *amqp.Connection
-	Concurrency int
+	Conn               *amqp.Connection
+	Exclusive          bool
+	SendConcurrency    int
+	ReceiveConcurrency int
 
-	ep    string
-	ch    *amqp.Channel
-	pub   *Publisher
-	msgs  <-chan amqp.Delivery
-	close chan *amqp.Error
+	ep  string
+	pub *publisher
+	con *consumer
 }
 
 // Initialize sets up the transport to communicate as an endpoint named ep.
@@ -32,147 +35,109 @@ func (t *Transport) Initialize(ctx context.Context, ep string) error {
 	if err != nil {
 		return err
 	}
-	defer func() {
-		// close the channel if it has not been "captured" by the transport for
-		// continued use.
-		if t.ch != ch {
-			_ = ch.Close()
-		}
-	}()
+	defer ch.Close()
 
-	err = setupTopology(ch, ep)
-	if err != nil {
-		return err
-	}
-
-	n := t.Concurrency
-	if n == 0 {
-		n = DefaultConcurrency
-	}
-
-	err = ch.Qos(n, 0, false)
-	if err != nil {
-		return err
-	}
-
-	queue, _ := queueNames(ep)
-
-	t.msgs, err = ch.Consume(
-		queue,
-		ep,    // consumer tag
-		false, // autoAck
-		false, // exclusive
-		false, // noLocal
-		false, // noWait
-		nil,   // args
-	)
-	if err != nil {
+	if err := declareExchanges(ch); err != nil {
 		return err
 	}
 
 	t.ep = ep
-	t.ch = ch
-	t.pub = NewPublisher(t.Conn, n)
-	t.close = make(chan *amqp.Error)
-	ch.NotifyClose(t.close)
+
+	poolSize := t.SendConcurrency
+	if poolSize == 0 {
+		poolSize = DefaultSendConcurrency
+	}
+
+	t.pub = newPublisher(
+		t.Conn,
+		poolSize,
+	)
 
 	return nil
 }
 
 // Subscribe instructs the transport to listen to multicast messages of the
 // given type.
-func (t *Transport) Subscribe(ctx context.Context, mt ax.MessageTypeSet) error {
-	return setupMulticastBindings(t.ch, t.ep, mt)
+func (t *Transport) Subscribe(ctx context.Context, op bus.Operation, mt ax.MessageTypeSet) error {
+	if err := t.startConsumer(); err != nil {
+		return err
+	}
+
+	switch op {
+	case bus.OpSendUnicast:
+		return t.con.BindUnicast(mt)
+	case bus.OpSendMulticast:
+		return t.con.BindMulticast(mt)
+	default:
+		panic(fmt.Sprintf("unrecognized outbound operation: %d", op))
+	}
 }
 
-// Accept sends a message.
-func (t *Transport) Accept(ctx context.Context, env bus.OutboundEnvelope) error {
+// Send sends env via the transport.
+func (t *Transport) Send(ctx context.Context, env bus.OutboundEnvelope) error {
 	var pub amqp.Publishing
 
-	if err := marshalMessage(t.ep, env, &pub); err != nil {
-		fmt.Println(err)
+	pub, err := marshalMessage(t.ep, env)
+	if err != nil {
 		return err
 	}
 
 	switch env.Operation {
 	case bus.OpSendUnicast:
-		return t.sendUnicast(ctx, env.DestinationEndpoint, pub)
+		return t.pub.PublishUnicast(ctx, pub, env.DestinationEndpoint)
 	case bus.OpSendMulticast:
-		return t.sendMulticast(ctx, pub)
+		return t.pub.PublishMulticast(ctx, pub)
 	default:
 		panic(fmt.Sprintf("unrecognized outbound operation: %d", env.Operation))
 	}
 }
 
-// Produce returns the next message that has been delivered to the endpoint.
-func (t *Transport) Produce(ctx context.Context) (bus.InboundEnvelope, error) {
+// Receive returns the next message sent to this endpoint.
+// It blocks until a message is available, or ctx is canceled.
+func (t *Transport) Receive(ctx context.Context) (env bus.InboundEnvelope, ack bus.Acknowledger, err error) {
+	err = t.startConsumer()
+	if err != nil {
+		return
+	}
+
+	var del amqp.Delivery
+
 	for {
-		select {
-		case del := <-t.msgs:
-			env, ok, err := t.receive(ctx, del)
-			if ok || err != nil {
-				return env, err
-			}
-		case err := <-t.close:
-			return bus.InboundEnvelope{}, err
-		case <-ctx.Done():
-			return bus.InboundEnvelope{}, ctx.Err()
+		del, err = t.con.Receive(ctx)
+		if err != nil {
+			return
+		}
+
+		env, err = unmarshalMessage(del)
+		if err == nil {
+			ack = &Acknowledger{del}
+			return
+		}
+
+		// TODO: log / sentry / etc
+		err = del.Reject(false) // false = don't requeue
+		if err != nil {
+			return
 		}
 	}
 }
 
-func (t *Transport) receive(
-	ctx context.Context,
-	del amqp.Delivery,
-) (bus.InboundEnvelope, bool, error) {
-	env := bus.InboundEnvelope{
-		Done: func(_ context.Context, op bus.InboundOperation) error {
-			switch op {
-			case bus.OpAck:
-				return del.Ack(false) // false = single message
-			case bus.OpRetry:
-				return del.Reject(true) // true = requeue
-			case bus.OpReject:
-				return del.Reject(false) // false = don't requeue
-			default:
-				panic(fmt.Sprintf("unrecognized inbound operation: %d", op))
-			}
-		},
+func (t *Transport) startConsumer() error {
+	if t.con != nil {
+		return nil
 	}
 
-	if err := unmarshalMessage(del, &env); err != nil {
-		// TODO: sentry, etc?
-		return bus.InboundEnvelope{}, false, del.Reject(false)
+	preFetch := t.ReceiveConcurrency
+	if preFetch == 0 {
+		preFetch = DefaultReceiveConcurrency
 	}
 
-	return env, true, nil
-}
+	con, err := newConsumer(t.Conn, t.ep, t.Exclusive, preFetch)
+	if err != nil {
+		return err
+	}
 
-// sendUnicast sends a unicast message directly to a specific endpoint.
-func (t *Transport) sendUnicast(
-	ctx context.Context,
-	ep string,
-	pub amqp.Publishing,
-) error {
-	return t.pub.Publish(
-		ctx,
-		unicastExchange,
-		ep,   // routing key
-		true, // mandatory
-		pub,
-	)
-}
+	t.con = con
 
-// sendMulticast sends a multicast message to the its subscribers.
-func (t *Transport) sendMulticast(
-	ctx context.Context,
-	pub amqp.Publishing,
-) error {
-	return t.pub.Publish(
-		ctx,
-		multicastExchange,
-		pub.Type, // routing key
-		false,    // mandatory
-		pub,
-	)
+	return nil
 }
