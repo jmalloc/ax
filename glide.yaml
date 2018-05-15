@@ -6,9 +6,6 @@ import:
   version: ^1.2.0
 - package: github.com/streadway/amqp
 - package: github.com/go-sql-driver/mysql
-  version: master
-- package: go.uber.org/multierr
-  version: ^1.1.0
 - package: golang.org/x/sync
   subpackages:
   - errgroup
@@ -19,3 +16,5 @@ import:
 - package: github.com/spf13/cobra
 - package: github.com/stoewer/go-strcase
   version: ^1.0.1
+- package: github.com/jmalloc/twelf
+  version: ^1.1.0

@@ -5,6 +5,7 @@ REQ += src/internal/bustest/transportmock.go
 REQ += src/internal/bustest/pipelinemock.go
 REQ += src/internal/persistencetest/datastoremock.go
 REQ += src/internal/persistencetest/transactionmock.go
+REQ += src/internal/observabilitytest/observermock.go
 
 -include artifacts/make/go/Makefile
 
@@ -39,6 +40,9 @@ src/internal/persistencetest/datastoremock.go: src/ax/persistence/datastore.go |
 
 src/internal/persistencetest/transactionmock.go: src/ax/persistence/transaction.go | $(MOQ)
 	$(MOQ) -out "$@" -pkg "persistencetest" src/ax/persistence Tx Committer
+
+src/internal/observabilitytest/observermock.go: src/ax/observability/observer.go | $(MOQ)
+	$(MOQ) -out "$@" -pkg "observabilitytest" src/ax/observability BeforeInboundObserver AfterInboundObserver BeforeOutboundObserver AfterOutboundObserver
 
 artifacts/make/%/Makefile:
 	curl -sf https://jmalloc.github.io/makefiles/fetch | bash /dev/stdin $*

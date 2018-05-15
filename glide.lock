@@ -1,10 +1,6 @@
-hash: f06ce5ec20103472173c741af5a2310e16011825ebb2d116a918a1137286845c
-updated: 2018-05-11T09:24:15.401742331+10:00
+hash: bb2875eb8c7964fced779fabc3dbb0270b64c71a1c66ee8bb31f8c904babaa8a
+updated: 2018-05-15T08:21:05.659840232+10:00
 imports:
-- name: github.com/davecgh/go-spew
-  version: 8991bc29aa16c548c550c7ff78260e27b9ab7c73
-  subpackages:
-  - spew
 - name: github.com/go-sql-driver/mysql
   version: 3287d94d4c6a48a63e16fffaabf27ab20203af2a
 - name: github.com/golang/protobuf
@@ -12,8 +8,13 @@ imports:
   subpackages:
   - jsonpb
   - proto
+  - ptypes/struct
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
+- name: github.com/jmalloc/twelf
+  version: 9f134de095cba6edc97910f8b38b313e354e6905
+  subpackages:
+  - src/twelf
 - name: github.com/onsi/ginkgo
   version: fa5fabab2a1bfbd924faf4c067d07ae414e2aedf
   subpackages:
@@ -36,7 +37,7 @@ imports:
   - reporters/stenographer/support/go-isatty
   - types
 - name: github.com/onsi/gomega
-  version: 003f63b7f4cff3fc95357005358af2de0f5fe152
+  version: 62bff4df71bdbc266561a0caee19f0594b17c240
   subpackages:
   - format
   - internal/assertion
