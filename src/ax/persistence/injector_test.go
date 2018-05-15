@@ -27,14 +27,14 @@ var _ = Describe("Injector", func() {
 
 	Describe("Initialize", func() {
 		It("calls the next pipeline with the data store in the context", func() {
-			next.InitializeFunc = func(ctx context.Context, _ endpoint.Transport) error {
+			next.InitializeFunc = func(ctx context.Context, _ *endpoint.Endpoint) error {
 				ds, ok := GetDataStore(ctx)
 				Expect(ok).To(BeTrue())
 				Expect(ds).To(Equal(inj.DataStore))
 				return nil
 			}
 
-			inj.Initialize(context.Background(), nil /* transport */)
+			inj.Initialize(context.Background(), &endpoint.Endpoint{})
 
 			Expect(next.InitializeCalls()).To(HaveLen(1))
 		})

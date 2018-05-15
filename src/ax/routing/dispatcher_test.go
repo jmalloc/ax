@@ -14,6 +14,8 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+var ensureDispatcherIsInboundPipeline endpoint.InboundPipeline = &Dispatcher{}
+
 var _ = Describe("Dispatcher", func() {
 	var (
 		h1, h2, h3 *routingtest.MessageHandlerMock
@@ -67,7 +69,7 @@ var _ = Describe("Dispatcher", func() {
 			}
 
 			ctx := context.Background()
-			err := dispatcher.Initialize(ctx, t)
+			err := dispatcher.Initialize(ctx, &endpoint.Endpoint{Transport: t})
 			Expect(err).ShouldNot(HaveOccurred())
 
 			Expect(t.SubscribeCalls()).To(ConsistOf(

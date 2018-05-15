@@ -84,7 +84,7 @@ func main() {
 			Observers: observers,
 			Next: &routing.Router{
 				Routes: etable,
-				Next:   &bus.TransportStage{},
+				Next:   &endpoint.TransportStage{},
 			},
 		},
 	}

@@ -12,6 +12,8 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+var ensureRouterIsOutboundPipeline endpoint.OutboundPipeline = &Router{}
+
 var _ = Describe("Router", func() {
 	var (
 		next   *endpointtest.OutboundPipelineMock
@@ -20,7 +22,7 @@ var _ = Describe("Router", func() {
 
 	BeforeEach(func() {
 		next = &endpointtest.OutboundPipelineMock{
-			InitializeFunc: func(context.Context, endpoint.Transport) error { return nil },
+			InitializeFunc: func(context.Context, *endpoint.Endpoint) error { return nil },
 			AcceptFunc:     func(context.Context, endpoint.OutboundEnvelope) error { return nil },
 		}
 		router = &Router{
@@ -30,12 +32,12 @@ var _ = Describe("Router", func() {
 
 	Describe("Initialize", func() {
 		It("initializes the next stage", func() {
-			t := &endpointtest.TransportMock{}
+			ep := &endpoint.Endpoint{}
 
-			err := router.Initialize(context.Background(), t)
+			err := router.Initialize(context.Background(), ep)
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(next.InitializeCalls()).To(HaveLen(1))
-			Expect(next.InitializeCalls()[0].T).To(Equal(t))
+			Expect(next.InitializeCalls()[0].Ep).To(Equal(ep))
 		})
 	})
 

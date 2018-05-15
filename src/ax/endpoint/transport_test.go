@@ -21,7 +21,7 @@ var _ = Describe("TransportStage", func() {
 				},
 			}
 
-			stage.Initialize(ctx, tr)
+			stage.Initialize(ctx, &Endpoint{Transport: tr})
 
 			env := OutboundEnvelope{}
 			env.MessageID.GenerateUUID()

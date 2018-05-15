@@ -16,16 +16,16 @@ import (
 
 var _ = Describe("InboundHook", func() {
 	var (
-		before    *observabilitytest.BeforeInboundObserverMock
-		after     *observabilitytest.AfterInboundObserverMock
-		transport *endpointtest.TransportMock
-		next      *endpointtest.InboundPipelineMock
-		env       endpoint.InboundEnvelope
-		hook      *InboundHook
+		before *observabilitytest.BeforeInboundObserverMock
+		after  *observabilitytest.AfterInboundObserverMock
+		ep     *endpoint.Endpoint
+		next   *endpointtest.InboundPipelineMock
+		env    endpoint.InboundEnvelope
+		hook   *InboundHook
 	)
 
 	BeforeEach(func() {
-		transport = &endpointtest.TransportMock{}
+		ep = &endpoint.Endpoint{}
 		before = &observabilitytest.BeforeInboundObserverMock{
 			BeforeInboundFunc: func(context.Context, endpoint.InboundEnvelope) {},
 		}
@@ -33,7 +33,7 @@ var _ = Describe("InboundHook", func() {
 			AfterInboundFunc: func(context.Context, endpoint.InboundEnvelope, error) {},
 		}
 		next = &endpointtest.InboundPipelineMock{
-			InitializeFunc: func(context.Context, endpoint.Transport) error { return nil },
+			InitializeFunc: func(context.Context, *endpoint.Endpoint) error { return nil },
 			AcceptFunc:     func(context.Context, endpoint.MessageSink, endpoint.InboundEnvelope) error { return nil },
 		}
 		env = endpoint.InboundEnvelope{
@@ -49,10 +49,10 @@ var _ = Describe("InboundHook", func() {
 
 	Describe("Initialize", func() {
 		It("initializes the next stage", func() {
-			err := hook.Initialize(context.Background(), transport)
+			err := hook.Initialize(context.Background(), ep)
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(next.InitializeCalls()).To(HaveLen(1))
-			Expect(next.InitializeCalls()[0].T).To(Equal(transport))
+			Expect(next.InitializeCalls()[0].Ep).To(Equal(ep))
 		})
 
 		It("panics if an observer does not implement either of the inbound observer interfaces", func() {
@@ -60,14 +60,14 @@ var _ = Describe("InboundHook", func() {
 			hook.Observers = append(hook.Observers, &observabilitytest.BeforeOutboundObserverMock{})
 
 			Expect(func() {
-				hook.Initialize(context.Background(), transport)
+				hook.Initialize(context.Background(), ep)
 			}).To(Panic())
 		})
 	})
 
 	Describe("Accept", func() {
 		BeforeEach(func() {
-			if err := hook.Initialize(context.Background(), transport); err != nil {
+			if err := hook.Initialize(context.Background(), ep); err != nil {
 				panic(err)
 			}
 		})
@@ -114,16 +114,16 @@ var _ = Describe("InboundHook", func() {
 
 var _ = Describe("OutboundHook", func() {
 	var (
-		before    *observabilitytest.BeforeOutboundObserverMock
-		after     *observabilitytest.AfterOutboundObserverMock
-		transport *endpointtest.TransportMock
-		next      *endpointtest.OutboundPipelineMock
-		env       endpoint.OutboundEnvelope
-		hook      *OutboundHook
+		before *observabilitytest.BeforeOutboundObserverMock
+		after  *observabilitytest.AfterOutboundObserverMock
+		ep     *endpoint.Endpoint
+		next   *endpointtest.OutboundPipelineMock
+		env    endpoint.OutboundEnvelope
+		hook   *OutboundHook
 	)
 
 	BeforeEach(func() {
-		transport = &endpointtest.TransportMock{}
+		ep = &endpoint.Endpoint{}
 		before = &observabilitytest.BeforeOutboundObserverMock{
 			BeforeOutboundFunc: func(context.Context, endpoint.OutboundEnvelope) {},
 		}
@@ -131,7 +131,7 @@ var _ = Describe("OutboundHook", func() {
 			AfterOutboundFunc: func(context.Context, endpoint.OutboundEnvelope, error) {},
 		}
 		next = &endpointtest.OutboundPipelineMock{
-			InitializeFunc: func(context.Context, endpoint.Transport) error { return nil },
+			InitializeFunc: func(context.Context, *endpoint.Endpoint) error { return nil },
 			AcceptFunc:     func(context.Context, endpoint.OutboundEnvelope) error { return nil },
 		}
 		env = endpoint.OutboundEnvelope{
@@ -147,10 +147,10 @@ var _ = Describe("OutboundHook", func() {
 
 	Describe("Initialize", func() {
 		It("initializes the next stage", func() {
-			err := hook.Initialize(context.Background(), transport)
+			err := hook.Initialize(context.Background(), ep)
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(next.InitializeCalls()).To(HaveLen(1))
-			Expect(next.InitializeCalls()[0].T).To(Equal(transport))
+			Expect(next.InitializeCalls()[0].Ep).To(Equal(ep))
 		})
 
 		It("panics if an observer does not implement either of the outbound observer interfaces", func() {
@@ -158,14 +158,14 @@ var _ = Describe("OutboundHook", func() {
 			hook.Observers = append(hook.Observers, &observabilitytest.BeforeInboundObserverMock{})
 
 			Expect(func() {
-				hook.Initialize(context.Background(), transport)
+				hook.Initialize(context.Background(), ep)
 			}).To(Panic())
 		})
 	})
 
 	Describe("Accept", func() {
 		BeforeEach(func() {
-			if err := hook.Initialize(context.Background(), transport); err != nil {
+			if err := hook.Initialize(context.Background(), ep); err != nil {
 				panic(err)
 			}
 		})

@@ -23,7 +23,7 @@ var (
 //             AcceptFunc: func(in1 context.Context, in2 endpoint.MessageSink, in3 endpoint.InboundEnvelope) error {
 // 	               panic("TODO: mock out the Accept method")
 //             },
-//             InitializeFunc: func(ctx context.Context, t endpoint.Transport) error {
+//             InitializeFunc: func(ctx context.Context, ep *endpoint.Endpoint) error {
 // 	               panic("TODO: mock out the Initialize method")
 //             },
 //         }
@@ -37,7 +37,7 @@ type InboundPipelineMock struct {
 	AcceptFunc func(in1 context.Context, in2 endpoint.MessageSink, in3 endpoint.InboundEnvelope) error
 
 	// InitializeFunc mocks the Initialize method.
-	InitializeFunc func(ctx context.Context, t endpoint.Transport) error
+	InitializeFunc func(ctx context.Context, ep *endpoint.Endpoint) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -54,8 +54,8 @@ type InboundPipelineMock struct {
 		Initialize []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// T is the t argument value.
-			T endpoint.Transport
+			// Ep is the ep argument value.
+			Ep *endpoint.Endpoint
 		}
 	}
 }
@@ -100,21 +100,21 @@ func (mock *InboundPipelineMock) AcceptCalls() []struct {
 }
 
 // Initialize calls InitializeFunc.
-func (mock *InboundPipelineMock) Initialize(ctx context.Context, t endpoint.Transport) error {
+func (mock *InboundPipelineMock) Initialize(ctx context.Context, ep *endpoint.Endpoint) error {
 	if mock.InitializeFunc == nil {
 		panic("moq: InboundPipelineMock.InitializeFunc is nil but InboundPipeline.Initialize was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
-		T   endpoint.Transport
+		Ep  *endpoint.Endpoint
 	}{
 		Ctx: ctx,
-		T:   t,
+		Ep:  ep,
 	}
 	lockInboundPipelineMockInitialize.Lock()
 	mock.calls.Initialize = append(mock.calls.Initialize, callInfo)
 	lockInboundPipelineMockInitialize.Unlock()
-	return mock.InitializeFunc(ctx, t)
+	return mock.InitializeFunc(ctx, ep)
 }
 
 // InitializeCalls gets all the calls that were made to Initialize.
@@ -122,11 +122,11 @@ func (mock *InboundPipelineMock) Initialize(ctx context.Context, t endpoint.Tran
 //     len(mockedInboundPipeline.InitializeCalls())
 func (mock *InboundPipelineMock) InitializeCalls() []struct {
 	Ctx context.Context
-	T   endpoint.Transport
+	Ep  *endpoint.Endpoint
 } {
 	var calls []struct {
 		Ctx context.Context
-		T   endpoint.Transport
+		Ep  *endpoint.Endpoint
 	}
 	lockInboundPipelineMockInitialize.RLock()
 	calls = mock.calls.Initialize
@@ -148,7 +148,7 @@ var (
 //             AcceptFunc: func(ctx context.Context, env endpoint.OutboundEnvelope) error {
 // 	               panic("TODO: mock out the Accept method")
 //             },
-//             InitializeFunc: func(ctx context.Context, t endpoint.Transport) error {
+//             InitializeFunc: func(ctx context.Context, ep *endpoint.Endpoint) error {
 // 	               panic("TODO: mock out the Initialize method")
 //             },
 //         }
@@ -162,7 +162,7 @@ type OutboundPipelineMock struct {
 	AcceptFunc func(ctx context.Context, env endpoint.OutboundEnvelope) error
 
 	// InitializeFunc mocks the Initialize method.
-	InitializeFunc func(ctx context.Context, t endpoint.Transport) error
+	InitializeFunc func(ctx context.Context, ep *endpoint.Endpoint) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -177,8 +177,8 @@ type OutboundPipelineMock struct {
 		Initialize []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// T is the t argument value.
-			T endpoint.Transport
+			// Ep is the ep argument value.
+			Ep *endpoint.Endpoint
 		}
 	}
 }
@@ -219,21 +219,21 @@ func (mock *OutboundPipelineMock) AcceptCalls() []struct {
 }
 
 // Initialize calls InitializeFunc.
-func (mock *OutboundPipelineMock) Initialize(ctx context.Context, t endpoint.Transport) error {
+func (mock *OutboundPipelineMock) Initialize(ctx context.Context, ep *endpoint.Endpoint) error {
 	if mock.InitializeFunc == nil {
 		panic("moq: OutboundPipelineMock.InitializeFunc is nil but OutboundPipeline.Initialize was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
-		T   endpoint.Transport
+		Ep  *endpoint.Endpoint
 	}{
 		Ctx: ctx,
-		T:   t,
+		Ep:  ep,
 	}
 	lockOutboundPipelineMockInitialize.Lock()
 	mock.calls.Initialize = append(mock.calls.Initialize, callInfo)
 	lockOutboundPipelineMockInitialize.Unlock()
-	return mock.InitializeFunc(ctx, t)
+	return mock.InitializeFunc(ctx, ep)
 }
 
 // InitializeCalls gets all the calls that were made to Initialize.
@@ -241,11 +241,11 @@ func (mock *OutboundPipelineMock) Initialize(ctx context.Context, t endpoint.Tra
 //     len(mockedOutboundPipeline.InitializeCalls())
 func (mock *OutboundPipelineMock) InitializeCalls() []struct {
 	Ctx context.Context
-	T   endpoint.Transport
+	Ep  *endpoint.Endpoint
 } {
 	var calls []struct {
 		Ctx context.Context
-		T   endpoint.Transport
+		Ep  *endpoint.Endpoint
 	}
 	lockOutboundPipelineMockInitialize.RLock()
 	calls = mock.calls.Initialize

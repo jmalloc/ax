@@ -14,8 +14,10 @@ type Dispatcher struct {
 	Routes HandlerTable
 }
 
-// Initialize subscribes t to events that the message handlers intend to handle.
-func (d *Dispatcher) Initialize(ctx context.Context, t endpoint.Transport) error {
+// Initialize is called during initialization of the endpoint, after the
+// transport is initialized. It can be used to inspect or furhter configure the
+// endpoint as per the needs of the pipeline.
+func (d *Dispatcher) Initialize(ctx context.Context, ep *endpoint.Endpoint) error {
 	var unicast, multicast ax.MessageTypeSet
 
 	for mt := range d.Routes {
@@ -29,11 +31,11 @@ func (d *Dispatcher) Initialize(ctx context.Context, t endpoint.Transport) error
 		}
 	}
 
-	if err := t.Subscribe(ctx, endpoint.OpSendUnicast, unicast); err != nil {
+	if err := ep.Transport.Subscribe(ctx, endpoint.OpSendUnicast, unicast); err != nil {
 		return err
 	}
 
-	return t.Subscribe(ctx, endpoint.OpSendMulticast, multicast)
+	return ep.Transport.Subscribe(ctx, endpoint.OpSendMulticast, multicast)
 }
 
 // Accept dispatches env to zero or more message handlers as per the dispatch

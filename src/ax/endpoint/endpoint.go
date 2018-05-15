@@ -56,13 +56,13 @@ func (ep *Endpoint) initialize(ctx context.Context) (err error) {
 		}
 
 		if ep.In != nil {
-			err = ep.In.Initialize(ctx, ep.Transport)
+			err = ep.In.Initialize(ctx, ep)
 			if err != nil {
 				return
 			}
 		}
 
-		err = ep.Out.Initialize(ctx, ep.Transport)
+		err = ep.Out.Initialize(ctx, ep)
 		if err != nil {
 			return
 		}

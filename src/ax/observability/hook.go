@@ -18,9 +18,10 @@ type InboundHook struct {
 	after  []AfterInboundObserver
 }
 
-// Initialize is called after the transport is initialized. It can be used
-// to inspect or configure the transport as per the needs of the pipeline.
-func (o *InboundHook) Initialize(ctx context.Context, t endpoint.Transport) error {
+// Initialize is called during initialization of the endpoint, after the
+// transport is initialized. It can be used to inspect or furhter configure the
+// endpoint as per the needs of the pipeline.
+func (o *InboundHook) Initialize(ctx context.Context, ep *endpoint.Endpoint) error {
 	for _, v := range o.Observers {
 		used := false
 
@@ -42,7 +43,7 @@ func (o *InboundHook) Initialize(ctx context.Context, t endpoint.Transport) erro
 		}
 	}
 
-	return o.Next.Initialize(ctx, t)
+	return o.Next.Initialize(ctx, ep)
 }
 
 // Accept forwards an inbound message through the pipeline until
@@ -71,9 +72,10 @@ type OutboundHook struct {
 	after  []AfterOutboundObserver
 }
 
-// Initialize is called after the transport is initialized. It can be used
-// to inspect or configure the transport as per the needs of the pipeline.
-func (o *OutboundHook) Initialize(ctx context.Context, t endpoint.Transport) error {
+// Initialize is called during initialization of the endpoint, after the
+// transport is initialized. It can be used to inspect or furhter configure the
+// endpoint as per the needs of the pipeline.
+func (o *OutboundHook) Initialize(ctx context.Context, ep *endpoint.Endpoint) error {
 	for _, v := range o.Observers {
 		used := false
 
@@ -95,7 +97,7 @@ func (o *OutboundHook) Initialize(ctx context.Context, t endpoint.Transport) err
 		}
 	}
 
-	return o.Next.Initialize(ctx, t)
+	return o.Next.Initialize(ctx, ep)
 }
 
 // Accept processes the message encapsulated in env.

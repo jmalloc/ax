@@ -17,9 +17,11 @@ type Deduplicator struct {
 	Next       endpoint.InboundPipeline
 }
 
-// Initialize calls d.Next.Initialize()
-func (d *Deduplicator) Initialize(ctx context.Context, t endpoint.Transport) error {
-	return d.Next.Initialize(ctx, t)
+// Initialize is called during initialization of the endpoint, after the
+// transport is initialized. It can be used to inspect or furhter configure the
+// endpoint as per the needs of the pipeline.
+func (d *Deduplicator) Initialize(ctx context.Context, ep *endpoint.Endpoint) error {
+	return d.Next.Initialize(ctx, ep)
 }
 
 // Accept passes env to the next pipeline stage only if it has not been
