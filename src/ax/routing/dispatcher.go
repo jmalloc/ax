@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/ax/bus"
+	"github.com/jmalloc/ax/src/ax/endpoint"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -15,7 +15,7 @@ type Dispatcher struct {
 }
 
 // Initialize subscribes t to events that the message handlers intend to handle.
-func (d *Dispatcher) Initialize(ctx context.Context, t bus.Transport) error {
+func (d *Dispatcher) Initialize(ctx context.Context, t endpoint.Transport) error {
 	var unicast, multicast ax.MessageTypeSet
 
 	for mt := range d.Routes {
@@ -29,11 +29,11 @@ func (d *Dispatcher) Initialize(ctx context.Context, t bus.Transport) error {
 		}
 	}
 
-	if err := t.Subscribe(ctx, bus.OpSendUnicast, unicast); err != nil {
+	if err := t.Subscribe(ctx, endpoint.OpSendUnicast, unicast); err != nil {
 		return err
 	}
 
-	return t.Subscribe(ctx, bus.OpSendMulticast, multicast)
+	return t.Subscribe(ctx, endpoint.OpSendMulticast, multicast)
 }
 
 // Accept dispatches env to zero or more message handlers as per the dispatch
@@ -43,8 +43,8 @@ func (d *Dispatcher) Initialize(ctx context.Context, t bus.Transport) error {
 // any messages sent using s within that context are configured as children of env.
 //
 // Each message handler is invoked on its own goroutine.
-func (d *Dispatcher) Accept(ctx context.Context, s bus.MessageSink, env bus.InboundEnvelope) error {
-	ctx = bus.WithEnvelope(ctx, env.Envelope)
+func (d *Dispatcher) Accept(ctx context.Context, s endpoint.MessageSink, env endpoint.InboundEnvelope) error {
+	ctx = endpoint.WithEnvelope(ctx, env.Envelope)
 	wg, ctx := errgroup.WithContext(ctx)
 
 	for _, h := range d.Routes.Lookup(env.Type()) {
@@ -52,7 +52,7 @@ func (d *Dispatcher) Accept(ctx context.Context, s bus.MessageSink, env bus.Inbo
 			wg.Go(func() error {
 				return h.HandleMessage(
 					ctx,
-					bus.SinkSender{Sink: s},
+					endpoint.SinkSender{Sink: s},
 					env.Envelope,
 				)
 			})

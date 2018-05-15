@@ -6,7 +6,7 @@ import (
 	"runtime"
 
 	"github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/ax/bus"
+	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/streadway/amqp"
 )
 
@@ -16,7 +16,7 @@ var DefaultReceiveConcurrency = runtime.NumCPU() * 2
 // DefaultSendConcurrency is the default number of messages to send concurrently.
 var DefaultSendConcurrency = runtime.NumCPU() * 10
 
-// Transport is an implementation of bus.Transport that uses RabbitMQ to
+// Transport is an implementation of endpoint.Transport that uses RabbitMQ to
 // communicate messages between endpoints.
 type Transport struct {
 	Conn               *amqp.Connection
@@ -58,15 +58,15 @@ func (t *Transport) Initialize(ctx context.Context, ep string) error {
 
 // Subscribe instructs the transport to listen to multicast messages of the
 // given type.
-func (t *Transport) Subscribe(ctx context.Context, op bus.Operation, mt ax.MessageTypeSet) error {
+func (t *Transport) Subscribe(ctx context.Context, op endpoint.Operation, mt ax.MessageTypeSet) error {
 	if err := t.startConsumer(); err != nil {
 		return err
 	}
 
 	switch op {
-	case bus.OpSendUnicast:
+	case endpoint.OpSendUnicast:
 		return t.con.BindUnicast(mt)
-	case bus.OpSendMulticast:
+	case endpoint.OpSendMulticast:
 		return t.con.BindMulticast(mt)
 	default:
 		panic(fmt.Sprintf("unrecognized outbound operation: %d", op))
@@ -74,7 +74,7 @@ func (t *Transport) Subscribe(ctx context.Context, op bus.Operation, mt ax.Messa
 }
 
 // Send sends env via the transport.
-func (t *Transport) Send(ctx context.Context, env bus.OutboundEnvelope) error {
+func (t *Transport) Send(ctx context.Context, env endpoint.OutboundEnvelope) error {
 	var pub amqp.Publishing
 
 	pub, err := marshalMessage(t.ep, env)
@@ -83,9 +83,9 @@ func (t *Transport) Send(ctx context.Context, env bus.OutboundEnvelope) error {
 	}
 
 	switch env.Operation {
-	case bus.OpSendUnicast:
+	case endpoint.OpSendUnicast:
 		return t.pub.PublishUnicast(ctx, pub, env.DestinationEndpoint)
-	case bus.OpSendMulticast:
+	case endpoint.OpSendMulticast:
 		return t.pub.PublishMulticast(ctx, pub)
 	default:
 		panic(fmt.Sprintf("unrecognized outbound operation: %d", env.Operation))
@@ -94,7 +94,7 @@ func (t *Transport) Send(ctx context.Context, env bus.OutboundEnvelope) error {
 
 // Receive returns the next message sent to this endpoint.
 // It blocks until a message is available, or ctx is canceled.
-func (t *Transport) Receive(ctx context.Context) (env bus.InboundEnvelope, ack bus.Acknowledger, err error) {
+func (t *Transport) Receive(ctx context.Context) (env endpoint.InboundEnvelope, ack endpoint.Acknowledger, err error) {
 	err = t.startConsumer()
 	if err != nil {
 		return

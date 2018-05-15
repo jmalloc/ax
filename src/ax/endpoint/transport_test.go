@@ -1,10 +1,10 @@
-package bus_test
+package endpoint_test
 
 import (
 	"context"
 
-	. "github.com/jmalloc/ax/src/ax/bus"
-	"github.com/jmalloc/ax/src/internal/bustest"
+	. "github.com/jmalloc/ax/src/ax/endpoint"
+	"github.com/jmalloc/ax/src/internal/endpointtest"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -15,7 +15,7 @@ var _ = Describe("TransportStage", func() {
 			stage := &TransportStage{}
 
 			ctx := context.Background()
-			tr := &bustest.TransportMock{
+			tr := &endpointtest.TransportMock{
 				SendFunc: func(context.Context, OutboundEnvelope) error {
 					return nil
 				},

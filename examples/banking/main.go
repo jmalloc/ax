@@ -10,7 +10,6 @@ import (
 
 	"github.com/jmalloc/ax/examples/banking/messages"
 	"github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/ax/bus"
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/observability"
 	"github.com/jmalloc/ax/src/ax/outbox"

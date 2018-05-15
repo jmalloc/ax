@@ -1,9 +1,9 @@
-package bus_test
+package endpoint_test
 
 import (
 	"context"
 
-	. "github.com/jmalloc/ax/src/ax/bus"
+	. "github.com/jmalloc/ax/src/ax/endpoint"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

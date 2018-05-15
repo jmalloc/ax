@@ -2,13 +2,13 @@ package axrmq
 
 import (
 	"github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/ax/bus"
+	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/marshaling"
 	"github.com/streadway/amqp"
 )
 
 // marshalMessage marshals a message envelope to an AMQP "publishing" message.
-func marshalMessage(ep string, env bus.OutboundEnvelope) (amqp.Publishing, error) {
+func marshalMessage(ep string, env endpoint.OutboundEnvelope) (amqp.Publishing, error) {
 	pub := amqp.Publishing{
 		AppId:         ep,
 		MessageId:     env.MessageID.Get(),
@@ -26,8 +26,8 @@ func marshalMessage(ep string, env bus.OutboundEnvelope) (amqp.Publishing, error
 
 // unmarshalMessage unmarshals a message envelope from an AMQP "delivery"
 // message.
-func unmarshalMessage(del amqp.Delivery) (bus.InboundEnvelope, error) {
-	env := bus.InboundEnvelope{
+func unmarshalMessage(del amqp.Delivery) (endpoint.InboundEnvelope, error) {
+	env := endpoint.InboundEnvelope{
 		SourceEndpoint: del.AppId,
 	}
 

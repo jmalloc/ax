@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/jmalloc/ax/src/ax/bus"
+	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/persistence"
 )
 
@@ -14,11 +14,11 @@ import (
 // See http://gistlabs.com/2014/05/the-outbox/
 type Deduplicator struct {
 	Repository Repository
-	Next       bus.InboundPipeline
+	Next       endpoint.InboundPipeline
 }
 
 // Initialize calls d.Next.Initialize()
-func (d *Deduplicator) Initialize(ctx context.Context, t bus.Transport) error {
+func (d *Deduplicator) Initialize(ctx context.Context, t endpoint.Transport) error {
 	return d.Next.Initialize(ctx, t)
 }
 
@@ -27,7 +27,7 @@ func (d *Deduplicator) Initialize(ctx context.Context, t bus.Transport) error {
 //
 // If it has been delivered previously, the messages that were produced the
 // first time are sent using s.
-func (d *Deduplicator) Accept(ctx context.Context, s bus.MessageSink, env bus.InboundEnvelope) error {
+func (d *Deduplicator) Accept(ctx context.Context, s endpoint.MessageSink, env endpoint.InboundEnvelope) error {
 	ds, ok := persistence.GetDataStore(ctx)
 	if !ok {
 		return errors.New("no data store is available in ctx")
@@ -60,14 +60,14 @@ func (d *Deduplicator) Accept(ctx context.Context, s bus.MessageSink, env bus.In
 
 // forward passes env to the next pipeline stage and persists the messages it produces to the outbox.
 // The messages are also returned to be sent via the transport immediately.
-func (d *Deduplicator) forward(ctx context.Context, env bus.InboundEnvelope) ([]bus.OutboundEnvelope, error) {
+func (d *Deduplicator) forward(ctx context.Context, env endpoint.InboundEnvelope) ([]endpoint.OutboundEnvelope, error) {
 	tx, com, err := persistence.BeginTx(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer com.Rollback()
 
-	var s bus.BufferedSink
+	var s endpoint.BufferedSink
 
 	if err := d.Next.Accept(
 		persistence.WithTx(ctx, tx),
@@ -93,8 +93,8 @@ func (d *Deduplicator) forward(ctx context.Context, env bus.InboundEnvelope) ([]
 // as sent.
 func (d *Deduplicator) send(
 	ctx context.Context,
-	s bus.MessageSink,
-	env bus.OutboundEnvelope,
+	s endpoint.MessageSink,
+	env endpoint.OutboundEnvelope,
 ) error {
 	if err := s.Accept(ctx, env); err != nil {
 		return err

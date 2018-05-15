@@ -3,16 +3,15 @@ package endpoint
 import (
 	"context"
 
-	"github.com/jmalloc/ax/src/ax/bus"
 	"github.com/jmalloc/ax/src/internal/servicegroup"
 )
 
 // receiver receives a message from a transport, forwards it to the inbound
 // pipeline, then acknowledges the message.
 type receiver struct {
-	Transport   bus.Transport
-	In          bus.InboundPipeline
-	Out         bus.OutboundPipeline
+	Transport   Transport
+	In          InboundPipeline
+	Out         OutboundPipeline
 	RetryPolicy RetryPolicy
 
 	wg *servicegroup.Group
@@ -49,8 +48,8 @@ func (r *receiver) receive(ctx context.Context) error {
 
 func (r *receiver) process(
 	ctx context.Context,
-	env bus.InboundEnvelope,
-	ack bus.Acknowledger,
+	env InboundEnvelope,
+	ack Acknowledger,
 ) error {
 	err := r.In.Accept(ctx, r.Out, env)
 

@@ -6,15 +6,14 @@ import (
 	"sync"
 
 	"github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/ax/bus"
 )
 
 // Endpoint is a named source and recipient of messages.
 type Endpoint struct {
 	Name        string
-	Transport   bus.Transport
-	In          bus.InboundPipeline
-	Out         bus.OutboundPipeline
+	Transport   Transport
+	In          InboundPipeline
+	Out         OutboundPipeline
 	RetryPolicy RetryPolicy
 
 	initOnce sync.Once
@@ -26,7 +25,7 @@ func (ep *Endpoint) NewSender(ctx context.Context) (ax.Sender, error) {
 		return nil, err
 	}
 
-	return bus.SinkSender{Sink: ep.Out}, nil
+	return SinkSender{Sink: ep.Out}, nil
 }
 
 // StartReceiving processes inbound messages until an error occurrs or ctx is canceled.

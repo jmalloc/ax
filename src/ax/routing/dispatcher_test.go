@@ -5,9 +5,9 @@ import (
 	"errors"
 
 	"github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/ax/bus"
+	"github.com/jmalloc/ax/src/ax/endpoint"
 	. "github.com/jmalloc/ax/src/ax/routing"
-	"github.com/jmalloc/ax/src/internal/bustest"
+	"github.com/jmalloc/ax/src/internal/endpointtest"
 	"github.com/jmalloc/ax/src/internal/messagetest"
 	"github.com/jmalloc/ax/src/internal/routingtest"
 	. "github.com/onsi/ginkgo"
@@ -17,7 +17,7 @@ import (
 var _ = Describe("Dispatcher", func() {
 	var (
 		h1, h2, h3 *routingtest.MessageHandlerMock
-		sink       *bus.BufferedSink
+		sink       *endpoint.BufferedSink
 		dispatcher *Dispatcher
 	)
 
@@ -54,14 +54,14 @@ var _ = Describe("Dispatcher", func() {
 		t, err := NewHandlerTable(h1, h2, h3)
 		Expect(err).ShouldNot(HaveOccurred())
 
-		sink = &bus.BufferedSink{}
+		sink = &endpoint.BufferedSink{}
 		dispatcher = &Dispatcher{Routes: t}
 	})
 
 	Describe("Initialize", func() {
 		It("subscribes the transport to all handled message types", func() {
-			t := &bustest.TransportMock{
-				SubscribeFunc: func(context.Context, bus.Operation, ax.MessageTypeSet) error {
+			t := &endpointtest.TransportMock{
+				SubscribeFunc: func(context.Context, endpoint.Operation, ax.MessageTypeSet) error {
 					return nil
 				},
 			}
@@ -73,11 +73,11 @@ var _ = Describe("Dispatcher", func() {
 			Expect(t.SubscribeCalls()).To(ConsistOf(
 				struct {
 					Ctx context.Context
-					Op  bus.Operation
+					Op  endpoint.Operation
 					Mt  ax.MessageTypeSet
 				}{
 					ctx,
-					bus.OpSendUnicast,
+					endpoint.OpSendUnicast,
 					ax.TypesOf(
 						&messagetest.Command{},
 						&messagetest.Message{},
@@ -85,11 +85,11 @@ var _ = Describe("Dispatcher", func() {
 				},
 				struct {
 					Ctx context.Context
-					Op  bus.Operation
+					Op  endpoint.Operation
 					Mt  ax.MessageTypeSet
 				}{
 					ctx,
-					bus.OpSendMulticast,
+					endpoint.OpSendMulticast,
 					ax.TypesOf(
 						&messagetest.Event{},
 						&messagetest.Message{},
@@ -101,7 +101,7 @@ var _ = Describe("Dispatcher", func() {
 
 	Describe("Accept", func() {
 		ctx := context.Background()
-		env := bus.InboundEnvelope{
+		env := endpoint.InboundEnvelope{
 			Envelope: ax.NewEnvelope(
 				&messagetest.Message{},
 			),
@@ -119,7 +119,7 @@ var _ = Describe("Dispatcher", func() {
 			h1.HandleMessageFunc = func(ctx context.Context, _ ax.Sender, _ ax.Envelope) error {
 				defer GinkgoRecover()
 
-				e, ok := bus.GetEnvelope(ctx)
+				e, ok := endpoint.GetEnvelope(ctx)
 
 				Expect(ok).To(BeTrue())
 				Expect(e).To(BeIdenticalTo(env.Envelope))

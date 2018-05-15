@@ -5,7 +5,7 @@ package observabilitytest
 
 import (
 	"context"
-	"github.com/jmalloc/ax/src/ax/bus"
+	"github.com/jmalloc/ax/src/ax/endpoint"
 	"sync"
 )
 
@@ -19,7 +19,7 @@ var (
 //
 //         // make and configure a mocked BeforeInboundObserver
 //         mockedBeforeInboundObserver := &BeforeInboundObserverMock{
-//             BeforeInboundFunc: func(ctx context.Context, env bus.InboundEnvelope)  {
+//             BeforeInboundFunc: func(ctx context.Context, env endpoint.InboundEnvelope)  {
 // 	               panic("TODO: mock out the BeforeInbound method")
 //             },
 //         }
@@ -30,7 +30,7 @@ var (
 //     }
 type BeforeInboundObserverMock struct {
 	// BeforeInboundFunc mocks the BeforeInbound method.
-	BeforeInboundFunc func(ctx context.Context, env bus.InboundEnvelope)
+	BeforeInboundFunc func(ctx context.Context, env endpoint.InboundEnvelope)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -39,19 +39,19 @@ type BeforeInboundObserverMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// Env is the env argument value.
-			Env bus.InboundEnvelope
+			Env endpoint.InboundEnvelope
 		}
 	}
 }
 
 // BeforeInbound calls BeforeInboundFunc.
-func (mock *BeforeInboundObserverMock) BeforeInbound(ctx context.Context, env bus.InboundEnvelope) {
+func (mock *BeforeInboundObserverMock) BeforeInbound(ctx context.Context, env endpoint.InboundEnvelope) {
 	if mock.BeforeInboundFunc == nil {
 		panic("moq: BeforeInboundObserverMock.BeforeInboundFunc is nil but BeforeInboundObserver.BeforeInbound was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
-		Env bus.InboundEnvelope
+		Env endpoint.InboundEnvelope
 	}{
 		Ctx: ctx,
 		Env: env,
@@ -67,11 +67,11 @@ func (mock *BeforeInboundObserverMock) BeforeInbound(ctx context.Context, env bu
 //     len(mockedBeforeInboundObserver.BeforeInboundCalls())
 func (mock *BeforeInboundObserverMock) BeforeInboundCalls() []struct {
 	Ctx context.Context
-	Env bus.InboundEnvelope
+	Env endpoint.InboundEnvelope
 } {
 	var calls []struct {
 		Ctx context.Context
-		Env bus.InboundEnvelope
+		Env endpoint.InboundEnvelope
 	}
 	lockBeforeInboundObserverMockBeforeInbound.RLock()
 	calls = mock.calls.BeforeInbound
@@ -89,7 +89,7 @@ var (
 //
 //         // make and configure a mocked AfterInboundObserver
 //         mockedAfterInboundObserver := &AfterInboundObserverMock{
-//             AfterInboundFunc: func(ctx context.Context, env bus.InboundEnvelope, err error)  {
+//             AfterInboundFunc: func(ctx context.Context, env endpoint.InboundEnvelope, err error)  {
 // 	               panic("TODO: mock out the AfterInbound method")
 //             },
 //         }
@@ -100,7 +100,7 @@ var (
 //     }
 type AfterInboundObserverMock struct {
 	// AfterInboundFunc mocks the AfterInbound method.
-	AfterInboundFunc func(ctx context.Context, env bus.InboundEnvelope, err error)
+	AfterInboundFunc func(ctx context.Context, env endpoint.InboundEnvelope, err error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -109,7 +109,7 @@ type AfterInboundObserverMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// Env is the env argument value.
-			Env bus.InboundEnvelope
+			Env endpoint.InboundEnvelope
 			// Err is the err argument value.
 			Err error
 		}
@@ -117,13 +117,13 @@ type AfterInboundObserverMock struct {
 }
 
 // AfterInbound calls AfterInboundFunc.
-func (mock *AfterInboundObserverMock) AfterInbound(ctx context.Context, env bus.InboundEnvelope, err error) {
+func (mock *AfterInboundObserverMock) AfterInbound(ctx context.Context, env endpoint.InboundEnvelope, err error) {
 	if mock.AfterInboundFunc == nil {
 		panic("moq: AfterInboundObserverMock.AfterInboundFunc is nil but AfterInboundObserver.AfterInbound was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
-		Env bus.InboundEnvelope
+		Env endpoint.InboundEnvelope
 		Err error
 	}{
 		Ctx: ctx,
@@ -141,12 +141,12 @@ func (mock *AfterInboundObserverMock) AfterInbound(ctx context.Context, env bus.
 //     len(mockedAfterInboundObserver.AfterInboundCalls())
 func (mock *AfterInboundObserverMock) AfterInboundCalls() []struct {
 	Ctx context.Context
-	Env bus.InboundEnvelope
+	Env endpoint.InboundEnvelope
 	Err error
 } {
 	var calls []struct {
 		Ctx context.Context
-		Env bus.InboundEnvelope
+		Env endpoint.InboundEnvelope
 		Err error
 	}
 	lockAfterInboundObserverMockAfterInbound.RLock()
@@ -165,7 +165,7 @@ var (
 //
 //         // make and configure a mocked BeforeOutboundObserver
 //         mockedBeforeOutboundObserver := &BeforeOutboundObserverMock{
-//             BeforeOutboundFunc: func(ctx context.Context, env bus.OutboundEnvelope)  {
+//             BeforeOutboundFunc: func(ctx context.Context, env endpoint.OutboundEnvelope)  {
 // 	               panic("TODO: mock out the BeforeOutbound method")
 //             },
 //         }
@@ -176,7 +176,7 @@ var (
 //     }
 type BeforeOutboundObserverMock struct {
 	// BeforeOutboundFunc mocks the BeforeOutbound method.
-	BeforeOutboundFunc func(ctx context.Context, env bus.OutboundEnvelope)
+	BeforeOutboundFunc func(ctx context.Context, env endpoint.OutboundEnvelope)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -185,19 +185,19 @@ type BeforeOutboundObserverMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// Env is the env argument value.
-			Env bus.OutboundEnvelope
+			Env endpoint.OutboundEnvelope
 		}
 	}
 }
 
 // BeforeOutbound calls BeforeOutboundFunc.
-func (mock *BeforeOutboundObserverMock) BeforeOutbound(ctx context.Context, env bus.OutboundEnvelope) {
+func (mock *BeforeOutboundObserverMock) BeforeOutbound(ctx context.Context, env endpoint.OutboundEnvelope) {
 	if mock.BeforeOutboundFunc == nil {
 		panic("moq: BeforeOutboundObserverMock.BeforeOutboundFunc is nil but BeforeOutboundObserver.BeforeOutbound was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
-		Env bus.OutboundEnvelope
+		Env endpoint.OutboundEnvelope
 	}{
 		Ctx: ctx,
 		Env: env,
@@ -213,11 +213,11 @@ func (mock *BeforeOutboundObserverMock) BeforeOutbound(ctx context.Context, env 
 //     len(mockedBeforeOutboundObserver.BeforeOutboundCalls())
 func (mock *BeforeOutboundObserverMock) BeforeOutboundCalls() []struct {
 	Ctx context.Context
-	Env bus.OutboundEnvelope
+	Env endpoint.OutboundEnvelope
 } {
 	var calls []struct {
 		Ctx context.Context
-		Env bus.OutboundEnvelope
+		Env endpoint.OutboundEnvelope
 	}
 	lockBeforeOutboundObserverMockBeforeOutbound.RLock()
 	calls = mock.calls.BeforeOutbound
@@ -235,7 +235,7 @@ var (
 //
 //         // make and configure a mocked AfterOutboundObserver
 //         mockedAfterOutboundObserver := &AfterOutboundObserverMock{
-//             AfterOutboundFunc: func(ctx context.Context, env bus.OutboundEnvelope, err error)  {
+//             AfterOutboundFunc: func(ctx context.Context, env endpoint.OutboundEnvelope, err error)  {
 // 	               panic("TODO: mock out the AfterOutbound method")
 //             },
 //         }
@@ -246,7 +246,7 @@ var (
 //     }
 type AfterOutboundObserverMock struct {
 	// AfterOutboundFunc mocks the AfterOutbound method.
-	AfterOutboundFunc func(ctx context.Context, env bus.OutboundEnvelope, err error)
+	AfterOutboundFunc func(ctx context.Context, env endpoint.OutboundEnvelope, err error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -255,7 +255,7 @@ type AfterOutboundObserverMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// Env is the env argument value.
-			Env bus.OutboundEnvelope
+			Env endpoint.OutboundEnvelope
 			// Err is the err argument value.
 			Err error
 		}
@@ -263,13 +263,13 @@ type AfterOutboundObserverMock struct {
 }
 
 // AfterOutbound calls AfterOutboundFunc.
-func (mock *AfterOutboundObserverMock) AfterOutbound(ctx context.Context, env bus.OutboundEnvelope, err error) {
+func (mock *AfterOutboundObserverMock) AfterOutbound(ctx context.Context, env endpoint.OutboundEnvelope, err error) {
 	if mock.AfterOutboundFunc == nil {
 		panic("moq: AfterOutboundObserverMock.AfterOutboundFunc is nil but AfterOutboundObserver.AfterOutbound was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
-		Env bus.OutboundEnvelope
+		Env endpoint.OutboundEnvelope
 		Err error
 	}{
 		Ctx: ctx,
@@ -287,12 +287,12 @@ func (mock *AfterOutboundObserverMock) AfterOutbound(ctx context.Context, env bu
 //     len(mockedAfterOutboundObserver.AfterOutboundCalls())
 func (mock *AfterOutboundObserverMock) AfterOutboundCalls() []struct {
 	Ctx context.Context
-	Env bus.OutboundEnvelope
+	Env endpoint.OutboundEnvelope
 	Err error
 } {
 	var calls []struct {
 		Ctx context.Context
-		Env bus.OutboundEnvelope
+		Env endpoint.OutboundEnvelope
 		Err error
 	}
 	lockAfterOutboundObserverMockAfterOutbound.RLock()

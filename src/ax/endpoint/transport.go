@@ -1,4 +1,4 @@
-package bus
+package endpoint
 
 import (
 	"context"

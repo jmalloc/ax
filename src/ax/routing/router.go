@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/ax/bus"
+	"github.com/jmalloc/ax/src/ax/endpoint"
 )
 
 // Router is an outbound pipeline stage that choses a destination endpoint for
@@ -16,7 +16,7 @@ type Router struct {
 	Routes EndpointTable
 
 	// Next is the next stage in the pipeline.
-	Next bus.OutboundPipeline
+	Next endpoint.OutboundPipeline
 
 	// cache is a map of message type to endpoint, used to bypass scanning the
 	// routing rules once a route has already been established.
@@ -24,13 +24,13 @@ type Router struct {
 }
 
 // Initialize is called when the transport is initialized.
-func (r *Router) Initialize(ctx context.Context, t bus.Transport) error {
+func (r *Router) Initialize(ctx context.Context, t endpoint.Transport) error {
 	return r.Next.Initialize(ctx, t)
 }
 
 // Accept populates the evn.DestinationEndpoint field of unicast messages that
 // do not already have a DestinationEndpoint specified.
-func (r *Router) Accept(ctx context.Context, env bus.OutboundEnvelope) error {
+func (r *Router) Accept(ctx context.Context, env endpoint.OutboundEnvelope) error {
 	if err := r.ensureDestination(&env); err != nil {
 		return err
 	}
@@ -39,8 +39,8 @@ func (r *Router) Accept(ctx context.Context, env bus.OutboundEnvelope) error {
 }
 
 // ensureDestintion ensures that env.DestinationEndpoint is set if required.
-func (r *Router) ensureDestination(env *bus.OutboundEnvelope) error {
-	if env.Operation != bus.OpSendUnicast || env.DestinationEndpoint != "" {
+func (r *Router) ensureDestination(env *endpoint.OutboundEnvelope) error {
+	if env.Operation != endpoint.OpSendUnicast || env.DestinationEndpoint != "" {
 		return nil
 	}
 

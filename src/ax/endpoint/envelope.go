@@ -1,4 +1,4 @@
-package bus
+package endpoint
 
 import (
 	"github.com/jmalloc/ax/src/ax"

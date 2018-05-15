@@ -3,7 +3,7 @@ package observability
 import (
 	"context"
 
-	"github.com/jmalloc/ax/src/ax/bus"
+	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/twelf/src/twelf"
 )
 
@@ -13,7 +13,7 @@ type LoggingObserver struct {
 }
 
 // BeforeInbound logs information about an inbound message.
-func (o *LoggingObserver) BeforeInbound(ctx context.Context, env bus.InboundEnvelope) {
+func (o *LoggingObserver) BeforeInbound(ctx context.Context, env endpoint.InboundEnvelope) {
 	mt := env.Type()
 
 	o.log(
@@ -27,7 +27,7 @@ func (o *LoggingObserver) BeforeInbound(ctx context.Context, env bus.InboundEnve
 }
 
 // AfterInbound logs information about errors that occur processing an inbound message.
-func (o *LoggingObserver) AfterInbound(ctx context.Context, env bus.InboundEnvelope, err error) {
+func (o *LoggingObserver) AfterInbound(ctx context.Context, env endpoint.InboundEnvelope, err error) {
 	if err != nil {
 		o.log(
 			"error: %s  %s  [%s msg:%s cause:%s corr:%s]",
@@ -42,7 +42,7 @@ func (o *LoggingObserver) AfterInbound(ctx context.Context, env bus.InboundEnvel
 }
 
 // AfterOutbound logs information about an outbound message.
-func (o *LoggingObserver) AfterOutbound(ctx context.Context, env bus.OutboundEnvelope, err error) {
+func (o *LoggingObserver) AfterOutbound(ctx context.Context, env endpoint.OutboundEnvelope, err error) {
 	if err == nil {
 		o.log(
 			"send: %s  [%s msg:%s cause:%s corr:%s]",

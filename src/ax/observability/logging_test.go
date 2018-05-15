@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/ax/bus"
+	"github.com/jmalloc/ax/src/ax/endpoint"
 	. "github.com/jmalloc/ax/src/ax/observability"
 	"github.com/jmalloc/ax/src/internal/messagetest"
 	"github.com/jmalloc/twelf/src/twelf"
@@ -30,7 +30,7 @@ var _ = Describe("Logger", func() {
 	})
 
 	Context("inbound messages", func() {
-		env := bus.InboundEnvelope{
+		env := endpoint.InboundEnvelope{
 			Envelope: ax.Envelope{
 				Message: &messagetest.Command{},
 			},
@@ -75,7 +75,7 @@ var _ = Describe("Logger", func() {
 	})
 
 	Context("outbound messages", func() {
-		env := bus.OutboundEnvelope{
+		env := endpoint.OutboundEnvelope{
 			Envelope: ax.Envelope{
 				Message: &messagetest.Command{},
 			},

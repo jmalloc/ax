@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/ax/bus"
+	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/outbox"
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/internal/messagetest"
@@ -48,14 +48,14 @@ func RepositorySuite(
 
 		g.Describe("LoadOutbox", func() {
 			g.Context("when the outbox exists", func() {
-				var m1, m2 bus.OutboundEnvelope
+				var m1, m2 endpoint.OutboundEnvelope
 				var t1, t2 time.Time
 
 				g.BeforeEach(func() {
 					t1 = time.Now()
 					t2 = time.Now()
 
-					m1 = bus.OutboundEnvelope{
+					m1 = endpoint.OutboundEnvelope{
 						Envelope: ax.Envelope{
 							CausationID:   causationID,
 							CorrelationID: correlationID,
@@ -64,12 +64,12 @@ func RepositorySuite(
 								Value: "<foo>",
 							},
 						},
-						Operation:           bus.OpSendUnicast,
+						Operation:           endpoint.OpSendUnicast,
 						DestinationEndpoint: "<dest>",
 					}
 					m1.MessageID.GenerateUUID()
 
-					m2 = bus.OutboundEnvelope{
+					m2 = endpoint.OutboundEnvelope{
 						Envelope: ax.Envelope{
 							CausationID:   causationID,
 							CorrelationID: correlationID,
@@ -78,7 +78,7 @@ func RepositorySuite(
 								Value: "<bar>",
 							},
 						},
-						Operation: bus.OpSendMulticast,
+						Operation: endpoint.OpSendMulticast,
 					}
 					m2.MessageID.GenerateUUID()
 
@@ -92,7 +92,7 @@ func RepositorySuite(
 						ctx,
 						tx,
 						causationID,
-						[]bus.OutboundEnvelope{m1, m2},
+						[]endpoint.OutboundEnvelope{m1, m2},
 					)
 					if err != nil {
 						panic(err)
@@ -231,14 +231,14 @@ func RepositorySuite(
 				)
 				m.Expect(err).ShouldNot(m.HaveOccurred())
 
-				env := bus.OutboundEnvelope{
+				env := endpoint.OutboundEnvelope{
 					Envelope: ax.Envelope{
 						CausationID:   causationID,
 						CorrelationID: correlationID,
 						Time:          time.Now(),
 						Message:       &messagetest.Message{},
 					},
-					Operation:           bus.OpSendUnicast,
+					Operation:           endpoint.OpSendUnicast,
 					DestinationEndpoint: "<dest>",
 				}
 				env.MessageID.GenerateUUID()
@@ -247,7 +247,7 @@ func RepositorySuite(
 					ctx,
 					tx,
 					causationID,
-					[]bus.OutboundEnvelope{env},
+					[]endpoint.OutboundEnvelope{env},
 				)
 				m.Expect(err).Should(m.HaveOccurred())
 
@@ -267,14 +267,14 @@ func RepositorySuite(
 				m.Expect(err).ShouldNot(m.HaveOccurred())
 				defer com.Rollback()
 
-				env := bus.OutboundEnvelope{
+				env := endpoint.OutboundEnvelope{
 					Envelope: ax.Envelope{
 						CausationID:   causationID,
 						CorrelationID: correlationID,
 						Time:          time.Now(),
 						Message:       &messagetest.Message{},
 					},
-					Operation:           bus.OpSendUnicast,
+					Operation:           endpoint.OpSendUnicast,
 					DestinationEndpoint: "<dest>",
 				}
 				env.MessageID.GenerateUUID()
@@ -283,7 +283,7 @@ func RepositorySuite(
 					ctx,
 					tx,
 					causationID,
-					[]bus.OutboundEnvelope{env},
+					[]endpoint.OutboundEnvelope{env},
 				)
 				m.Expect(err).ShouldNot(m.HaveOccurred())
 

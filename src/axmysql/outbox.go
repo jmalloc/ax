@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/ax/bus"
+	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/marshaling"
 	"github.com/jmalloc/ax/src/ax/persistence"
 )
@@ -21,7 +21,7 @@ func (r *OutboxRepository) LoadOutbox(
 	ctx context.Context,
 	ds persistence.DataStore,
 	id ax.MessageID,
-) ([]bus.OutboundEnvelope, bool, error) {
+) ([]endpoint.OutboundEnvelope, bool, error) {
 	db := ds.(*DataStore).DB
 
 	row := db.QueryRowContext(
@@ -59,7 +59,7 @@ func (r *OutboxRepository) LoadOutbox(
 		return nil, false, err
 	}
 
-	var envelopes []bus.OutboundEnvelope
+	var envelopes []endpoint.OutboundEnvelope
 
 	for rows.Next() {
 		env, err := scanOutboxMessage(rows, id)
@@ -79,7 +79,7 @@ func (r *OutboxRepository) SaveOutbox(
 	ctx context.Context,
 	tx persistence.Tx,
 	id ax.MessageID,
-	envs []bus.OutboundEnvelope,
+	envs []endpoint.OutboundEnvelope,
 ) error {
 	stx := tx.(*Tx).tx
 
@@ -104,7 +104,7 @@ func (r *OutboxRepository) SaveOutbox(
 func (r *OutboxRepository) MarkAsSent(
 	ctx context.Context,
 	tx persistence.Tx,
-	env bus.OutboundEnvelope,
+	env endpoint.OutboundEnvelope,
 ) error {
 	_, err := tx.(*Tx).tx.ExecContext(
 		ctx,
@@ -114,8 +114,8 @@ func (r *OutboxRepository) MarkAsSent(
 	return err
 }
 
-func scanOutboxMessage(rows *sql.Rows, causationID ax.MessageID) (bus.OutboundEnvelope, error) {
-	env := bus.OutboundEnvelope{
+func scanOutboxMessage(rows *sql.Rows, causationID ax.MessageID) (endpoint.OutboundEnvelope, error) {
+	env := endpoint.OutboundEnvelope{
 		Envelope: ax.Envelope{
 			CausationID: causationID,
 		},
@@ -153,7 +153,7 @@ func scanOutboxMessage(rows *sql.Rows, causationID ax.MessageID) (bus.OutboundEn
 func insertOutboxMessage(
 	ctx context.Context,
 	tx *sql.Tx,
-	env bus.OutboundEnvelope,
+	env endpoint.OutboundEnvelope,
 ) error {
 	ct, body, err := marshaling.MarshalMessage(env.Message)
 	if err != nil {

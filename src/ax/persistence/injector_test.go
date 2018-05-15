@@ -3,9 +3,9 @@ package persistence_test
 import (
 	"context"
 
-	"github.com/jmalloc/ax/src/ax/bus"
+	"github.com/jmalloc/ax/src/ax/endpoint"
 	. "github.com/jmalloc/ax/src/ax/persistence"
-	"github.com/jmalloc/ax/src/internal/bustest"
+	"github.com/jmalloc/ax/src/internal/endpointtest"
 	"github.com/jmalloc/ax/src/internal/persistencetest"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -13,12 +13,12 @@ import (
 
 var _ = Describe("Injector", func() {
 	var (
-		next *bustest.InboundPipelineMock
+		next *endpointtest.InboundPipelineMock
 		inj  *Injector
 	)
 
 	BeforeEach(func() {
-		next = &bustest.InboundPipelineMock{}
+		next = &endpointtest.InboundPipelineMock{}
 		inj = &Injector{
 			DataStore: &persistencetest.DataStoreMock{},
 			Next:      next,
@@ -27,7 +27,7 @@ var _ = Describe("Injector", func() {
 
 	Describe("Initialize", func() {
 		It("calls the next pipeline with the data store in the context", func() {
-			next.InitializeFunc = func(ctx context.Context, _ bus.Transport) error {
+			next.InitializeFunc = func(ctx context.Context, _ endpoint.Transport) error {
 				ds, ok := GetDataStore(ctx)
 				Expect(ok).To(BeTrue())
 				Expect(ds).To(Equal(inj.DataStore))
@@ -42,14 +42,14 @@ var _ = Describe("Injector", func() {
 
 	Describe("Accept", func() {
 		It("calls the next pipeline with the data store in the context", func() {
-			next.AcceptFunc = func(ctx context.Context, _ bus.MessageSink, _ bus.InboundEnvelope) error {
+			next.AcceptFunc = func(ctx context.Context, _ endpoint.MessageSink, _ endpoint.InboundEnvelope) error {
 				ds, ok := GetDataStore(ctx)
 				Expect(ok).To(BeTrue())
 				Expect(ds).To(Equal(inj.DataStore))
 				return nil
 			}
 
-			inj.Accept(context.Background(), nil /* sink */, bus.InboundEnvelope{})
+			inj.Accept(context.Background(), nil /* sink */, endpoint.InboundEnvelope{})
 
 			Expect(next.AcceptCalls()).To(HaveLen(1))
 		})
