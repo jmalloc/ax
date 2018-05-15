@@ -2,20 +2,12 @@ package endpoint
 
 import (
 	"context"
+	"errors"
 	"sync"
 
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/bus"
 )
-
-// RetryPolicy returns true if the message should be retried.
-type RetryPolicy func(bus.InboundEnvelope, error) bool
-
-// DefaultRetryPolicy is a RetryPolicy that rejects a message after it has been
-// attempted three (3) times.
-func DefaultRetryPolicy(env bus.InboundEnvelope, _ error) bool {
-	return env.DeliveryCount < 3
-}
 
 // Endpoint is a named source and recipient of messages.
 type Endpoint struct {
@@ -39,6 +31,10 @@ func (ep *Endpoint) NewSender(ctx context.Context) (ax.Sender, error) {
 
 // StartReceiving processes inbound messages until an error occurrs or ctx is canceled.
 func (ep *Endpoint) StartReceiving(ctx context.Context) error {
+	if ep.In == nil {
+		return errors.New("can not receive on send-only endpoint, there is no inbound message pipeline")
+	}
+
 	if err := ep.initialize(ctx); err != nil {
 		return err
 	}
@@ -60,9 +56,11 @@ func (ep *Endpoint) initialize(ctx context.Context) (err error) {
 			return
 		}
 
-		err = ep.In.Initialize(ctx, ep.Transport)
-		if err != nil {
-			return
+		if ep.In != nil {
+			err = ep.In.Initialize(ctx, ep.Transport)
+			if err != nil {
+				return
+			}
 		}
 
 		err = ep.Out.Initialize(ctx, ep.Transport)
