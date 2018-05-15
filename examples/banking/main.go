@@ -15,6 +15,7 @@ import (
 	"github.com/jmalloc/ax/src/ax/observability"
 	"github.com/jmalloc/ax/src/ax/outbox"
 	"github.com/jmalloc/ax/src/ax/persistence"
+	"github.com/jmalloc/ax/src/ax/routing"
 	"github.com/jmalloc/ax/src/axcli"
 	"github.com/jmalloc/ax/src/axmysql"
 	"github.com/jmalloc/ax/src/axrmq"
@@ -49,12 +50,12 @@ func main() {
 	}
 	defer rmq.Close()
 
-	dtable, err := bus.NewDispatchTable(handler{})
+	htable, err := routing.NewHandlerTable(handler{})
 	if err != nil {
 		panic(err)
 	}
 
-	rtable, err := bus.NewRoutingTable()
+	etable, err := routing.NewEndpointTable()
 	if err != nil {
 		panic(err)
 	}
@@ -74,16 +75,16 @@ func main() {
 				DataStore: &axmysql.DataStore{DB: db},
 				Next: &outbox.Deduplicator{
 					Repository: &axmysql.OutboxRepository{},
-					Next: &bus.Dispatcher{
-						Routes: dtable,
+					Next: &routing.Dispatcher{
+						Routes: htable,
 					},
 				},
 			},
 		},
 		Out: &observability.OutboundHook{
 			Observers: observers,
-			Next: &bus.Router{
-				Routes: rtable,
+			Next: &routing.Router{
+				Routes: etable,
 				Next:   &bus.TransportStage{},
 			},
 		},

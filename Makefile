@@ -1,8 +1,8 @@
 REQ += $(shell find src -name "*.proto")
-REQ += src/internal/bustest/handlermock.go
 REQ += src/internal/bustest/sinkmock.go
 REQ += src/internal/bustest/transportmock.go
 REQ += src/internal/bustest/pipelinemock.go
+REQ += src/internal/routingtest/handlermock.go
 REQ += src/internal/persistencetest/datastoremock.go
 REQ += src/internal/persistencetest/transactionmock.go
 REQ += src/internal/observabilitytest/observermock.go
@@ -23,9 +23,6 @@ MOQ := $(GOPATH)/bin/moq
 $(MOQ):
 	go get -u github.com/matryer/moq
 
-src/internal/bustest/handlermock.go: src/ax/bus/handler.go | $(MOQ)
-	$(MOQ) -out "$@" -pkg "bustest" src/ax/bus MessageHandler
-
 src/internal/bustest/sinkmock.go: src/ax/bus/sink.go | $(MOQ)
 	$(MOQ) -out "$@" -pkg "bustest" src/ax/bus MessageSink
 
@@ -34,6 +31,9 @@ src/internal/bustest/transportmock.go: src/ax/bus/transport.go src/ax/bus/sink.g
 
 src/internal/bustest/pipelinemock.go: src/ax/bus/pipeline.go | $(MOQ)
 	$(MOQ) -out "$@" -pkg "bustest" src/ax/bus InboundPipeline OutboundPipeline
+
+src/internal/routingtest/handlermock.go: src/ax/routing/handler.go | $(MOQ)
+	$(MOQ) -out "$@" -pkg "routingtest" src/ax/routing MessageHandler
 
 src/internal/persistencetest/datastoremock.go: src/ax/persistence/datastore.go | $(MOQ)
 	$(MOQ) -out "$@" -pkg "persistencetest" src/ax/persistence DataStore
