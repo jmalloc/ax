@@ -1,4 +1,4 @@
-package bus
+package endpoint
 
 import (
 	"context"
@@ -29,9 +29,11 @@ type TransportStage struct {
 	transport Transport
 }
 
-// Initialize sets the transport used to send messages.
-func (s *TransportStage) Initialize(ctx context.Context, t Transport) error {
-	s.transport = t
+// Initialize is called during initialization of the endpoint, after the
+// transport is initialized. It can be used to inspect or furhter configure the
+// endpoint as per the needs of the pipeline.
+func (s *TransportStage) Initialize(ctx context.Context, ep *Endpoint) error {
+	s.transport = ep.Transport
 	return nil
 }
 

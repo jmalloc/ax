@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/ax/bus"
+	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/persistence"
 )
 
@@ -19,7 +19,7 @@ type Repository interface {
 		ctx context.Context,
 		ds persistence.DataStore,
 		id ax.MessageID,
-	) (envs []bus.OutboundEnvelope, ok bool, err error)
+	) (envs []endpoint.OutboundEnvelope, ok bool, err error)
 
 	// SaveOutbox saves a set of unsent outbound messages that were produced
 	// when the message identified by id was delivered.
@@ -27,13 +27,13 @@ type Repository interface {
 		ctx context.Context,
 		tx persistence.Tx,
 		id ax.MessageID,
-		envs []bus.OutboundEnvelope,
+		envs []endpoint.OutboundEnvelope,
 	) error
 
 	// MarkAsSent marks a message as sent, removing it from the outbox.
 	MarkAsSent(
 		ctx context.Context,
 		tx persistence.Tx,
-		env bus.OutboundEnvelope,
+		env endpoint.OutboundEnvelope,
 	) error
 }

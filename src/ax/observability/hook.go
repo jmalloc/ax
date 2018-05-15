@@ -5,22 +5,23 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/jmalloc/ax/src/ax/bus"
+	"github.com/jmalloc/ax/src/ax/endpoint"
 )
 
 // InboundHook is an inbound pipeline stage that invokes hook methods
 // on a set of observers.
 type InboundHook struct {
 	Observers []Observer
-	Next      bus.InboundPipeline
+	Next      endpoint.InboundPipeline
 
 	before []BeforeInboundObserver
 	after  []AfterInboundObserver
 }
 
-// Initialize is called after the transport is initialized. It can be used
-// to inspect or configure the transport as per the needs of the pipeline.
-func (o *InboundHook) Initialize(ctx context.Context, t bus.Transport) error {
+// Initialize is called during initialization of the endpoint, after the
+// transport is initialized. It can be used to inspect or furhter configure the
+// endpoint as per the needs of the pipeline.
+func (o *InboundHook) Initialize(ctx context.Context, ep *endpoint.Endpoint) error {
 	for _, v := range o.Observers {
 		used := false
 
@@ -42,12 +43,12 @@ func (o *InboundHook) Initialize(ctx context.Context, t bus.Transport) error {
 		}
 	}
 
-	return o.Next.Initialize(ctx, t)
+	return o.Next.Initialize(ctx, ep)
 }
 
 // Accept forwards an inbound message through the pipeline until
 // it is handled by some application-defined message handler(s).
-func (o *InboundHook) Accept(ctx context.Context, s bus.MessageSink, env bus.InboundEnvelope) error {
+func (o *InboundHook) Accept(ctx context.Context, s endpoint.MessageSink, env endpoint.InboundEnvelope) error {
 	for _, ob := range o.before {
 		ob.BeforeInbound(ctx, env)
 	}
@@ -65,15 +66,16 @@ func (o *InboundHook) Accept(ctx context.Context, s bus.MessageSink, env bus.Inb
 // on a set of observers.
 type OutboundHook struct {
 	Observers []Observer
-	Next      bus.OutboundPipeline
+	Next      endpoint.OutboundPipeline
 
 	before []BeforeOutboundObserver
 	after  []AfterOutboundObserver
 }
 
-// Initialize is called after the transport is initialized. It can be used
-// to inspect or configure the transport as per the needs of the pipeline.
-func (o *OutboundHook) Initialize(ctx context.Context, t bus.Transport) error {
+// Initialize is called during initialization of the endpoint, after the
+// transport is initialized. It can be used to inspect or furhter configure the
+// endpoint as per the needs of the pipeline.
+func (o *OutboundHook) Initialize(ctx context.Context, ep *endpoint.Endpoint) error {
 	for _, v := range o.Observers {
 		used := false
 
@@ -95,11 +97,11 @@ func (o *OutboundHook) Initialize(ctx context.Context, t bus.Transport) error {
 		}
 	}
 
-	return o.Next.Initialize(ctx, t)
+	return o.Next.Initialize(ctx, ep)
 }
 
 // Accept processes the message encapsulated in env.
-func (o *OutboundHook) Accept(ctx context.Context, env bus.OutboundEnvelope) error {
+func (o *OutboundHook) Accept(ctx context.Context, env endpoint.OutboundEnvelope) error {
 	for _, ob := range o.before {
 		ob.BeforeOutbound(ctx, env)
 	}

@@ -1,4 +1,4 @@
-package bus_test
+package endpoint_test
 
 import (
 	"reflect"
