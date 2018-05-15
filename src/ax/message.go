@@ -1,10 +1,12 @@
 package ax
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/jmalloc/ax/src/ax/ident"
+	"github.com/jmalloc/ax/src/ax/marshaling"
 )
 
 // MessageID uniquely identifies a message.
@@ -52,3 +54,26 @@ var (
 	commandType = reflect.TypeOf((*Command)(nil)).Elem()
 	eventType   = reflect.TypeOf((*Event)(nil)).Elem()
 )
+
+// MarshalMessage marshals m to a binary representation.
+func MarshalMessage(m Message) (contentType string, data []byte, err error) {
+	return marshaling.MarshalProtobuf(m)
+}
+
+// UnmarshalMessage unmarshals an Ax message from some serialized
+// representation. ct is the MIME content-type for the binary data.
+func UnmarshalMessage(ct string, data []byte) (Message, error) {
+	v, err := marshaling.Unmarshal(ct, data)
+	if err != nil {
+		return nil, err
+	}
+
+	if m, ok := v.(Message); ok {
+		return m, nil
+	}
+
+	return nil, fmt.Errorf(
+		"can not unmarshal '%s', content-type is not an Ax message",
+		ct,
+	)
+}

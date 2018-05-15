@@ -7,7 +7,6 @@ import (
 
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
-	"github.com/jmalloc/ax/src/ax/marshaling"
 	"github.com/jmalloc/ax/src/ax/persistence"
 )
 
@@ -145,7 +144,7 @@ func scanOutboxMessage(rows *sql.Rows, causationID ax.MessageID) (endpoint.Outbo
 		return env, err
 	}
 
-	env.Message, err = marshaling.UnmarshalMessage(ct, body)
+	env.Message, err = ax.UnmarshalMessage(ct, body)
 
 	return env, err
 }
@@ -155,7 +154,7 @@ func insertOutboxMessage(
 	tx *sql.Tx,
 	env endpoint.OutboundEnvelope,
 ) error {
-	ct, body, err := marshaling.MarshalMessage(env.Message)
+	ct, body, err := ax.MarshalMessage(env.Message)
 	if err != nil {
 		return err
 	}

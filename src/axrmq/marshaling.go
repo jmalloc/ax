@@ -3,7 +3,6 @@ package axrmq
 import (
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
-	"github.com/jmalloc/ax/src/ax/marshaling"
 	"github.com/streadway/amqp"
 )
 
@@ -19,7 +18,7 @@ func marshalMessage(ep string, env endpoint.OutboundEnvelope) (amqp.Publishing, 
 	}
 
 	var err error
-	pub.ContentType, pub.Body, err = marshaling.MarshalMessage(env.Message)
+	pub.ContentType, pub.Body, err = ax.MarshalMessage(env.Message)
 
 	return pub, err
 }
@@ -46,7 +45,7 @@ func unmarshalMessage(del amqp.Delivery) (endpoint.InboundEnvelope, error) {
 	env.Time = del.Timestamp
 
 	var err error
-	env.Message, err = marshaling.UnmarshalMessage(del.ContentType, del.Body)
+	env.Message, err = ax.UnmarshalMessage(del.ContentType, del.Body)
 
 	return env, err
 }
