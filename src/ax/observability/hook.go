@@ -19,7 +19,7 @@ type InboundHook struct {
 }
 
 // Initialize is called during initialization of the endpoint, after the
-// transport is initialized. It can be used to inspect or furhter configure the
+// transport is initialized. It can be used to inspect or further configure the
 // endpoint as per the needs of the pipeline.
 func (o *InboundHook) Initialize(ctx context.Context, ep *endpoint.Endpoint) error {
 	for _, v := range o.Observers {
@@ -73,7 +73,7 @@ type OutboundHook struct {
 }
 
 // Initialize is called during initialization of the endpoint, after the
-// transport is initialized. It can be used to inspect or furhter configure the
+// transport is initialized. It can be used to inspect or further configure the
 // endpoint as per the needs of the pipeline.
 func (o *OutboundHook) Initialize(ctx context.Context, ep *endpoint.Endpoint) error {
 	for _, v := range o.Observers {
