@@ -41,9 +41,11 @@ func (r *receiver) receive(ctx context.Context) error {
 			return err
 		}
 
-		r.wg.Go(func(ctx context.Context) error {
+		if err := r.wg.Go(func(ctx context.Context) error {
 			return r.process(ctx, env, ack)
-		})
+		}); err != nil {
+			return err
+		}
 	}
 }
 
