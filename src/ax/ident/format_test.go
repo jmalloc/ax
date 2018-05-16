@@ -14,6 +14,13 @@ var _ = Describe("Format", func() {
 		})
 	})
 
+	Context("when the identifier is an empty string", func() {
+		It("returns '<unidentified>' string", func() {
+			s := Format("")
+			Expect(s).To(Equal("<unidentified>"))
+		})
+	})
+
 	Context("when the identifier is not formatted like a UUID", func() {
 		It("returns the entire identifier", func() {
 			s := Format("<identifier>")

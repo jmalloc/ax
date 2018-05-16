@@ -79,10 +79,6 @@ func (id ID) Get() string {
 //
 // Use Value() to get a copy a valid ID represented as a string.
 func (id ID) String() string {
-	if id.value == "" {
-		return "<unidentified>"
-	}
-
 	return Format(id.value)
 }
 
