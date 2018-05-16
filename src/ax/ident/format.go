@@ -2,9 +2,14 @@ package ident
 
 // Format returns a compact rendering of ID for use in log messages and other
 // human-readable strings.
+// It returns '<unidentified>' if id is an empty string.
 func Format(id string) string {
 	if looksLikeUUID(id) {
 		return id[:uuidSep1] + id[uuidLen:]
+	}
+
+	if id == "" {
+		return "<unidentified>"
 	}
 
 	return id
