@@ -79,16 +79,18 @@ func (d *Deduplicator) forward(ctx context.Context, env endpoint.InboundEnvelope
 		return nil, err
 	}
 
+	envs := s.TakeEnvelopes()
+
 	if err := d.Repository.SaveOutbox(
 		ctx,
 		tx,
 		env.MessageID,
-		s.Envelopes,
+		envs,
 	); err != nil {
 		return nil, err
 	}
 
-	return s.Envelopes, com.Commit()
+	return envs, com.Commit()
 }
 
 // send uses s to send a message that was previously persisted before marking it

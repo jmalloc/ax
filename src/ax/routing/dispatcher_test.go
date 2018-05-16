@@ -142,7 +142,7 @@ var _ = Describe("Dispatcher", func() {
 			_ = dispatcher.Accept(ctx, sink, env)
 
 			Expect(h1.HandleMessageCalls()).To(HaveLen(1))
-			Expect(sink.Envelopes).To(HaveLen(1))
+			Expect(sink.Envelopes()).To(HaveLen(1))
 		})
 
 		It("returns nil if all handlers succeed", func() {
