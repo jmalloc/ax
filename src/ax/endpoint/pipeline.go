@@ -17,7 +17,7 @@ type InboundPipeline interface {
 
 	// Accept forwards an inbound message through the pipeline until
 	// it is handled by some application-defined message handler(s).
-	Accept(context.Context, MessageSink, InboundEnvelope) error
+	Accept(ctx context.Context, sink MessageSink, env InboundEnvelope) error
 }
 
 // OutboundPipeline is an interface for a message pipeline that processes
