@@ -3,8 +3,6 @@ package saga
 import (
 	"context"
 
-	"github.com/golang/protobuf/proto"
-
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/persistence"
 )
@@ -41,9 +39,9 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 	loadReq := LoadRequest{
 		SagaName:    h.Saga.SagaName(),
 		MessageType: env.Type(),
-		MappingKey:  h.Saga.MapMessage(env.Message),
+		MappingKey:  h.Saga.MapMessage(env),
 	}
-	res, ok, err := h.Repository.LoadSagaInstance(ctx, tx, loadReq)
+	i, ok, err := h.Repository.LoadSagaInstance(ctx, tx, loadReq)
 	if err != nil {
 		return err
 	}
@@ -56,9 +54,7 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 	}
 
 	if ok {
-		saveReq.InstanceID = res.InstanceID
-		saveReq.Instance = res.Instance
-		saveReq.CurrentRevision = res.CurrentRevision
+		saveReq.Instance = i
 	} else {
 		triggers, _ := h.Saga.MessageTypes()
 
@@ -68,23 +64,23 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 			return h.Saga.HandleNotFound(handleCtx, s, env)
 		}
 
-		saveReq.InstanceID, saveReq.Instance = h.Saga.NewInstance(env.Message)
+		id, data := h.Saga.NewInstance(env)
+		saveReq.Instance = Instance{
+			InstanceID: id,
+			Data:       data,
+		}
 	}
-
-	before := proto.Clone(saveReq.Instance)
 
 	// pass the message to the saga for handling.
 	if err := h.Saga.HandleMessage(handleCtx, s, env, saveReq.Instance); err != nil {
 		return err
 	}
 
-	if !proto.Equal(saveReq.Instance, before) {
-		saveReq.MappingTable = buildMappingTable(h.Saga, saveReq.Instance)
+	saveReq.MappingTable = buildMappingTable(h.Saga, saveReq.Instance.Data)
 
-		// save the changes to the saga and its mapping table.
-		if err := h.Repository.SaveSagaInstance(ctx, tx, saveReq); err != nil {
-			return err
-		}
+	// save the changes to the saga and its mapping table.
+	if err := h.Repository.SaveSagaInstance(ctx, tx, saveReq); err != nil {
+		return err
 	}
 
 	return com.Commit()

@@ -30,7 +30,7 @@ func (*SagaRepository) LoadSagaInstance(
 	ctx context.Context,
 	tx persistence.Tx,
 	req saga.LoadRequest,
-) (saga.LoadResult, bool, error) {
+) (saga.Instance, bool, error) {
 	stx := tx.(*Tx).tx
 
 	row := stx.QueryRowContext(
@@ -52,32 +52,32 @@ func (*SagaRepository) LoadSagaInstance(
 	)
 
 	var (
-		res  saga.LoadResult
+		i    saga.Instance
 		ct   string
 		data []byte
 	)
 
 	err := row.Scan(
-		&res.InstanceID,
-		&res.CurrentRevision,
+		&i.InstanceID,
+		&i.Revision,
 		&ct,
 		&data,
 	)
 
 	if err == sql.ErrNoRows {
-		return res, false, nil
+		return i, false, nil
 	}
 
 	if err != nil {
-		return res, false, err
+		return i, false, err
 	}
 
-	res.Instance, err = saga.UnmarshalData(ct, data)
+	i.Data, err = saga.UnmarshalData(ct, data)
 	if err != nil {
-		return res, false, err
+		return i, false, err
 	}
 
-	return res, true, nil
+	return i, true, nil
 }
 
 // SaveSagaInstance persists a saga instance and its associated mapping
@@ -98,12 +98,12 @@ func (*SagaRepository) SaveSagaInstance(
 ) error {
 	stx := tx.(*Tx).tx
 
-	ct, data, err := saga.MarshalData(req.Instance)
+	ct, data, err := saga.MarshalData(req.Instance.Data)
 	if err != nil {
 		return err
 	}
 
-	if req.CurrentRevision == 0 {
+	if req.Instance.Revision == 0 {
 		if _, err := stx.ExecContext(
 			ctx,
 			`INSERT INTO saga_instance SET
@@ -113,9 +113,9 @@ func (*SagaRepository) SaveSagaInstance(
 				content_type = ?,
 				data = ?,
 				revision = 1`,
-			req.InstanceID,
+			req.Instance.InstanceID,
 			req.SagaName,
-			req.Instance.SagaDescription(),
+			req.Instance.Data.SagaDescription(),
 			ct,
 			data,
 		); err != nil {
@@ -129,7 +129,7 @@ func (*SagaRepository) SaveSagaInstance(
 			FROM saga_instance
 			WHERE id = ?
 			FOR UPDATE`,
-			req.InstanceID,
+			req.Instance.InstanceID,
 		)
 
 		var rev uint64
@@ -137,10 +137,10 @@ func (*SagaRepository) SaveSagaInstance(
 			return err
 		}
 
-		if req.CurrentRevision != rev {
+		if req.Instance.Revision != rev {
 			return fmt.Errorf(
 				"can not update saga instance %s, revision is out of date",
-				req.InstanceID,
+				req.Instance.InstanceID,
 			)
 		}
 
@@ -152,10 +152,10 @@ func (*SagaRepository) SaveSagaInstance(
 				data = ?,
 				revision = revision + 1
 			WHERE id = ?`,
-			req.Instance.SagaDescription(),
+			req.Instance.Data.SagaDescription(),
 			ct,
 			data,
-			req.InstanceID,
+			req.Instance.InstanceID,
 		); err != nil {
 			return err
 		}
@@ -164,7 +164,7 @@ func (*SagaRepository) SaveSagaInstance(
 			ctx,
 			`DELETE FROM saga_map
 			WHERE instance_id = ?`,
-			req.InstanceID,
+			req.Instance.InstanceID,
 		); err != nil {
 			return err
 		}
@@ -181,7 +181,7 @@ func (*SagaRepository) SaveSagaInstance(
 			req.SagaName,
 			mt.Name,
 			mk,
-			req.InstanceID,
+			req.Instance.InstanceID,
 		); err != nil {
 			return err
 		}

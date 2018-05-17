@@ -22,7 +22,7 @@ type Repository interface {
 		ctx context.Context,
 		tx persistence.Tx,
 		req LoadRequest,
-	) (res LoadResult, ok bool, err error)
+	) (i Instance, ok bool, err error)
 
 	// SaveSagaInstance persists a saga instance and its associated mapping
 	// table to the store as part of tx.
@@ -47,18 +47,9 @@ type LoadRequest struct {
 	MappingKey  string
 }
 
-// LoadResult contains the result of loading a saga.
-type LoadResult struct {
-	InstanceID      InstanceID
-	CurrentRevision uint64
-	Instance        Data
-}
-
 // SaveRequest contains information used to save a saga instance.
 type SaveRequest struct {
-	SagaName        string
-	InstanceID      InstanceID
-	CurrentRevision uint64
-	Instance        Data
-	MappingTable    MappingTable
+	SagaName     string
+	Instance     Instance
+	MappingTable MappingTable
 }

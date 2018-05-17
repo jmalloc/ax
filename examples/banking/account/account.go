@@ -16,7 +16,7 @@ func (a *Account) SagaDescription() string {
 }
 
 // AggregateRoot is a saga that implements the Account aggregate.
-var AggregateRoot = &aggregateRoot{}
+var AggregateRoot saga.Saga = &aggregateRoot{}
 
 type aggregateRoot struct {
 	saga.ErrorIfNotFound
@@ -35,21 +35,21 @@ func (aggregateRoot) MessageTypes() (ax.MessageTypeSet, ax.MessageTypeSet) {
 		)
 }
 
-func (aggregateRoot) MapMessage(m ax.Message) string {
+func (aggregateRoot) MapMessage(env ax.Envelope) string {
 	type hasAccountID interface {
 		GetAccountId() string
 	}
 
-	return m.(hasAccountID).GetAccountId()
+	return env.Message.(hasAccountID).GetAccountId()
 }
 
 func (aggregateRoot) MapData(_ ax.MessageType, i saga.Data) string {
 	return i.(*Account).AccountId
 }
 
-func (aggregateRoot) NewInstance(m ax.Message) (saga.InstanceID, saga.Data) {
+func (aggregateRoot) NewInstance(env ax.Envelope) (saga.InstanceID, saga.Data) {
 	var id saga.InstanceID
-	id.MustParse(m.(*messages.OpenAccount).AccountId)
+	id.MustParse(env.Message.(*messages.OpenAccount).AccountId)
 	return id, &Account{}
 }
 
@@ -57,9 +57,9 @@ func (aggregateRoot) HandleMessage(
 	ctx context.Context,
 	s ax.Sender,
 	env ax.Envelope,
-	i saga.Data,
+	i saga.Instance,
 ) error {
-	acct := i.(*Account)
+	acct := i.Data.(*Account)
 
 	switch m := env.Message.(type) {
 	case *messages.OpenAccount:
