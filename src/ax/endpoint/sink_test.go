@@ -9,16 +9,39 @@ import (
 )
 
 var _ = Describe("BufferedSink", func() {
-	b := &BufferedSink{}
+	env := OutboundEnvelope{}
+	env.MessageID.GenerateUUID()
+
+	sink := &BufferedSink{}
 
 	Describe("Accept", func() {
 		It("adds the message to the internal slice", func() {
-			env := OutboundEnvelope{}
-			env.MessageID.GenerateUUID()
-
-			err := b.Accept(context.Background(), env)
+			err := sink.Accept(context.Background(), env)
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(b.Envelopes).To(ConsistOf(env))
+			Expect(sink.Envelopes()).To(ConsistOf(env))
+		})
+	})
+
+	Describe("Reset", func() {
+		It("removes the buffered envelopes", func() {
+			sink.Accept(context.Background(), env)
+			sink.Reset()
+
+			Expect(sink.Envelopes()).To(BeEmpty())
+		})
+	})
+
+	Describe("TakeEnvelopes", func() {
+		It("returns the buffered envelopes", func() {
+			sink.Accept(context.Background(), env)
+			Expect(sink.TakeEnvelopes()).To(ConsistOf(env))
+		})
+
+		It("clears the buffer", func() {
+			sink.Accept(context.Background(), env)
+			sink.TakeEnvelopes()
+
+			Expect(sink.Envelopes()).To(BeEmpty())
 		})
 	})
 })

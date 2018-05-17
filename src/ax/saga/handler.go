@@ -12,8 +12,6 @@ import (
 type MessageHandler struct {
 	Repository Repository
 	Saga       Saga
-
-	triggers ax.MessageTypeSet
 }
 
 // MessageTypes returns the set of messages that the handler can handle.
@@ -22,8 +20,6 @@ type MessageHandler struct {
 // and the message types that are routed to existing instances.
 func (h *MessageHandler) MessageTypes() ax.MessageTypeSet {
 	triggers, others := h.Saga.MessageTypes()
-	h.triggers = triggers
-
 	return triggers.Union(others)
 }
 
@@ -53,8 +49,12 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 
 	// if no existing instance is found, and this message type does not produce
 	// new instances, then the not-found handler is called.
-	if !ok && !h.triggers.Has(mt) {
-		return h.Saga.HandleNotFound(hctx, s, env)
+	if !ok {
+		triggers, _ := h.Saga.MessageTypes()
+
+		if !triggers.Has(mt) {
+			return h.Saga.HandleNotFound(hctx, s, env)
+		}
 	}
 
 	// pass the message to the saga for handling.

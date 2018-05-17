@@ -26,8 +26,8 @@ var _ = Describe("SinkSender", func() {
 			err := sender.ExecuteCommand(context.Background(), &messagetest.Command{})
 			Expect(err).ShouldNot(HaveOccurred())
 
-			Expect(sink.Envelopes).To(HaveLen(1))
-			env := sink.Envelopes[0]
+			Expect(sink.Envelopes()).To(HaveLen(1))
+			env := sink.Envelopes()[0]
 			Expect(env.Operation).To(Equal(OpSendUnicast))
 			Expect(env.Message).To(Equal(&messagetest.Command{}))
 		})
@@ -38,8 +38,8 @@ var _ = Describe("SinkSender", func() {
 
 			_ = sender.ExecuteCommand(ctx, &messagetest.Command{})
 
-			Expect(sink.Envelopes).To(HaveLen(1))
-			Expect(sink.Envelopes[0].CausationID).To(Equal(env.MessageID))
+			Expect(sink.Envelopes()).To(HaveLen(1))
+			Expect(sink.Envelopes()[0].CausationID).To(Equal(env.MessageID))
 		})
 	})
 
@@ -48,8 +48,8 @@ var _ = Describe("SinkSender", func() {
 			err := sender.PublishEvent(context.Background(), &messagetest.Event{})
 			Expect(err).ShouldNot(HaveOccurred())
 
-			Expect(sink.Envelopes).To(HaveLen(1))
-			env := sink.Envelopes[0]
+			Expect(sink.Envelopes()).To(HaveLen(1))
+			env := sink.Envelopes()[0]
 			Expect(env.Operation).To(Equal(OpSendMulticast))
 			Expect(env.Message).To(Equal(&messagetest.Event{}))
 		})
@@ -60,8 +60,8 @@ var _ = Describe("SinkSender", func() {
 
 			_ = sender.PublishEvent(ctx, &messagetest.Event{})
 
-			Expect(sink.Envelopes).To(HaveLen(1))
-			Expect(sink.Envelopes[0].CausationID).To(Equal(env.MessageID))
+			Expect(sink.Envelopes()).To(HaveLen(1))
+			Expect(sink.Envelopes()[0].CausationID).To(Equal(env.MessageID))
 		})
 	})
 })

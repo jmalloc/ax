@@ -20,7 +20,7 @@ banking:
 	protoc --go_out=. $(@D)/*.proto
 
 MOQ := $(GOPATH)/bin/moq
-$(MOQ):
+$(MOQ): | vendor # ensure dependencies are installed before trying to build mocks
 	go get -u github.com/matryer/moq
 
 src/internal/endpointtest/sinkmock.go: src/ax/endpoint/sink.go | $(MOQ)
