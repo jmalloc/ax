@@ -13,6 +13,11 @@ import (
 // saga state is managed by the framework. The state is represented by the
 // Instance interface. Each saga may produce many instances.
 type Saga interface {
+	// SagaName returns a unique name for the saga.
+	// The saga name is used to locate instances of the saga. It must not be
+	// changed while there are active instances.
+	SagaName() string
+
 	// MessageTypes returns the set of messages that are routed to this saga.
 	//
 	// tr is the set of "trigger" messages that will cause a new instance to be
@@ -21,14 +26,14 @@ type Saga interface {
 	MessageTypes() (tr ax.MessageTypeSet, mt ax.MessageTypeSet)
 
 	// MapMessage returns a mapping key for the given message.
-	MapMessage(ax.Message) MappingKey
+	MapMessage(ax.Message) string
 
 	// MapInstance returns a mapping key to use for the given message
 	// type and saga instance.
-	MapInstance(ax.MessageType, Instance) MappingKey
+	MapInstance(ax.MessageType, Instance) string
 
-	// InitialState returns a new saga value.
-	InitialState() Instance
+	// NewInstance returns a new saga instance.
+	NewInstance(ax.Message) (InstanceID, Instance)
 
 	// HandleMessage handles a message for a particular saga instance.
 	HandleMessage(context.Context, ax.Sender, ax.Envelope, Instance) error

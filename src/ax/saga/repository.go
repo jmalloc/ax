@@ -13,16 +13,16 @@ type Repository interface {
 	// LoadSagaInstance fetches a saga instance from the store based on a
 	// mapping key for a particular message type.
 	//
-	// ok is true if the instance is found, in which case i is populated with
-	// data from the store.
+	// mt is the the type of the message being processed, and k is the mapping
+	// key for that message that identifies the saga to load.
 	//
-	// err is non-nil if there is a problem communicating with the store itself.
+	// ok is true if the instance is found, err is non-nil if there is a problem
+	// communicating with the store itself.
 	LoadSagaInstance(
 		ctx context.Context,
-		mt ax.MessageType,
-		k MappingKey,
-		i Instance,
-	) (ok bool, err error)
+		tx persistence.Tx,
+		req LoadRequest,
+	) (res LoadResult, ok bool, err error)
 
 	// SaveSagaInstance persists a saga instance and its associated mapping
 	// table to the store as part of tx.
@@ -35,7 +35,30 @@ type Repository interface {
 	SaveSagaInstance(
 		ctx context.Context,
 		tx persistence.Tx,
-		i Instance,
-		t MappingTable,
+		req SaveRequest,
 	) error
+}
+
+// LoadRequest contains information used to locate the saga instance that
+// is associated with a specific message.
+type LoadRequest struct {
+	SagaName    string
+	MessageType ax.MessageType
+	MappingKey  string
+}
+
+// LoadResult contains the result of loading a saga.
+type LoadResult struct {
+	InstanceID      InstanceID
+	CurrentRevision uint64
+	Instance        Instance
+}
+
+// SaveRequest contains information used to save a saga instance.
+type SaveRequest struct {
+	SagaName        string
+	InstanceID      InstanceID
+	CurrentRevision uint64
+	Instance        Instance
+	MappingTable    MappingTable
 }

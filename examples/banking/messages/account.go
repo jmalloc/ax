@@ -29,3 +29,51 @@ func (m *AccountOpened) Description() string {
 		m.Name,
 	)
 }
+
+// IsCommand marks the message as a command.
+func (*CreditAccount) IsCommand() {}
+
+// Description returns a human-readable description of the message.
+func (m *CreditAccount) Description() string {
+	return fmt.Sprintf(
+		"credit %d to account %s",
+		m.Cents,
+		ident.Format(m.AccountId),
+	)
+}
+
+// IsEvent marks the message as an event.
+func (*AccountCredited) IsEvent() {}
+
+// Description returns a human-readable description of the message.
+func (m *AccountCredited) Description() string {
+	return fmt.Sprintf(
+		"credited %d to account %s",
+		m.Cents,
+		ident.Format(m.AccountId),
+	)
+}
+
+// IsCommand marks the message as a command.
+func (*DebitAccount) IsCommand() {}
+
+// Description returns a human-readable description of the message.
+func (m *DebitAccount) Description() string {
+	return fmt.Sprintf(
+		"debit %d from account %s",
+		m.Cents,
+		ident.Format(m.AccountId),
+	)
+}
+
+// IsEvent marks the message as an event.
+func (*AccountDebited) IsEvent() {}
+
+// Description returns a human-readable description of the message.
+func (m *AccountDebited) Description() string {
+	return fmt.Sprintf(
+		"debited %s from account %s",
+		m.Cents,
+		ident.Format(m.AccountId),
+	)
+}

@@ -17,7 +17,7 @@ import "github.com/jmalloc/ax/src/ax"
 // Whenever a saga instance is modified, a MappingTable is produced by calling
 // Saga.MapInstance() for each of the saga's message types. There can be only
 // one saga instance for each message type / key combination.
-type MappingKey string
+type MappingKey = string
 
 // MappingTable is a map of message type to mapping key for a specific saga
 // instance.
