@@ -27,6 +27,8 @@ func newConsumer(
 	}
 	defer func() {
 		if ch != nil {
+			// Error ignored: a more significant error has already occurred if
+			// we are exiting without having created a consumer.
 			_ = ch.Close()
 		}
 	}()
