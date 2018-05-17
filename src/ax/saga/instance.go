@@ -5,16 +5,11 @@ import (
 	"github.com/jmalloc/ax/src/ax/ident"
 )
 
-// InstanceID uniquely identifies a saga instance.
-type InstanceID struct {
-	ident.ID
-}
-
-// Instance is an interface for application-defined saga data.
-type Instance interface {
+// Data is an interface for application-defined saga data.
+type Data interface {
 	proto.Message
 
-	// InstanceDescription returns a human-readable description of the saga
+	// SagaDescription returns a human-readable description of the saga
 	// instance.
 	//
 	// Assume that the description will be used inside log messages or displayed
@@ -22,7 +17,12 @@ type Instance interface {
 	//
 	// Follow the same conventions as for error messages:
 	// https://github.com/golang/go/wiki/CodeReviewComments#error-strings
-	InstanceDescription() string
+	SagaDescription() string
+}
+
+// InstanceID uniquely identifies a saga instance.
+type InstanceID struct {
+	ident.ID
 }
 
 // // InstanceEnvelope is a container for an instance and its associated meta-data.

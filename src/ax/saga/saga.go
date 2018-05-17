@@ -28,15 +28,15 @@ type Saga interface {
 	// MapMessage returns a mapping key for the given message.
 	MapMessage(ax.Message) string
 
-	// MapInstance returns a mapping key to use for the given message
+	// MapData returns a mapping key to use for the given message
 	// type and saga instance.
-	MapInstance(ax.MessageType, Instance) string
+	MapData(ax.MessageType, Data) string
 
 	// NewInstance returns a new saga instance.
-	NewInstance(ax.Message) (InstanceID, Instance)
+	NewInstance(ax.Message) (InstanceID, Data)
 
 	// HandleMessage handles a message for a particular saga instance.
-	HandleMessage(context.Context, ax.Sender, ax.Envelope, Instance) error
+	HandleMessage(context.Context, ax.Sender, ax.Envelope, Data) error
 
 	// HandleNotFound handles a message that is intended for a saga instance
 	// that could not be found.

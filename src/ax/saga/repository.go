@@ -51,7 +51,7 @@ type LoadRequest struct {
 type LoadResult struct {
 	InstanceID      InstanceID
 	CurrentRevision uint64
-	Instance        Instance
+	Instance        Data
 }
 
 // SaveRequest contains information used to save a saga instance.
@@ -59,6 +59,6 @@ type SaveRequest struct {
 	SagaName        string
 	InstanceID      InstanceID
 	CurrentRevision uint64
-	Instance        Instance
+	Instance        Data
 	MappingTable    MappingTable
 }

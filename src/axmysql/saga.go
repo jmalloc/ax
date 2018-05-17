@@ -72,7 +72,7 @@ func (*SagaRepository) LoadSagaInstance(
 		return res, false, err
 	}
 
-	res.Instance, err = saga.UnmarshalInstance(ct, data)
+	res.Instance, err = saga.UnmarshalData(ct, data)
 	if err != nil {
 		return res, false, err
 	}
@@ -98,7 +98,7 @@ func (*SagaRepository) SaveSagaInstance(
 ) error {
 	stx := tx.(*Tx).tx
 
-	ct, data, err := saga.MarshalInstance(req.Instance)
+	ct, data, err := saga.MarshalData(req.Instance)
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func (*SagaRepository) SaveSagaInstance(
 				revision = 1`,
 			req.InstanceID,
 			req.SagaName,
-			req.Instance.InstanceDescription(),
+			req.Instance.SagaDescription(),
 			ct,
 			data,
 		); err != nil {
@@ -152,7 +152,7 @@ func (*SagaRepository) SaveSagaInstance(
 				data = ?,
 				revision = revision + 1
 			WHERE id = ?`,
-			req.Instance.InstanceDescription(),
+			req.Instance.SagaDescription(),
 			ct,
 			data,
 			req.InstanceID,

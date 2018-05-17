@@ -10,8 +10,8 @@ import (
 	"github.com/jmalloc/ax/src/ax/saga"
 )
 
-// InstanceDescription returns a human-readable description of the saga instance.
-func (a *Account) InstanceDescription() string {
+// SagaDescription returns a human-readable description of the saga instance.
+func (a *Account) SagaDescription() string {
 	return fmt.Sprintf("account %s", ident.Format(a.AccountId))
 }
 
@@ -43,11 +43,11 @@ func (aggregateRoot) MapMessage(m ax.Message) string {
 	return m.(hasAccountID).GetAccountId()
 }
 
-func (aggregateRoot) MapInstance(_ ax.MessageType, i saga.Instance) string {
+func (aggregateRoot) MapData(_ ax.MessageType, i saga.Data) string {
 	return i.(*Account).AccountId
 }
 
-func (aggregateRoot) NewInstance(m ax.Message) (saga.InstanceID, saga.Instance) {
+func (aggregateRoot) NewInstance(m ax.Message) (saga.InstanceID, saga.Data) {
 	var id saga.InstanceID
 	id.MustParse(m.(*messages.OpenAccount).AccountId)
 	return id, &Account{}
@@ -57,7 +57,7 @@ func (aggregateRoot) HandleMessage(
 	ctx context.Context,
 	s ax.Sender,
 	env ax.Envelope,
-	i saga.Instance,
+	i saga.Data,
 ) error {
 	acct := i.(*Account)
 

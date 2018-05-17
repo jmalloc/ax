@@ -25,13 +25,13 @@ type MappingTable map[ax.MessageType]MappingKey
 
 // buildMappingTable returns a mapping table for i containing each of its
 // supported message types.
-func buildMappingTable(s Saga, i Instance) MappingTable {
+func buildMappingTable(s Saga, d Data) MappingTable {
 	triggers, others := s.MessageTypes()
 	types := triggers.Union(others)
 	table := MappingTable{}
 
 	for _, mt := range types.Members() {
-		table[mt] = s.MapInstance(mt, i)
+		table[mt] = s.MapData(mt, d)
 	}
 
 	return table

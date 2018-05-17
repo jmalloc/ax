@@ -6,20 +6,20 @@ import (
 	"github.com/jmalloc/ax/src/ax/marshaling"
 )
 
-// MarshalInstance marshals i to a binary representation.
-func MarshalInstance(i Instance) (contentType string, data []byte, err error) {
-	return marshaling.MarshalJSON(i)
+// MarshalData marshals i to a binary representation.
+func MarshalData(d Data) (contentType string, data []byte, err error) {
+	return marshaling.MarshalJSON(d)
 }
 
-// UnmarshalInstance unmarshals a saga instance from some serialized
+// UnmarshalData unmarshals a saga instance from some serialized
 // representation. ct is the MIME content-type for the binary data.
-func UnmarshalInstance(ct string, data []byte) (Instance, error) {
+func UnmarshalData(ct string, data []byte) (Data, error) {
 	v, err := marshaling.Unmarshal(ct, data)
 	if err != nil {
 		return nil, err
 	}
 
-	if m, ok := v.(Instance); ok {
+	if m, ok := v.(Data); ok {
 		return m, nil
 	}
 
