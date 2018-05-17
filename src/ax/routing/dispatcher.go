@@ -5,7 +5,6 @@ import (
 
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
-	"golang.org/x/sync/errgroup"
 )
 
 // Dispatcher is an inbound pipeline stage that routes messages to the
@@ -47,19 +46,13 @@ func (d *Dispatcher) Initialize(ctx context.Context, ep *endpoint.Endpoint) erro
 // Each message handler is invoked on its own goroutine.
 func (d *Dispatcher) Accept(ctx context.Context, s endpoint.MessageSink, env endpoint.InboundEnvelope) error {
 	ctx = endpoint.WithEnvelope(ctx, env.Envelope)
-	wg, ctx := errgroup.WithContext(ctx)
+	sender := endpoint.SinkSender{Sink: s}
 
 	for _, h := range d.Routes.Lookup(env.Type()) {
-		func(h MessageHandler) {
-			wg.Go(func() error {
-				return h.HandleMessage(
-					ctx,
-					endpoint.SinkSender{Sink: s},
-					env.Envelope,
-				)
-			})
-		}(h)
+		if err := h.HandleMessage(ctx, sender, env.Envelope); err != nil {
+			return err
+		}
 	}
 
-	return wg.Wait()
+	return nil
 }

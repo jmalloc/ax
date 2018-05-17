@@ -1,5 +1,5 @@
-hash: bb2875eb8c7964fced779fabc3dbb0270b64c71a1c66ee8bb31f8c904babaa8a
-updated: 2018-05-15T08:21:05.659840232+10:00
+hash: 1116151b93d91399ccea2c2cf5637fe0f6f8ff19c6b81223cb196fdba42b40fd
+updated: 2018-05-17T10:28:35.304980055+10:00
 imports:
 - name: github.com/go-sql-driver/mysql
   version: 3287d94d4c6a48a63e16fffaabf27ab20203af2a
@@ -67,14 +67,9 @@ imports:
 - name: golang.org/x/net
   version: f73e4c9ed3b7ebdd5f699a16a880c2b1994e50dd
   subpackages:
-  - context
   - html
   - html/atom
   - html/charset
-- name: golang.org/x/sync
-  version: 1d60e4601c6fd243af51cc01ddf169918a5407ca
-  subpackages:
-  - errgroup
 - name: golang.org/x/sys
   version: 7db1c3b1a98089d0071c84f646ff5c96aad43682
   subpackages:

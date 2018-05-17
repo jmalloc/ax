@@ -2,8 +2,6 @@ package endpoint
 
 import (
 	"context"
-
-	"golang.org/x/sync/errgroup"
 )
 
 // Fanout is an inbound pipeline that forwards inbound messages to zero-or-more
@@ -26,14 +24,11 @@ func (f Fanout) Initialize(ctx context.Context, ep *Endpoint) error {
 // Accept forwards an inbound message through the pipeline until
 // it is handled by some application-defined message handler(s).
 func (f Fanout) Accept(ctx context.Context, sink MessageSink, env InboundEnvelope) error {
-	g, ctx := errgroup.WithContext(ctx)
-
-	for _, _p := range f {
-		p := _p // capture loop variable
-		g.Go(func() error {
-			return p.Accept(ctx, sink, env)
-		})
+	for _, p := range f {
+		if err := p.Accept(ctx, sink, env); err != nil {
+			return err
+		}
 	}
 
-	return g.Wait()
+	return nil
 }
