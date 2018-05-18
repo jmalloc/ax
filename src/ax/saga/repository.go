@@ -3,25 +3,27 @@ package saga
 import (
 	"context"
 
-	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/persistence"
 )
 
 // Repository is an interface for loading and saving saga instances to/from a
 // persistent data store.
 type Repository interface {
-	// LoadSagaInstance fetches a saga instance from the store based on a
-	// mapping key for a particular message type.
+	// LoadSagaInstance fetches a saga instance that has a specific key/value
+	// pair in its mapping table.
 	//
-	// mt is the the type of the message being processed, and k is the mapping
-	// key for that message that identifies the saga to load.
+	// sn is the saga name. k and v are the key and value in the mapping table,
+	// respectively.
 	//
-	// ok is true if the instance is found, err is non-nil if there is a problem
-	// communicating with the store itself.
+	// If a saga instance is found; ok is true, otherwise it is false. A
+	// non-nil error indicates a problem with the store itself.
+	//
+	// It panics if the repository is not able to enlist in tx because it uses a
+	// different underlying storage system.
 	LoadSagaInstance(
 		ctx context.Context,
 		tx persistence.Tx,
-		req LoadRequest,
+		sn, k, v string,
 	) (i Instance, ok bool, err error)
 
 	// SaveSagaInstance persists a saga instance and its associated mapping
@@ -30,26 +32,13 @@ type Repository interface {
 	// It returns an error if the saga instance has been modified since it was
 	// loaded, or if there is a problem communicating with the store itself.
 	//
-	// Save() panics if the repository is not able to enlist in tx because it
-	// uses a different underlying storage system.
+	// It panics if the repository is not able to enlist in tx because it uses a
+	// different underlying storage system.
 	SaveSagaInstance(
 		ctx context.Context,
 		tx persistence.Tx,
-		req SaveRequest,
+		sn string,
+		i Instance,
+		t map[string]string,
 	) error
-}
-
-// LoadRequest contains information used to locate the saga instance that
-// is associated with a specific message.
-type LoadRequest struct {
-	SagaName    string
-	MessageType ax.MessageType
-	MappingKey  string
-}
-
-// SaveRequest contains information used to save a saga instance.
-type SaveRequest struct {
-	SagaName     string
-	Instance     Instance
-	MappingTable MappingTable
 }

@@ -25,15 +25,24 @@ type Saga interface {
 	// instances (or the not-found handler).
 	MessageTypes() (tr ax.MessageTypeSet, mt ax.MessageTypeSet)
 
-	// MapMessage returns a mapping key for the given message.
-	MapMessage(ax.Envelope) string
-
-	// MapData returns a mapping key to use for the given message
-	// type and saga instance.
-	MapData(ax.MessageType, Data) string
-
 	// NewInstance returns a new saga instance.
-	NewInstance(ax.Envelope) (InstanceID, Data)
+	NewInstance(context.Context, ax.Envelope) (InstanceID, Data, error)
+
+	// BuildMappingTable returns the message mapping table to use for the given
+	// saga instance.
+	//
+	// Mapping tables are used to correlate incoming messages with the saga
+	// instance they are routed to.
+	//
+	// The mapping table is rebuilt each time an instance receives a message. Care
+	// should be taken when adding new keys to the mapping table, as the persisted
+	// mapping tables for existing instances will not include that key until they
+	// next receive a message.
+	BuildMappingTable(context.Context, Instance) (map[string]string, error)
+
+	// MapMessage returns the key and value to use to locate the saga instance
+	// for the given message.
+	MapMessage(context.Context, ax.Envelope) (string, string, error)
 
 	// HandleMessage handles a message for a particular saga instance.
 	HandleMessage(context.Context, ax.Sender, ax.Envelope, Instance) error

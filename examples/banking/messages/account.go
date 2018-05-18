@@ -72,7 +72,7 @@ func (*AccountDebited) IsEvent() {}
 // Description returns a human-readable description of the message.
 func (m *AccountDebited) Description() string {
 	return fmt.Sprintf(
-		"debited %s from account %s",
+		"debited %d from account %s",
 		m.Cents,
 		ident.Format(m.AccountId),
 	)

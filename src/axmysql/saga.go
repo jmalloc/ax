@@ -15,23 +15,23 @@ import (
 // It requires that Saga instances be implemented as protocol buffers messages.
 type SagaRepository struct{}
 
-// LoadSagaInstance fetches a saga instance from the store based on a
-// mapping key for a particular message type.
+// LoadSagaInstance fetches a saga instance that has a specific key/value
+// pair in its mapping table.
 //
-// sn is the saga name. mt is the message type, and k is the mapping key
-// associated with that message type. i must be a non-nil pointer to an
-// empty saga instance, which is populated with the loaded data.
+// sn is the saga name. k and v are the key and value in the mapping table,
+// respectively.
 //
-// ok is true if the instance is found, in which case i is populated with
-// data from the store.
+// If a saga instance is found; ok is true, otherwise it is false. A
+// non-nil error indicates a problem with the store itself.
 //
-// err is non-nil if there is a problem communicating with the store itself.
+// It panics if the repository is not able to enlist in tx because it uses a
+// different underlying storage system.
 func (*SagaRepository) LoadSagaInstance(
 	ctx context.Context,
 	tx persistence.Tx,
-	req saga.LoadRequest,
-) (saga.Instance, bool, error) {
-	stx := tx.(*Tx).tx
+	sn, k, v string,
+) (i saga.Instance, ok bool, err error) {
+	stx := tx.(*Tx).sqlTx
 
 	row := stx.QueryRowContext(
 		ctx,
@@ -44,20 +44,19 @@ func (*SagaRepository) LoadSagaInstance(
 		INNER JOIN saga_map AS m
 		ON m.instance_id = i.id
 		WHERE m.saga_name = ?
-		AND m.message_type = ?
-		AND m.mapping_key = ?`,
-		req.SagaName,
-		req.MessageType.Name,
-		req.MappingKey,
+		AND m.mapping_key = ?
+		AND m.mapping_value = ?`,
+		sn,
+		k,
+		v,
 	)
 
 	var (
-		i    saga.Instance
 		ct   string
 		data []byte
 	)
 
-	err := row.Scan(
+	err = row.Scan(
 		&i.InstanceID,
 		&i.Revision,
 		&ct,
@@ -86,24 +85,23 @@ func (*SagaRepository) LoadSagaInstance(
 // It returns an error if the saga instance has been modified since it was
 // loaded, or if there is a problem communicating with the store itself.
 //
-// sn is the saga name. i is the saga instance to save, and t is the complete
-// mapping table for i.
-//
-// Save() panics if the repository is not able to enlist in tx because it
-// uses a different underlying storage system.
+// It panics if the repository is not able to enlist in tx because it uses a
+// different underlying storage system.
 func (*SagaRepository) SaveSagaInstance(
 	ctx context.Context,
 	tx persistence.Tx,
-	req saga.SaveRequest,
+	sn string,
+	i saga.Instance,
+	t map[string]string,
 ) error {
-	stx := tx.(*Tx).tx
+	stx := tx.(*Tx).sqlTx
 
-	ct, data, err := saga.MarshalData(req.Instance.Data)
+	ct, data, err := saga.MarshalData(i.Data)
 	if err != nil {
 		return err
 	}
 
-	if req.Instance.Revision == 0 {
+	if i.Revision == 0 {
 		if _, err := stx.ExecContext(
 			ctx,
 			`INSERT INTO saga_instance SET
@@ -113,9 +111,9 @@ func (*SagaRepository) SaveSagaInstance(
 				content_type = ?,
 				data = ?,
 				revision = 1`,
-			req.Instance.InstanceID,
-			req.SagaName,
-			req.Instance.Data.SagaDescription(),
+			i.InstanceID,
+			sn,
+			i.Data.SagaDescription(),
 			ct,
 			data,
 		); err != nil {
@@ -129,7 +127,7 @@ func (*SagaRepository) SaveSagaInstance(
 			FROM saga_instance
 			WHERE id = ?
 			FOR UPDATE`,
-			req.Instance.InstanceID,
+			i.InstanceID,
 		)
 
 		var rev uint64
@@ -137,10 +135,10 @@ func (*SagaRepository) SaveSagaInstance(
 			return err
 		}
 
-		if req.Instance.Revision != rev {
+		if i.Revision != rev {
 			return fmt.Errorf(
 				"can not update saga instance %s, revision is out of date",
-				req.Instance.InstanceID,
+				i.InstanceID,
 			)
 		}
 
@@ -152,10 +150,10 @@ func (*SagaRepository) SaveSagaInstance(
 				data = ?,
 				revision = revision + 1
 			WHERE id = ?`,
-			req.Instance.Data.SagaDescription(),
+			i.Data.SagaDescription(),
 			ct,
 			data,
-			req.Instance.InstanceID,
+			i.InstanceID,
 		); err != nil {
 			return err
 		}
@@ -164,24 +162,24 @@ func (*SagaRepository) SaveSagaInstance(
 			ctx,
 			`DELETE FROM saga_map
 			WHERE instance_id = ?`,
-			req.Instance.InstanceID,
+			i.InstanceID,
 		); err != nil {
 			return err
 		}
 	}
 
-	for mt, mk := range req.MappingTable {
+	for k, v := range t {
 		if _, err := stx.ExecContext(
 			ctx,
 			`INSERT INTO saga_map SET
 				saga_name = ?,
-				message_type = ?,
 				mapping_key = ?,
+				mapping_value = ?,
 				instance_id = ?`,
-			req.SagaName,
-			mt.Name,
-			mk,
-			req.Instance.InstanceID,
+			sn,
+			k,
+			v,
+			i.InstanceID,
 		); err != nil {
 			return err
 		}
@@ -205,11 +203,11 @@ var SagaSchema = []string{
 	)`,
 	`CREATE TABLE IF NOT EXISTS saga_map (
 		saga_name     VARBINARY(255) NOT NULL,
-		message_type  VARBINARY(255) NOT NULL,
 		mapping_key   VARBINARY(255) NOT NULL,
+		mapping_value VARBINARY(255) NOT NULL,
 		instance_id   VARBINARY(255) NOT NULL,
 
-		PRIMARY KEY (saga_name, message_type, mapping_key),
+		PRIMARY KEY (saga_name, mapping_key, mapping_value),
 		INDEX (instance_id)
 	)`,
 }

@@ -35,22 +35,25 @@ func (aggregateRoot) MessageTypes() (ax.MessageTypeSet, ax.MessageTypeSet) {
 		)
 }
 
-func (aggregateRoot) MapMessage(env ax.Envelope) string {
+func (aggregateRoot) NewInstance(ctx context.Context, env ax.Envelope) (saga.InstanceID, saga.Data, error) {
+	var id saga.InstanceID
+	id.MustParse(env.Message.(*messages.OpenAccount).AccountId)
+
+	return id, &Account{}, nil
+}
+
+func (aggregateRoot) BuildMappingTable(ctx context.Context, i saga.Instance) (map[string]string, error) {
+	return map[string]string{
+		"account_id": i.Data.(*Account).AccountId,
+	}, nil
+}
+
+func (aggregateRoot) MapMessage(ctx context.Context, env ax.Envelope) (string, string, error) {
 	type hasAccountID interface {
 		GetAccountId() string
 	}
 
-	return env.Message.(hasAccountID).GetAccountId()
-}
-
-func (aggregateRoot) MapData(_ ax.MessageType, i saga.Data) string {
-	return i.(*Account).AccountId
-}
-
-func (aggregateRoot) NewInstance(env ax.Envelope) (saga.InstanceID, saga.Data) {
-	var id saga.InstanceID
-	id.MustParse(env.Message.(*messages.OpenAccount).AccountId)
-	return id, &Account{}
+	return "account_id", env.Message.(hasAccountID).GetAccountId(), nil
 }
 
 func (aggregateRoot) HandleMessage(
