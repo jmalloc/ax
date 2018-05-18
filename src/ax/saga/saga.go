@@ -6,43 +6,73 @@ import (
 	"github.com/jmalloc/ax/src/ax"
 )
 
-// Saga is an interface for handling messages associated with a particular saga
-// instance.
+// A Saga is a stateful message handler.
 //
-// A Saga is essentially a stateful message handler where persistence of the
-// saga state is managed by the framework. The state is represented by the
-// Instance interface. Each saga may produce many instances.
+// They are typically used to model "long-running" business processes. They are
+// the foundation on which aggregates and workflows are built.
+//
+// Each saga can have multiple instances, represented by the saga.Instance
+// struct. Each instance as associated application-defined data, represented by
+// the saga.Data interface.
+//
+// For each saga, an inbound message is always routed to one saga instance.
+//
+// Saga instances are persisted using an implementation of the Repository
+// interface, which is typically provided by a specific persistence
+// implementation.
 type Saga interface {
 	// SagaName returns a unique name for the saga.
-	// The saga name is used to locate instances of the saga. It must not be
-	// changed while there are active instances.
+	//
+	// The saga name is used to relate saga instances to the saga implementation
+	// that manages them. For that reason, saga names should not be changed when
+	// there are active saga instances.
 	SagaName() string
 
 	// MessageTypes returns the set of messages that are routed to this saga.
 	//
-	// tr is the set of "trigger" messages that will cause a new instance to be
-	// created. mt is the set of messages that are only routed to existing
-	// instances (or the not-found handler).
+	// tr is the set of "trigger" messages. If they can not be routed to an
+	// existing saga instance a new instance is created.
+	//
+	// mt is the set of messages that are only routed to existing instances. If
+	// they can not be routed to an existing instance, the HandleNotFound()
+	// method is called instead.
 	MessageTypes() (tr ax.MessageTypeSet, mt ax.MessageTypeSet)
 
 	// NewInstance returns a new saga instance.
-	NewInstance(context.Context, ax.Envelope) (InstanceID, Data, error)
-
-	// BuildMappingTable returns the message mapping table to use for the given
-	// saga instance.
 	//
-	// Mapping tables are used to correlate incoming messages with the saga
-	// instance they are routed to.
+	// It is called when a "trigger" message is received and there is no
+	// existing saga instance. env contains the "trigger" message.
 	//
-	// The mapping table is rebuilt each time an instance receives a message. Care
-	// should be taken when adding new keys to the mapping table, as the persisted
-	// mapping tables for existing instances will not include that key until they
-	// next receive a message.
-	BuildMappingTable(context.Context, Instance) (map[string]string, error)
+	// If err is nil, id must be a valid InstanceID, and d must be non-nil.
+	NewInstance(ctx context.Context, env ax.Envelope) (id InstanceID, d Data, err error)
 
-	// MapMessage returns the key and value to use to locate the saga instance
-	// for the given message.
-	MapMessage(context.Context, ax.Envelope) (string, string, error)
+	// MappingKeyForMessage returns the key used to locate the saga instance
+	// to which the given message is routed.
+	//
+	// The message is routed to the saga instance that contains k in its
+	// associated key set.
+	//
+	// If no saga instance is found and the message is a "trigger" message, a
+	// new instance is created; otherwise, HandleNotFound() is called.
+	MappingKeyForMessage(ctx context.Context, env ax.Envelope) (k string, err error)
+
+	// MappingKeysForInstance returns the set of mapping keys associated with
+	// the given instance.
+	//
+	// When a message is received, a mapping key is produced by calling
+	// MappingKeyForMessage(). The message is routed to the saga instance that
+	// contains this key in its key set.
+	//
+	// Key sets must be disjoint. That is, no two instances of the same saga
+	// may share any keys.
+	//
+	// The key set is rebuild whenever a message is received. It is persisted
+	// alongside the saga instance by the Repository.
+	//
+	// Extra care must be taken when introducing a new key to the set, as the key
+	// set for existing saga instances will not be updated until they next receive
+	// a message.
+	MappingKeysForInstance(context.Context, Instance) (KeySet, error)
 
 	// HandleMessage handles a message for a particular saga instance.
 	HandleMessage(context.Context, ax.Sender, ax.Envelope, Instance) error

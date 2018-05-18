@@ -12,8 +12,7 @@ type Repository interface {
 	// LoadSagaInstance fetches a saga instance that has a specific key/value
 	// pair in its mapping table.
 	//
-	// sn is the saga name. k and v are the key and value in the mapping table,
-	// respectively.
+	// sn is the saga name. k is the message mapping key.
 	//
 	// If a saga instance is found; ok is true, otherwise it is false. A
 	// non-nil error indicates a problem with the store itself.
@@ -23,7 +22,7 @@ type Repository interface {
 	LoadSagaInstance(
 		ctx context.Context,
 		tx persistence.Tx,
-		sn, k, v string,
+		sn, k string,
 	) (i Instance, ok bool, err error)
 
 	// SaveSagaInstance persists a saga instance and its associated mapping
@@ -39,6 +38,6 @@ type Repository interface {
 		tx persistence.Tx,
 		sn string,
 		i Instance,
-		t map[string]string,
+		ks KeySet,
 	) error
 }

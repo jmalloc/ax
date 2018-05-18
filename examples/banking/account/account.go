@@ -42,18 +42,21 @@ func (aggregateRoot) NewInstance(ctx context.Context, env ax.Envelope) (saga.Ins
 	return id, &Account{}, nil
 }
 
-func (aggregateRoot) BuildMappingTable(ctx context.Context, i saga.Instance) (map[string]string, error) {
-	return map[string]string{
-		"account_id": i.Data.(*Account).AccountId,
-	}, nil
-}
-
-func (aggregateRoot) MapMessage(ctx context.Context, env ax.Envelope) (string, string, error) {
+func (aggregateRoot) MappingKeyForMessage(ctx context.Context, env ax.Envelope) (string, error) {
 	type hasAccountID interface {
 		GetAccountId() string
 	}
 
-	return "account_id", env.Message.(hasAccountID).GetAccountId(), nil
+	return env.Message.(hasAccountID).GetAccountId(), nil
+}
+
+func (aggregateRoot) MappingKeysForInstance(
+	ctx context.Context,
+	i saga.Instance,
+) (saga.KeySet, error) {
+	return saga.NewKeySet(
+		i.Data.(*Account).AccountId,
+	), nil
 }
 
 func (aggregateRoot) HandleMessage(

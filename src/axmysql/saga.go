@@ -29,7 +29,7 @@ type SagaRepository struct{}
 func (*SagaRepository) LoadSagaInstance(
 	ctx context.Context,
 	tx persistence.Tx,
-	sn, k, v string,
+	sn, k string,
 ) (i saga.Instance, ok bool, err error) {
 	stx := tx.(*Tx).sqlTx
 
@@ -41,14 +41,12 @@ func (*SagaRepository) LoadSagaInstance(
 			i.content_type,
 			i.data
 		FROM saga_instance AS i
-		INNER JOIN saga_map AS m
-		ON m.instance_id = i.id
-		WHERE m.saga_name = ?
-		AND m.mapping_key = ?
-		AND m.mapping_value = ?`,
+		INNER JOIN saga_key AS k
+		ON k.instance_id = i.id
+		WHERE k.saga_name = ?
+		AND k.mapping_key = ?`,
 		sn,
 		k,
-		v,
 	)
 
 	var (
@@ -92,7 +90,7 @@ func (*SagaRepository) SaveSagaInstance(
 	tx persistence.Tx,
 	sn string,
 	i saga.Instance,
-	t map[string]string,
+	ks saga.KeySet,
 ) error {
 	stx := tx.(*Tx).sqlTx
 
@@ -160,7 +158,7 @@ func (*SagaRepository) SaveSagaInstance(
 
 		if _, err := stx.ExecContext(
 			ctx,
-			`DELETE FROM saga_map
+			`DELETE FROM saga_key
 			WHERE instance_id = ?`,
 			i.InstanceID,
 		); err != nil {
@@ -168,17 +166,15 @@ func (*SagaRepository) SaveSagaInstance(
 		}
 	}
 
-	for k, v := range t {
+	for k := range ks {
 		if _, err := stx.ExecContext(
 			ctx,
-			`INSERT INTO saga_map SET
+			`INSERT INTO saga_key SET
 				saga_name = ?,
 				mapping_key = ?,
-				mapping_value = ?,
 				instance_id = ?`,
 			sn,
 			k,
-			v,
 			i.InstanceID,
 		); err != nil {
 			return err
@@ -201,13 +197,12 @@ var SagaSchema = []string{
 
 		INDEX (saga_name)
 	)`,
-	`CREATE TABLE IF NOT EXISTS saga_map (
+	`CREATE TABLE IF NOT EXISTS saga_key (
 		saga_name     VARBINARY(255) NOT NULL,
 		mapping_key   VARBINARY(255) NOT NULL,
-		mapping_value VARBINARY(255) NOT NULL,
 		instance_id   VARBINARY(255) NOT NULL,
 
-		PRIMARY KEY (saga_name, mapping_key, mapping_value),
+		PRIMARY KEY (saga_name, mapping_key),
 		INDEX (instance_id)
 	)`,
 }

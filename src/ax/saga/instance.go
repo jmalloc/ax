@@ -10,15 +10,17 @@ type InstanceID struct {
 	ident.ID
 }
 
-// Instance is an instance of a saga. It encapsulates the application-defined
-// saga data with its meta-data.
+// Instance is an instance of a saga.
+//
+// It encapsulates the application-defined saga data and its meta-data.
 type Instance struct {
 	InstanceID InstanceID
 	Revision   uint64
 	Data       Data
 }
 
-// Data is an interface for application-defined saga data.
+// Data is an interface for application-defined data associated with a saga
+// instance.
 type Data interface {
 	proto.Message
 

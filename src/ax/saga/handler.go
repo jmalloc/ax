@@ -38,14 +38,14 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 	ctx = persistence.WithTx(ctx, tx)
 
 	// acquire the key/value used to query the repository.
-	k, v, err := h.Saga.MapMessage(ctx, env)
+	k, err := h.Saga.MappingKeyForMessage(ctx, env)
 	if err != nil {
 		return err
 	}
 
 	// attempt to find an existing saga instance.
 	sn := h.Saga.SagaName()
-	i, ok, err := h.Repository.LoadSagaInstance(ctx, tx, sn, k, v)
+	i, ok, err := h.Repository.LoadSagaInstance(ctx, tx, sn, k)
 	if err != nil {
 		return err
 	}
@@ -73,13 +73,13 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 	}
 
 	// rebuild the instance's mapping table.
-	t, err := h.Saga.BuildMappingTable(ctx, i)
+	ks, err := h.Saga.MappingKeysForInstance(ctx, i)
 	if err != nil {
 		return err
 	}
 
 	// save the changes to the saga and its mapping table.
-	if err := h.Repository.SaveSagaInstance(ctx, tx, sn, i, t); err != nil {
+	if err := h.Repository.SaveSagaInstance(ctx, tx, sn, i, ks); err != nil {
 		return err
 	}
 
