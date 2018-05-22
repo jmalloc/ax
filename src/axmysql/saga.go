@@ -3,6 +3,7 @@ package axmysql
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/jmalloc/ax/src/ax/persistence"
@@ -36,29 +37,32 @@ func (*SagaRepository) LoadSagaInstance(
 	row := stx.QueryRowContext(
 		ctx,
 		`SELECT
-			i.id,
-			i.revision,
-			i.content_type,
-			i.data
+			i.instance_id,
+			i.current_revision,
+			i.snapshot_revision,
+			i.snapshot_content_type,
+			i.snapshot_data
 		FROM saga_instance AS i
 		INNER JOIN saga_key AS k
-		ON k.instance_id = i.id
-		WHERE k.saga_name = ?
+		ON k.instance_id = i.instance_id
+		WHERE k.saga = ?
 		AND k.mapping_key = ?`,
 		sn,
 		k,
 	)
 
 	var (
-		ct   string
-		data []byte
+		snapRev  saga.Revision
+		snapType string
+		snapData []byte
 	)
 
 	err = row.Scan(
 		&i.InstanceID,
 		&i.Revision,
-		&ct,
-		&data,
+		&snapRev,
+		&snapType,
+		&snapData,
 	)
 
 	if err == sql.ErrNoRows {
@@ -69,7 +73,11 @@ func (*SagaRepository) LoadSagaInstance(
 		return i, false, err
 	}
 
-	i.Data, err = saga.UnmarshalData(ct, data)
+	if snapRev != i.Revision {
+		return i, false, errors.New("saga snapshot revision is not the current revision")
+	}
+
+	i.Data, err = saga.UnmarshalData(snapType, snapData)
 	if err != nil {
 		return i, false, err
 	}
@@ -94,7 +102,7 @@ func (*SagaRepository) SaveSagaInstance(
 ) error {
 	stx := tx.(*Tx).sqlTx
 
-	ct, data, err := saga.MarshalData(i.Data)
+	snapType, snapData, err := saga.MarshalData(i.Data)
 	if err != nil {
 		return err
 	}
@@ -103,17 +111,18 @@ func (*SagaRepository) SaveSagaInstance(
 		if _, err := stx.ExecContext(
 			ctx,
 			`INSERT INTO saga_instance SET
-				id = ?,
-				saga_name = ?,
-				description = ?,
-				content_type = ?,
-				data = ?,
-				revision = 1`,
+				instance_id = ?,
+				saga = ?,
+				current_revision = 1,
+				snapshot_revision = 1,
+				snapshot_description = ?,
+				snapshot_content_type = ?,
+				snapshot_data = ?`,
 			i.InstanceID,
 			sn,
 			i.Data.SagaDescription(),
-			ct,
-			data,
+			snapType,
+			snapData,
 		); err != nil {
 			return err
 		}
@@ -121,14 +130,14 @@ func (*SagaRepository) SaveSagaInstance(
 		row := stx.QueryRowContext(
 			ctx,
 			`SELECT
-				revision
+				current_revision
 			FROM saga_instance
-			WHERE id = ?
+			WHERE instance_id = ?
 			FOR UPDATE`,
 			i.InstanceID,
 		)
 
-		var rev uint64
+		var rev saga.Revision
 		if err := row.Scan(&rev); err != nil {
 			return err
 		}
@@ -143,14 +152,17 @@ func (*SagaRepository) SaveSagaInstance(
 		if _, err := stx.ExecContext(
 			ctx,
 			`UPDATE saga_instance SET
-				description = ?,
-				content_type = ?,
-				data = ?,
-				revision = revision + 1
-			WHERE id = ?`,
+				current_revision = ?,
+				snapshot_revision = ?,
+				snapshot_description = ?,
+				snapshot_content_type = ?,
+				snapshot_data = ?
+			WHERE instance_id = ?`,
+			rev+1,
+			rev+1,
 			i.Data.SagaDescription(),
-			ct,
-			data,
+			snapType,
+			snapData,
 			i.InstanceID,
 		); err != nil {
 			return err
@@ -170,7 +182,7 @@ func (*SagaRepository) SaveSagaInstance(
 		if _, err := stx.ExecContext(
 			ctx,
 			`INSERT INTO saga_key SET
-				saga_name = ?,
+				saga = ?,
 				mapping_key = ?,
 				instance_id = ?`,
 			sn,
@@ -188,21 +200,32 @@ func (*SagaRepository) SaveSagaInstance(
 // used by OutboxRepository.
 var SagaSchema = []string{
 	`CREATE TABLE IF NOT EXISTS saga_instance (
-		id             VARBINARY(255) NOT NULL PRIMARY KEY,
-		saga_name      VARBINARY(255) NOT NULL,
-		description    VARBINARY(255) NOT NULL,
-		content_type   VARBINARY(255) NOT NULL,
-		data           BLOB NOT NULL,
-		revision       BIGINT UNSIGNED NOT NULL,
+		instance_id           VARBINARY(255) NOT NULL PRIMARY KEY,
+		saga                  VARBINARY(255) NOT NULL,
+		current_revision      BIGINT UNSIGNED NOT NULL,
 
-		INDEX (saga_name)
+		snapshot_revision     BIGINT UNSIGNED,
+		snapshot_description  VARBINARY(255),
+		snapshot_content_type VARBINARY(255),
+		snapshot_data         BLOB,
+
+		INDEX (saga)
 	)`,
 	`CREATE TABLE IF NOT EXISTS saga_key (
-		saga_name     VARBINARY(255) NOT NULL,
+		saga          VARBINARY(255) NOT NULL,
 		mapping_key   VARBINARY(255) NOT NULL,
 		instance_id   VARBINARY(255) NOT NULL,
 
-		PRIMARY KEY (saga_name, mapping_key),
+		PRIMARY KEY (saga, mapping_key),
 		INDEX (instance_id)
 	)`,
+	// `CREATE TABLE IF NOT EXISTS saga_event (
+	// 	instance_id  VARBINARY(255) NOT NULL,
+	// 	revision     BIGINT UNSIGNED NOT NULL,
+	// 	description  VARBINARY(255) NOT NULL,
+	// 	content_type VARBINARY(255) NOT NULL,
+	// 	data         BLOB NOT NULL,
+
+	// 	PRIMARY KEY (instance_id, revision)
+	// )`,
 }

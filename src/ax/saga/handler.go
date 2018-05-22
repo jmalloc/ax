@@ -7,8 +7,9 @@ import (
 	"github.com/jmalloc/ax/src/ax/persistence"
 )
 
-// MessageHandler is an implementation of routing.MessageHandler that handles
-// the persistence of saga instances before forwarding the message to a saga.
+// MessageHandler is an implementation of routing.MessageHandler that loads a
+// saga instance, forwards the message to the saga, then perists any changes
+// to the instance.
 type MessageHandler struct {
 	Repository Repository
 	Saga       Saga

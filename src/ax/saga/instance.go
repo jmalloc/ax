@@ -15,9 +15,12 @@ type InstanceID struct {
 // It encapsulates the application-defined saga data and its meta-data.
 type Instance struct {
 	InstanceID InstanceID
-	Revision   uint64
+	Revision   Revision
 	Data       Data
 }
+
+// Revision is the version of a saga instance.
+type Revision uint64
 
 // Data is an interface for application-defined data associated with a saga
 // instance.
