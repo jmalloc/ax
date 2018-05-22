@@ -31,7 +31,7 @@ func (m *OpenAccount) Reset()         { *m = OpenAccount{} }
 func (m *OpenAccount) String() string { return proto.CompactTextString(m) }
 func (*OpenAccount) ProtoMessage()    {}
 func (*OpenAccount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_account_00996e67f678d99a, []int{0}
+	return fileDescriptor_account_6e8740aba8d3b8ce, []int{0}
 }
 func (m *OpenAccount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_OpenAccount.Unmarshal(m, b)
@@ -78,7 +78,7 @@ func (m *AccountOpened) Reset()         { *m = AccountOpened{} }
 func (m *AccountOpened) String() string { return proto.CompactTextString(m) }
 func (*AccountOpened) ProtoMessage()    {}
 func (*AccountOpened) Descriptor() ([]byte, []int) {
-	return fileDescriptor_account_00996e67f678d99a, []int{1}
+	return fileDescriptor_account_6e8740aba8d3b8ce, []int{1}
 }
 func (m *AccountOpened) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AccountOpened.Unmarshal(m, b)
@@ -112,17 +112,211 @@ func (m *AccountOpened) GetName() string {
 	return ""
 }
 
+// CreditAccount is a command that credits funds to an account.
+type CreditAccount struct {
+	AccountId            string   `protobuf:"bytes,1,opt,name=account_id,json=accountId" json:"account_id,omitempty"`
+	Cents                int32    `protobuf:"varint,2,opt,name=cents" json:"cents,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *CreditAccount) Reset()         { *m = CreditAccount{} }
+func (m *CreditAccount) String() string { return proto.CompactTextString(m) }
+func (*CreditAccount) ProtoMessage()    {}
+func (*CreditAccount) Descriptor() ([]byte, []int) {
+	return fileDescriptor_account_6e8740aba8d3b8ce, []int{2}
+}
+func (m *CreditAccount) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_CreditAccount.Unmarshal(m, b)
+}
+func (m *CreditAccount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CreditAccount.Marshal(b, m, deterministic)
+}
+func (dst *CreditAccount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CreditAccount.Merge(dst, src)
+}
+func (m *CreditAccount) XXX_Size() int {
+	return xxx_messageInfo_CreditAccount.Size(m)
+}
+func (m *CreditAccount) XXX_DiscardUnknown() {
+	xxx_messageInfo_CreditAccount.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CreditAccount proto.InternalMessageInfo
+
+func (m *CreditAccount) GetAccountId() string {
+	if m != nil {
+		return m.AccountId
+	}
+	return ""
+}
+
+func (m *CreditAccount) GetCents() int32 {
+	if m != nil {
+		return m.Cents
+	}
+	return 0
+}
+
+// AccountCredited is an event that occurs when funds are credited to an
+// account.
+type AccountCredited struct {
+	AccountId            string   `protobuf:"bytes,1,opt,name=account_id,json=accountId" json:"account_id,omitempty"`
+	Cents                int32    `protobuf:"varint,2,opt,name=cents" json:"cents,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *AccountCredited) Reset()         { *m = AccountCredited{} }
+func (m *AccountCredited) String() string { return proto.CompactTextString(m) }
+func (*AccountCredited) ProtoMessage()    {}
+func (*AccountCredited) Descriptor() ([]byte, []int) {
+	return fileDescriptor_account_6e8740aba8d3b8ce, []int{3}
+}
+func (m *AccountCredited) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_AccountCredited.Unmarshal(m, b)
+}
+func (m *AccountCredited) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_AccountCredited.Marshal(b, m, deterministic)
+}
+func (dst *AccountCredited) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AccountCredited.Merge(dst, src)
+}
+func (m *AccountCredited) XXX_Size() int {
+	return xxx_messageInfo_AccountCredited.Size(m)
+}
+func (m *AccountCredited) XXX_DiscardUnknown() {
+	xxx_messageInfo_AccountCredited.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AccountCredited proto.InternalMessageInfo
+
+func (m *AccountCredited) GetAccountId() string {
+	if m != nil {
+		return m.AccountId
+	}
+	return ""
+}
+
+func (m *AccountCredited) GetCents() int32 {
+	if m != nil {
+		return m.Cents
+	}
+	return 0
+}
+
+// DebitAccount is a command that debits funds from an account.
+type DebitAccount struct {
+	AccountId            string   `protobuf:"bytes,1,opt,name=account_id,json=accountId" json:"account_id,omitempty"`
+	Cents                int32    `protobuf:"varint,2,opt,name=cents" json:"cents,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *DebitAccount) Reset()         { *m = DebitAccount{} }
+func (m *DebitAccount) String() string { return proto.CompactTextString(m) }
+func (*DebitAccount) ProtoMessage()    {}
+func (*DebitAccount) Descriptor() ([]byte, []int) {
+	return fileDescriptor_account_6e8740aba8d3b8ce, []int{4}
+}
+func (m *DebitAccount) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DebitAccount.Unmarshal(m, b)
+}
+func (m *DebitAccount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DebitAccount.Marshal(b, m, deterministic)
+}
+func (dst *DebitAccount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DebitAccount.Merge(dst, src)
+}
+func (m *DebitAccount) XXX_Size() int {
+	return xxx_messageInfo_DebitAccount.Size(m)
+}
+func (m *DebitAccount) XXX_DiscardUnknown() {
+	xxx_messageInfo_DebitAccount.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DebitAccount proto.InternalMessageInfo
+
+func (m *DebitAccount) GetAccountId() string {
+	if m != nil {
+		return m.AccountId
+	}
+	return ""
+}
+
+func (m *DebitAccount) GetCents() int32 {
+	if m != nil {
+		return m.Cents
+	}
+	return 0
+}
+
+// AccountDebited is an event that occurs when funds are debited from an
+// account.
+type AccountDebited struct {
+	AccountId            string   `protobuf:"bytes,1,opt,name=account_id,json=accountId" json:"account_id,omitempty"`
+	Cents                int32    `protobuf:"varint,2,opt,name=cents" json:"cents,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *AccountDebited) Reset()         { *m = AccountDebited{} }
+func (m *AccountDebited) String() string { return proto.CompactTextString(m) }
+func (*AccountDebited) ProtoMessage()    {}
+func (*AccountDebited) Descriptor() ([]byte, []int) {
+	return fileDescriptor_account_6e8740aba8d3b8ce, []int{5}
+}
+func (m *AccountDebited) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_AccountDebited.Unmarshal(m, b)
+}
+func (m *AccountDebited) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_AccountDebited.Marshal(b, m, deterministic)
+}
+func (dst *AccountDebited) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AccountDebited.Merge(dst, src)
+}
+func (m *AccountDebited) XXX_Size() int {
+	return xxx_messageInfo_AccountDebited.Size(m)
+}
+func (m *AccountDebited) XXX_DiscardUnknown() {
+	xxx_messageInfo_AccountDebited.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AccountDebited proto.InternalMessageInfo
+
+func (m *AccountDebited) GetAccountId() string {
+	if m != nil {
+		return m.AccountId
+	}
+	return ""
+}
+
+func (m *AccountDebited) GetCents() int32 {
+	if m != nil {
+		return m.Cents
+	}
+	return 0
+}
+
 func init() {
 	proto.RegisterType((*OpenAccount)(nil), "ax.examples.banking.OpenAccount")
 	proto.RegisterType((*AccountOpened)(nil), "ax.examples.banking.AccountOpened")
+	proto.RegisterType((*CreditAccount)(nil), "ax.examples.banking.CreditAccount")
+	proto.RegisterType((*AccountCredited)(nil), "ax.examples.banking.AccountCredited")
+	proto.RegisterType((*DebitAccount)(nil), "ax.examples.banking.DebitAccount")
+	proto.RegisterType((*AccountDebited)(nil), "ax.examples.banking.AccountDebited")
 }
 
 func init() {
-	proto.RegisterFile("examples/banking/messages/account.proto", fileDescriptor_account_00996e67f678d99a)
+	proto.RegisterFile("examples/banking/messages/account.proto", fileDescriptor_account_6e8740aba8d3b8ce)
 }
 
-var fileDescriptor_account_00996e67f678d99a = []byte{
-	// 145 bytes of a gzipped FileDescriptorProto
+var fileDescriptor_account_6e8740aba8d3b8ce = []byte{
+	// 202 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x52, 0x4f, 0xad, 0x48, 0xcc,
 	0x2d, 0xc8, 0x49, 0x2d, 0xd6, 0x4f, 0x4a, 0xcc, 0xcb, 0xce, 0xcc, 0x4b, 0xd7, 0xcf, 0x4d, 0x2d,
 	0x2e, 0x4e, 0x4c, 0x4f, 0x2d, 0xd6, 0x4f, 0x4c, 0x4e, 0xce, 0x2f, 0xcd, 0x2b, 0xd1, 0x2b, 0x28,
@@ -130,7 +324,10 @@ var fileDescriptor_account_00996e67f678d99a = []byte{
 	0xe2, 0xf6, 0x2f, 0x48, 0xcd, 0x73, 0x84, 0xa8, 0x14, 0x92, 0xe5, 0xe2, 0x82, 0x6a, 0x8a, 0xcf,
 	0x4c, 0x91, 0x60, 0x54, 0x60, 0xd4, 0xe0, 0x0c, 0xe2, 0x84, 0x8a, 0x78, 0xa6, 0x08, 0x09, 0x71,
 	0xb1, 0xe4, 0x25, 0xe6, 0xa6, 0x4a, 0x30, 0x81, 0x25, 0xc0, 0x6c, 0x25, 0x27, 0x2e, 0x5e, 0xa8,
-	0x6e, 0x90, 0x41, 0xa9, 0x29, 0x64, 0x98, 0xe1, 0xc4, 0x15, 0xc5, 0x01, 0x73, 0x74, 0x12, 0x1b,
-	0xd8, 0xb5, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0x5c, 0xa6, 0x2d, 0xb1, 0xd8, 0x00, 0x00,
-	0x00,
+	0x6e, 0x90, 0x41, 0xa9, 0x29, 0xe4, 0x98, 0xe1, 0xc2, 0xc5, 0xeb, 0x5c, 0x94, 0x9a, 0x92, 0x59,
+	0x42, 0xa4, 0x3b, 0x44, 0xb8, 0x58, 0x93, 0x53, 0xf3, 0x4a, 0x8a, 0xc1, 0x86, 0xb0, 0x06, 0x41,
+	0x38, 0x4a, 0x6e, 0x5c, 0xfc, 0x50, 0xfd, 0x10, 0xc3, 0x08, 0xbb, 0x05, 0xbb, 0x39, 0xce, 0x5c,
+	0x3c, 0x2e, 0xa9, 0x49, 0x14, 0x3a, 0xc6, 0x95, 0x8b, 0x0f, 0xaa, 0x1f, 0x6c, 0x16, 0x99, 0x6e,
+	0x71, 0xe2, 0x8a, 0xe2, 0x80, 0x45, 0x67, 0x12, 0x1b, 0x38, 0x1e, 0x8d, 0x01, 0x01, 0x00, 0x00,
+	0xff, 0xff, 0x07, 0xe2, 0x57, 0x35, 0xf2, 0x01, 0x00, 0x00,
 }

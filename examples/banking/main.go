@@ -8,6 +8,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
+	"github.com/jmalloc/ax/examples/banking/account"
 	"github.com/jmalloc/ax/examples/banking/messages"
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
@@ -15,26 +16,13 @@ import (
 	"github.com/jmalloc/ax/src/ax/outbox"
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/ax/routing"
+	"github.com/jmalloc/ax/src/ax/saga"
 	"github.com/jmalloc/ax/src/axcli"
 	"github.com/jmalloc/ax/src/axmysql"
 	"github.com/jmalloc/ax/src/axrmq"
 	"github.com/spf13/cobra"
 	"github.com/streadway/amqp"
 )
-
-type handler struct{}
-
-func (handler) MessageTypes() ax.MessageTypeSet {
-	return ax.TypesOf(&messages.OpenAccount{})
-}
-
-func (handler) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope) error {
-	m := env.Message.(*messages.OpenAccount)
-	return s.PublishEvent(ctx, &messages.AccountOpened{
-		AccountId: m.AccountId,
-		Name:      m.Name,
-	})
-}
 
 func main() {
 	db, err := sql.Open("mysql", os.Getenv("AX_MYSQL_DSN"))
@@ -49,7 +37,12 @@ func main() {
 	}
 	defer rmq.Close()
 
-	htable, err := routing.NewHandlerTable(handler{})
+	htable, err := routing.NewHandlerTable(
+		&saga.MessageHandler{
+			Saga:       account.AggregateRoot,
+			Repository: &axmysql.SagaRepository{},
+		},
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -107,6 +100,8 @@ func main() {
 		sender,
 		ax.TypesOf(
 			&messages.OpenAccount{},
+			&messages.CreditAccount{},
+			&messages.DebitAccount{},
 		),
 	)
 	if err != nil {

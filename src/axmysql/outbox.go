@@ -80,7 +80,7 @@ func (r *OutboxRepository) SaveOutbox(
 	id ax.MessageID,
 	envs []endpoint.OutboundEnvelope,
 ) error {
-	stx := tx.(*Tx).tx
+	stx := tx.(*Tx).sqlTx
 
 	if _, err := stx.ExecContext(
 		ctx,
@@ -105,7 +105,7 @@ func (r *OutboxRepository) MarkAsSent(
 	tx persistence.Tx,
 	env endpoint.OutboundEnvelope,
 ) error {
-	_, err := tx.(*Tx).tx.ExecContext(
+	_, err := tx.(*Tx).sqlTx.ExecContext(
 		ctx,
 		`DELETE FROM outbox_message WHERE message_id = ?`,
 		env.MessageID,

@@ -7,8 +7,9 @@ import (
 	"github.com/jmalloc/ax/src/ax/persistence"
 )
 
-// MessageHandler is an implementation of bus.MessageHandler that handles the
-// persistence of saga instances before forwarding the message to a saga.
+// MessageHandler is an implementation of routing.MessageHandler that loads a
+// saga instance, forwards the message to the saga, then perists any changes
+// to the instance.
 type MessageHandler struct {
 	Repository Repository
 	Saga       Saga
@@ -23,52 +24,63 @@ func (h *MessageHandler) MessageTypes() ax.MessageTypeSet {
 	return triggers.Union(others)
 }
 
-// HandleMessage loads a saga instance, passes env to the saga to be handled, and
-// saves the changes to the saga instance.
+// HandleMessage loads a saga instance, passes env to the saga to be handled,
+// and saves the changes to the saga instance.
 //
-// Changes to the saga are persisted within the outbox transaction if one is
-// present in ctx. Otherwise, a new transaction is started.
+// Changes to the saga are persisted within the existing transaction in ctx, if
+// present.
 func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope) error {
-	mt := env.Type()
-	mk := h.Saga.MapMessage(env.Message)
-	si := h.Saga.InitialState()
-
-	// attempt to find an existing saga instance from the message mapping key.
-	ok, err := h.Repository.LoadSagaInstance(ctx, mt, mk, si)
-	if err != nil {
-		return err
-	}
-
 	tx, com, err := persistence.GetOrBeginTx(ctx)
 	if err != nil {
 		return err
 	}
 	defer com.Rollback()
 
-	hctx := persistence.WithTx(ctx, tx)
+	ctx = persistence.WithTx(ctx, tx)
 
-	// if no existing instance is found, and this message type does not produce
-	// new instances, then the not-found handler is called.
+	// acquire the key used to query the repository.
+	k, err := h.Saga.MappingKeyForMessage(ctx, env)
+	if err != nil {
+		return err
+	}
+
+	// attempt to find an existing saga instance.
+	sn := h.Saga.SagaName()
+	i, ok, err := h.Repository.LoadSagaInstance(ctx, tx, sn, k)
+	if err != nil {
+		return err
+	}
+
 	if !ok {
 		triggers, _ := h.Saga.MessageTypes()
 
-		if !triggers.Has(mt) {
-			return h.Saga.HandleNotFound(hctx, s, env)
+		// if no existing instance is found, and this message type does not trigger
+		// new instances, then the not-found handler is called.
+		if !triggers.Has(env.Type()) {
+			return h.Saga.HandleNotFound(ctx, s, env)
+		}
+
+		// otherwise, create a new saga instance.
+		i.InstanceID, i.Data, err = h.Saga.NewInstance(ctx, env)
+		if err != nil {
+			return err
 		}
 	}
 
 	// pass the message to the saga for handling.
-	if err := h.Saga.HandleMessage(hctx, s, env, si); err != nil {
+	err = h.Saga.HandleMessage(ctx, s, env, i)
+	if err != nil {
+		return err
+	}
+
+	// rebuild the instance's mapping table.
+	ks, err := h.Saga.MappingKeysForInstance(ctx, i)
+	if err != nil {
 		return err
 	}
 
 	// save the changes to the saga and its mapping table.
-	if err := h.Repository.SaveSagaInstance(
-		ctx,
-		tx,
-		si,
-		buildMappingTable(h.Saga, si),
-	); err != nil {
+	if err := h.Repository.SaveSagaInstance(ctx, tx, sn, i, ks); err != nil {
 		return err
 	}
 
