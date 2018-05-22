@@ -12,7 +12,7 @@ import (
 // the foundation on which aggregates and workflows are built.
 //
 // Each saga can have multiple instances, represented by the saga.Instance
-// struct. Each instance as associated application-defined data, represented by
+// struct. Each instance has associated application-defined data, represented by
 // the saga.Data interface.
 //
 // For each saga, an inbound message is always routed to one saga instance.
@@ -66,7 +66,7 @@ type Saga interface {
 	// Key sets must be disjoint. That is, no two instances of the same saga
 	// may share any keys.
 	//
-	// The key set is rebuild whenever a message is received. It is persisted
+	// The key set is rebuilt whenever a message is received. It is persisted
 	// alongside the saga instance by the Repository.
 	//
 	// Extra care must be taken when introducing a new key to the set, as the key

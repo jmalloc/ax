@@ -16,11 +16,10 @@ import (
 // It requires that Saga instances be implemented as protocol buffers messages.
 type SagaRepository struct{}
 
-// LoadSagaInstance fetches a saga instance that has a specific key/value
-// pair in its mapping table.
+// LoadSagaInstance fetches a saga instance that has a specific mapping key
+// in its key set.
 //
-// sn is the saga name. k and v are the key and value in the mapping table,
-// respectively.
+// sn is the saga name. k is the message mapping key.
 //
 // If a saga instance is found; ok is true, otherwise it is false. A
 // non-nil error indicates a problem with the store itself.

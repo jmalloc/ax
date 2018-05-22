@@ -38,7 +38,7 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 
 	ctx = persistence.WithTx(ctx, tx)
 
-	// acquire the key/value used to query the repository.
+	// acquire the key used to query the repository.
 	k, err := h.Saga.MappingKeyForMessage(ctx, env)
 	if err != nil {
 		return err

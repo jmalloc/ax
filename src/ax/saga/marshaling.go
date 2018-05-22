@@ -6,7 +6,7 @@ import (
 	"github.com/jmalloc/ax/src/ax/marshaling"
 )
 
-// MarshalData marshals i to a binary representation.
+// MarshalData marshals d to a binary representation.
 func MarshalData(d Data) (contentType string, data []byte, err error) {
 	return marshaling.MarshalJSON(d)
 }
