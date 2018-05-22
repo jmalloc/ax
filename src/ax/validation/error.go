@@ -1,23 +1,30 @@
 package validation
 
-import "github.com/jmalloc/ax/src/ax"
+import (
+	"fmt"
+
+	"github.com/jmalloc/ax/src/ax"
+)
 
 // ValidationError is an error type that contains
 // specifics about superficial message validation
 type ValidationError struct {
-	msg ax.Message
-	s   string
+	env   ax.Envelope
+	cause error
 }
 
 // NewValidationError returns a pointer to a new ValidationError struct
-func NewValidationError(s string, msg ax.Message) *ValidationError {
+func NewValidationError(err error, env ax.Envelope) *ValidationError {
 	return &ValidationError{
-		s:   s,
-		msg: msg,
+		env:   env,
+		cause: err,
 	}
 }
 
 // Error returns a string message of an error
 func (ve *ValidationError) Error() string {
-	return ve.s
+	return fmt.Sprintf(
+		"validation error, cause: %v",
+		ve.cause,
+	)
 }
