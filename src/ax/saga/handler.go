@@ -61,7 +61,12 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 		}
 
 		// otherwise, create a new saga instance.
-		i.InstanceID, i.Data, err = h.Saga.NewInstance(ctx, env)
+		i.InstanceID, err = h.Saga.GenerateInstanceID(ctx, env)
+		if err != nil {
+			return err
+		}
+
+		i.Data, err = h.Saga.InitialState(ctx)
 		if err != nil {
 			return err
 		}

@@ -35,11 +35,13 @@ func (aggregateRoot) MessageTypes() (ax.MessageTypeSet, ax.MessageTypeSet) {
 		)
 }
 
-func (aggregateRoot) NewInstance(ctx context.Context, env ax.Envelope) (saga.InstanceID, saga.Data, error) {
-	var id saga.InstanceID
-	id.MustParse(env.Message.(*messages.OpenAccount).AccountId)
+func (aggregateRoot) GenerateInstanceID(ctx context.Context, env ax.Envelope) (id saga.InstanceID, err error) {
+	err = id.Parse(env.Message.(*messages.OpenAccount).AccountId)
+	return
+}
 
-	return id, &Account{}, nil
+func (aggregateRoot) InitialState(ctx context.Context) (saga.Data, error) {
+	return &Account{}, nil
 }
 
 func (aggregateRoot) MappingKeyForMessage(ctx context.Context, env ax.Envelope) (string, error) {
