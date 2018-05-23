@@ -16,3 +16,9 @@ type Tx struct {
 func (tx *Tx) DataStore() persistence.DataStore {
 	return tx.ds
 }
+
+// sqlTx returns the standard SQL transaction wrapped by tx.
+// It panics if tx is not *axmysql.Tx
+func sqlTx(tx persistence.Tx) *sql.Tx {
+	return tx.(*Tx).sqlTx
+}

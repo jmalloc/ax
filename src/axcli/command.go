@@ -42,7 +42,8 @@ func NewCommand(s ax.Sender, mt ax.MessageType) (*cobra.Command, error) {
 			mt.Name,
 		)
 		send = func(ctx context.Context) error {
-			return s.ExecuteCommand(ctx, v)
+			_, err := s.ExecuteCommand(ctx, v)
+			return err
 		}
 	case ax.Event:
 		usage = fmt.Sprintf(
@@ -50,7 +51,8 @@ func NewCommand(s ax.Sender, mt ax.MessageType) (*cobra.Command, error) {
 			mt.Name,
 		)
 		send = func(ctx context.Context) error {
-			return s.PublishEvent(ctx, v)
+			_, err := s.PublishEvent(ctx, v)
+			return err
 		}
 	default:
 		return nil, fmt.Errorf(

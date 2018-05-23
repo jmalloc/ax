@@ -9,6 +9,9 @@ import (
 type Data interface {
 	saga.Data
 
-	// ApplyEvent updates the data to reflect the fact that ev has occurred.
-	ApplyEvent(ev ax.Event)
+	// ApplyEvent updates the data to reflect the fact that an event has
+	// occurred.
+	//
+	// It may panic if env.Message does not implement ax.Event.
+	ApplyEvent(env ax.Envelope)
 }

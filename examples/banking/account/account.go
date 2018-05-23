@@ -12,12 +12,17 @@ import (
 
 // SagaDescription returns a human-readable description of the saga instance.
 func (a *Account) SagaDescription() string {
-	return fmt.Sprintf("account %s", ident.Format(a.AccountId))
+	return fmt.Sprintf(
+		"account %s for %s, balance of %d",
+		ident.Format(a.AccountId),
+		a.Name,
+		a.Balance,
+	)
 }
 
 // ApplyEvent updates the data to reflect the fact that ev has occurred.
-func (a *Account) ApplyEvent(m ax.Event) {
-	switch ev := m.(type) {
+func (a *Account) ApplyEvent(env ax.Envelope) {
+	switch ev := env.Message.(type) {
 	case *messages.AccountOpened:
 		a.AccountId = ev.AccountId
 		a.Name = ev.Name
@@ -80,32 +85,32 @@ func (aggregateRoot) HandleMessage(
 	s ax.Sender,
 	env ax.Envelope,
 	i saga.Instance,
-) error {
+) (err error) {
 	acct := i.Data.(*Account)
 
 	switch m := env.Message.(type) {
 	case *messages.OpenAccount:
 		if acct.IsOpen {
-			return nil
+			return
 		}
 
-		return s.PublishEvent(ctx, &messages.AccountOpened{
+		_, err = s.PublishEvent(ctx, &messages.AccountOpened{
 			AccountId: m.AccountId,
 			Name:      m.Name,
 		})
 
 	case *messages.CreditAccount:
-		return s.PublishEvent(ctx, &messages.AccountCredited{
+		_, err = s.PublishEvent(ctx, &messages.AccountCredited{
 			AccountId: m.AccountId,
 			Cents:     m.Cents,
 		})
 
 	case *messages.DebitAccount:
-		return s.PublishEvent(ctx, &messages.AccountDebited{
+		_, err = s.PublishEvent(ctx, &messages.AccountDebited{
 			AccountId: m.AccountId,
 			Cents:     m.Cents,
 		})
 	}
 
-	return nil
+	return
 }

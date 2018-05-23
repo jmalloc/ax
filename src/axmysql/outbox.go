@@ -76,13 +76,13 @@ func (r *OutboxRepository) LoadOutbox(
 // when the message identified by id was delivered.
 func (r *OutboxRepository) SaveOutbox(
 	ctx context.Context,
-	tx persistence.Tx,
+	ptx persistence.Tx,
 	id ax.MessageID,
 	envs []endpoint.OutboundEnvelope,
 ) error {
-	stx := tx.(*Tx).sqlTx
+	tx := sqlTx(ptx)
 
-	if _, err := stx.ExecContext(
+	if _, err := tx.ExecContext(
 		ctx,
 		`INSERT INTO outbox SET message_id = ?`,
 		id,
@@ -91,7 +91,7 @@ func (r *OutboxRepository) SaveOutbox(
 	}
 
 	for _, env := range envs {
-		if err := insertOutboxMessage(ctx, stx, env); err != nil {
+		if err := insertOutboxMessage(ctx, tx, env); err != nil {
 			return err
 		}
 	}
@@ -102,10 +102,10 @@ func (r *OutboxRepository) SaveOutbox(
 // MarkAsSent marks a message as sent, removing it from the outbox.
 func (r *OutboxRepository) MarkAsSent(
 	ctx context.Context,
-	tx persistence.Tx,
+	ptx persistence.Tx,
 	env endpoint.OutboundEnvelope,
 ) error {
-	_, err := tx.(*Tx).sqlTx.ExecContext(
+	_, err := sqlTx(ptx).ExecContext(
 		ctx,
 		`DELETE FROM outbox_message WHERE message_id = ?`,
 		env.MessageID,

@@ -41,8 +41,8 @@ func main() {
 		&eventsourcing.MessageHandler{
 			Saga:   account.AggregateRoot,
 			Mapper: &axmysql.SagaMapper{},
-			Repository: &eventsourcing.EventStoreRepository{
-				EventStore: &axmysql.EventStore{},
+			Repository: &eventsourcing.MessageStoreRepository{
+				MessageStore: &axmysql.MessageStore{},
 			},
 		},
 	)

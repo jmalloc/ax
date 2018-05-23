@@ -136,7 +136,8 @@ var _ = Describe("Dispatcher", func() {
 
 		It("passes a sender that sends messages via the message sink", func() {
 			h1.HandleMessageFunc = func(ctx context.Context, s ax.Sender, _ ax.Envelope) error {
-				return s.ExecuteCommand(ctx, &messagetest.Command{})
+				_, err := s.ExecuteCommand(ctx, &messagetest.Command{})
+				return err
 			}
 
 			_ = dispatcher.Accept(ctx, sink, env)

@@ -24,21 +24,37 @@ type Repository interface {
 		d Data,
 	) (saga.Instance, error)
 
+	// SaveSagaInstance persists a saga instance.
+	//
+	// It returns an error if the saga instance has been modified since it was
+	// loaded, or if there is a problem communicating with the store itself.
+	//
+	// It panics if envs contains any messages that do not implement ax.Event.
+	//
+	// It panics if the repository is not able to enlist in tx because it uses a
+	// different underlying storage system.
 	SaveSagaInstance(
 		ctx context.Context,
 		tx persistence.Tx,
 		i saga.Instance,
-		ev []ax.Event,
+		envs []ax.Envelope,
 	) error
 }
 
-// EventStoreRepository is an implementation of Repository that loads
+// MessageStoreRepository is an implementation of Repository that loads
 // eventsourced saga instances from an event store, without using any snapshots.
-type EventStoreRepository struct {
-	EventStore EventStore
+type MessageStoreRepository struct {
+	MessageStore persistence.MessageStore
 }
 
-func (r *EventStoreRepository) LoadSagaInstance(
+// LoadSagaInstance fetches a saga instance by its ID.
+//
+// If a saga instance is found; ok is true, otherwise it is false. A
+// non-nil error indicates a problem with the store itself.
+//
+// It panics if the repository is not able to enlist in tx because it uses a
+// different underlying storage system.
+func (r *MessageStoreRepository) LoadSagaInstance(
 	ctx context.Context,
 	tx persistence.Tx,
 	id saga.InstanceID,
@@ -49,28 +65,49 @@ func (r *EventStoreRepository) LoadSagaInstance(
 		Data:       d,
 	}
 
-	return i, applyEvents(ctx, tx, r.EventStore, &i)
+	return i, applyEvents(ctx, tx, r.MessageStore, &i)
 }
 
-func (r *EventStoreRepository) SaveSagaInstance(
+// SaveSagaInstance persists a saga instance.
+//
+// It returns an error if the saga instance has been modified since it was
+// loaded, or if there is a problem communicating with the store itself.
+//
+// It panics if envs contains any messages that do not implement ax.Event.
+//
+// It panics if the repository is not able to enlist in tx because it uses a
+// different underlying storage system.
+func (r *MessageStoreRepository) SaveSagaInstance(
 	ctx context.Context,
 	tx persistence.Tx,
 	i saga.Instance,
-	ev []ax.Event,
+	envs []ax.Envelope,
 ) error {
-	return r.EventStore.AppendEvents(ctx, tx, i.InstanceID, i.Revision, ev)
+	return appendEvents(ctx, tx, r.MessageStore, i, envs)
 }
 
+// DefaultSnapshotFrequency is the default number of revisions to allow between
+// storing snapshots.
 const DefaultSnapshotFrequency = 1000
 
 // SnapshottingRepository is an implementation of Repository that uses an
 // event store and snaphot repository to store eventsourced saga instances.
 type SnapshottingRepository struct {
-	EventStore        EventStore
-	Snapshots         SnapshotRepository
-	SnapshotFrequency saga.Revision
+	MessageStore persistence.MessageStore
+	Snapshots    SnapshotRepository
+	Frequency    saga.Revision
 }
 
+// LoadSagaInstance fetches a saga instance by its ID.
+//
+// It first attempts to load a snapshot of the saga data, before fetching
+// events from the message store.
+//
+// If a saga instance is found; ok is true, otherwise it is false. A
+// non-nil error indicates a problem with the store itself.
+//
+// It panics if the repository is not able to enlist in tx because it uses a
+// different underlying storage system.
 func (r *SnapshottingRepository) LoadSagaInstance(
 	ctx context.Context,
 	tx persistence.Tx,
@@ -89,21 +126,33 @@ func (r *SnapshottingRepository) LoadSagaInstance(
 		}
 	}
 
-	return i, applyEvents(ctx, tx, r.EventStore, &i)
+	return i, applyEvents(ctx, tx, r.MessageStore, &i)
 }
 
+// SaveSagaInstance persists a saga instance.
+//
+// If the save operation causes the saga revision to pass the snapshot frequency
+// threshold, a new snapshot is stored.
+//
+// It returns an error if the saga instance has been modified since it was
+// loaded, or if there is a problem communicating with the store itself.
+//
+// It panics if envs contains any messages that do not implement ax.Event.
+//
+// It panics if the repository is not able to enlist in tx because it uses a
+// different underlying storage system.
 func (r *SnapshottingRepository) SaveSagaInstance(
 	ctx context.Context,
 	tx persistence.Tx,
 	i saga.Instance,
-	ev []ax.Event,
+	envs []ax.Envelope,
 ) error {
-	if err := r.EventStore.AppendEvents(ctx, tx, i.InstanceID, i.Revision, ev); err != nil {
+	if err := appendEvents(ctx, tx, r.MessageStore, i, envs); err != nil {
 		return err
 	}
 
 	prev := i.Revision
-	i.Revision += saga.Revision(len(ev))
+	i.Revision += saga.Revision(len(envs))
 
 	if r.shouldSnapshot(prev, i.Revision) {
 		return r.Snapshots.SaveSagaSnapshot(ctx, tx, i)
@@ -112,8 +161,9 @@ func (r *SnapshottingRepository) SaveSagaInstance(
 	return nil
 }
 
+// shouldSnapshot returns true if a new snapshot should be stored.
 func (r *SnapshottingRepository) shouldSnapshot(before, after saga.Revision) bool {
-	freq := r.SnapshotFrequency
+	freq := r.Frequency
 	if freq == 0 {
 		freq = DefaultSnapshotFrequency
 	}

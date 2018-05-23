@@ -27,12 +27,12 @@ type SagaRepository struct{}
 // different underlying storage system.
 func (*SagaRepository) LoadSagaInstance(
 	ctx context.Context,
-	tx persistence.Tx,
+	ptx persistence.Tx,
 	id saga.InstanceID,
 ) (i saga.Instance, err error) {
-	stx := tx.(*Tx).sqlTx
+	tx := sqlTx(ptx)
 
-	row := stx.QueryRowContext(
+	row := tx.QueryRowContext(
 		ctx,
 		`SELECT
 			i.instance_id,
@@ -82,10 +82,10 @@ func (*SagaRepository) LoadSagaInstance(
 // different underlying storage system.
 func (*SagaRepository) SaveSagaInstance(
 	ctx context.Context,
-	tx persistence.Tx,
+	ptx persistence.Tx,
 	i saga.Instance,
 ) error {
-	stx := tx.(*Tx).sqlTx
+	tx := sqlTx(ptx)
 
 	snapType, snapData, err := saga.MarshalData(i.Data)
 	if err != nil {
@@ -93,7 +93,7 @@ func (*SagaRepository) SaveSagaInstance(
 	}
 
 	if i.Revision == 0 {
-		if _, err := stx.ExecContext(
+		if _, err := tx.ExecContext(
 			ctx,
 			`INSERT INTO saga_instance SET
 				instance_id = ?,
@@ -110,7 +110,7 @@ func (*SagaRepository) SaveSagaInstance(
 			return err
 		}
 	} else {
-		row := stx.QueryRowContext(
+		row := tx.QueryRowContext(
 			ctx,
 			`SELECT
 				i.current_revision
@@ -132,7 +132,7 @@ func (*SagaRepository) SaveSagaInstance(
 			)
 		}
 
-		if _, err := stx.ExecContext(
+		if _, err := tx.ExecContext(
 			ctx,
 			`UPDATE saga_instance SET
 				current_revision = ?,

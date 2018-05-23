@@ -17,12 +17,12 @@ type SagaMapper struct{}
 // sn is the name of the saga, and k is the message's mapping key.
 func (SagaMapper) FindByKey(
 	ctx context.Context,
-	tx persistence.Tx,
+	ptx persistence.Tx,
 	sn, k string,
 ) (saga.InstanceID, bool, error) {
-	stx := tx.(*Tx).sqlTx
+	tx := sqlTx(ptx)
 
-	row := stx.QueryRowContext(
+	row := tx.QueryRowContext(
 		ctx,
 		`SELECT k.instance_id
 		FROM saga_keyset AS k
@@ -50,14 +50,14 @@ func (SagaMapper) FindByKey(
 // sn is the name of the saga.
 func (SagaMapper) SaveKeys(
 	ctx context.Context,
-	tx persistence.Tx,
+	ptx persistence.Tx,
 	sn string,
 	id saga.InstanceID,
 	ks saga.KeySet,
 ) error {
-	stx := tx.(*Tx).sqlTx
+	tx := sqlTx(ptx)
 
-	if _, err := stx.ExecContext(
+	if _, err := tx.ExecContext(
 		ctx,
 		`DELETE FROM saga_keyset
 		WHERE instance_id = ?`,
@@ -67,7 +67,7 @@ func (SagaMapper) SaveKeys(
 	}
 
 	for k := range ks {
-		if _, err := stx.ExecContext(
+		if _, err := tx.ExecContext(
 			ctx,
 			`INSERT INTO saga_keyset SET
 				saga = ?,

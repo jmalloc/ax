@@ -22,13 +22,4 @@ var SagaSchema = []string{
 		PRIMARY KEY (saga, mapping_key),
 		INDEX (instance_id)
 	)`,
-	`CREATE TABLE IF NOT EXISTS saga_event (
-		instance_id   VARBINARY(255) NOT NULL,
-		revision      BIGINT UNSIGNED NOT NULL,
-		description   VARBINARY(255) NOT NULL,
-		content_type  VARBINARY(255) NOT NULL,
-		data          BLOB NOT NULL,
-
-		PRIMARY KEY (instance_id, revision)
-	)`,
 }

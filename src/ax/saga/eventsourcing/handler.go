@@ -126,13 +126,13 @@ func (h *MessageHandler) saveInstance(
 	ctx context.Context,
 	tx persistence.Tx,
 	i saga.Instance,
-	ev []ax.Event,
+	envs []ax.Envelope,
 ) error {
-	if len(ev) == 0 {
+	if len(envs) == 0 {
 		return nil
 	}
 
-	if err := h.Repository.SaveSagaInstance(ctx, tx, i, ev); err != nil {
+	if err := h.Repository.SaveSagaInstance(ctx, tx, i, envs); err != nil {
 		return err
 	}
 
