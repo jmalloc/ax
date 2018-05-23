@@ -16,7 +16,7 @@ import (
 	"github.com/jmalloc/ax/src/ax/outbox"
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/ax/routing"
-	"github.com/jmalloc/ax/src/ax/saga"
+	"github.com/jmalloc/ax/src/ax/saga/eventsourcing"
 	"github.com/jmalloc/ax/src/axcli"
 	"github.com/jmalloc/ax/src/axmysql"
 	"github.com/jmalloc/ax/src/axrmq"
@@ -38,10 +38,12 @@ func main() {
 	defer rmq.Close()
 
 	htable, err := routing.NewHandlerTable(
-		&saga.MessageHandler{
-			Saga:       account.AggregateRoot,
-			Mapper:     &axmysql.SagaMapper{},
-			Repository: &axmysql.SagaRepository{},
+		&eventsourcing.MessageHandler{
+			Saga:   account.AggregateRoot,
+			Mapper: &axmysql.SagaMapper{},
+			Repository: &eventsourcing.EventStoreRepository{
+				EventStore: &axmysql.EventStore{},
+			},
 		},
 	)
 	if err != nil {

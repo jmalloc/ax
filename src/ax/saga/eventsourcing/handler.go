@@ -1,18 +1,19 @@
-package saga
+package eventsourcing
 
 import (
 	"context"
 
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/persistence"
+	"github.com/jmalloc/ax/src/ax/saga"
 )
 
 // MessageHandler is an implementation of routing.MessageHandler that loads a
 // saga instance, forwards the message to the saga, then perists any changes
 // to the instance.
 type MessageHandler struct {
-	Saga       Saga
-	Mapper     Mapper
+	Saga       saga.Saga
+	Mapper     saga.Mapper
 	Repository Repository
 }
 
@@ -39,17 +40,22 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 
 	ctx = persistence.WithTx(ctx, tx)
 
-	i, ok, err := h.loadInstance(ctx, tx, env)
+	i, ok, err := h.findInstance(ctx, tx, env)
 	if err != nil {
 		return err
 	}
 
 	if ok {
-		if err = h.Saga.HandleMessage(ctx, s, env, i); err != nil {
+		sender := &Sender{
+			Next: s,
+			Data: i.Data.(Data),
+		}
+
+		if err = h.Saga.HandleMessage(ctx, sender, env, i); err != nil {
 			return err
 		}
 
-		if err := h.saveInstance(ctx, tx, i); err != nil {
+		if err := h.saveInstance(ctx, tx, i, sender.Events); err != nil {
 			return err
 		}
 	} else {
@@ -61,26 +67,31 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 	return com.Commit()
 }
 
-// loadInstance returns the saga instance that the given message is routed to,
+// findInstance returns the saga instance that the given message is routed to,
 // creating a new instance if necessary.
-func (h *MessageHandler) loadInstance(
+func (h *MessageHandler) findInstance(
 	ctx context.Context,
 	tx persistence.Tx,
 	env ax.Envelope,
-) (Instance, bool, error) {
+) (saga.Instance, bool, error) {
 	k, err := h.Saga.MappingKeyForMessage(ctx, env)
 	if err != nil {
-		return Instance{}, false, err
+		return saga.Instance{}, false, err
 	}
 
 	sn := h.Saga.SagaName()
 	id, ok, err := h.Mapper.FindByKey(ctx, tx, sn, k)
 	if err != nil {
-		return Instance{}, false, err
+		return saga.Instance{}, false, err
 	}
 
 	if ok {
-		i, err := h.Repository.LoadSagaInstance(ctx, tx, id)
+		zv, err := h.Saga.InitialState(ctx)
+		if err != nil {
+			return saga.Instance{}, false, err
+		}
+
+		i, err := h.Repository.LoadSagaInstance(ctx, tx, id, zv.(Data))
 		return i, true, err
 	}
 
@@ -90,21 +101,21 @@ func (h *MessageHandler) loadInstance(
 		return i, true, err
 	}
 
-	return Instance{}, false, nil
+	return saga.Instance{}, false, nil
 }
 
-func (h *MessageHandler) newInstance(ctx context.Context, env ax.Envelope) (Instance, error) {
+func (h *MessageHandler) newInstance(ctx context.Context, env ax.Envelope) (saga.Instance, error) {
 	id, err := h.Saga.GenerateInstanceID(ctx, env)
 	if err != nil {
-		return Instance{}, err
+		return saga.Instance{}, err
 	}
 
 	data, err := h.Saga.InitialState(ctx)
 	if err != nil {
-		return Instance{}, err
+		return saga.Instance{}, err
 	}
 
-	return Instance{
+	return saga.Instance{
 		InstanceID: id,
 		Data:       data,
 	}, nil
@@ -114,9 +125,14 @@ func (h *MessageHandler) newInstance(ctx context.Context, env ax.Envelope) (Inst
 func (h *MessageHandler) saveInstance(
 	ctx context.Context,
 	tx persistence.Tx,
-	i Instance,
+	i saga.Instance,
+	ev []ax.Event,
 ) error {
-	if err := h.Repository.SaveSagaInstance(ctx, tx, i); err != nil {
+	if len(ev) == 0 {
+		return nil
+	}
+
+	if err := h.Repository.SaveSagaInstance(ctx, tx, i, ev); err != nil {
 		return err
 	}
 

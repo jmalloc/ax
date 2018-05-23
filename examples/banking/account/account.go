@@ -15,6 +15,20 @@ func (a *Account) SagaDescription() string {
 	return fmt.Sprintf("account %s", ident.Format(a.AccountId))
 }
 
+// ApplyEvent updates the data to reflect the fact that ev has occurred.
+func (a *Account) ApplyEvent(m ax.Event) {
+	switch ev := m.(type) {
+	case *messages.AccountOpened:
+		a.AccountId = ev.AccountId
+		a.Name = ev.Name
+		a.IsOpen = true
+	case *messages.AccountCredited:
+		a.Balance += ev.Cents
+	case *messages.AccountDebited:
+		a.Balance -= ev.Cents
+	}
+}
+
 // AggregateRoot is a saga that implements the Account aggregate.
 var AggregateRoot saga.Saga = &aggregateRoot{}
 
@@ -75,26 +89,18 @@ func (aggregateRoot) HandleMessage(
 			return nil
 		}
 
-		acct.IsOpen = true
-		acct.AccountId = m.AccountId
-		acct.Name = m.Name
-
 		return s.PublishEvent(ctx, &messages.AccountOpened{
 			AccountId: m.AccountId,
 			Name:      m.Name,
 		})
 
 	case *messages.CreditAccount:
-		acct.Balance += m.Cents
-
 		return s.PublishEvent(ctx, &messages.AccountCredited{
 			AccountId: m.AccountId,
 			Cents:     m.Cents,
 		})
 
 	case *messages.DebitAccount:
-		acct.Balance -= m.Cents
-
 		return s.PublishEvent(ctx, &messages.AccountDebited{
 			AccountId: m.AccountId,
 			Cents:     m.Cents,
