@@ -14,9 +14,14 @@ type InstanceID struct {
 //
 // It encapsulates the application-defined saga data and its meta-data.
 type Instance struct {
+	// InstanceID is a globally unique identifier for the saga instance.
 	InstanceID InstanceID
-	Revision   Revision
-	Data       Data
+
+	// Data is the application-defined data associated with this instance.
+	Data Data
+
+	// Revision is version of the instance that the data represents.
+	Revision Revision
 }
 
 // Revision is the version of a saga instance.

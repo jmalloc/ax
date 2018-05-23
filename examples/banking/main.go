@@ -40,6 +40,7 @@ func main() {
 	htable, err := routing.NewHandlerTable(
 		&saga.MessageHandler{
 			Saga:       account.AggregateRoot,
+			Mapper:     &axmysql.SagaMapper{},
 			Repository: &axmysql.SagaRepository{},
 		},
 	)

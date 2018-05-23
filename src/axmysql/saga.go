@@ -10,6 +10,82 @@ import (
 	"github.com/jmalloc/ax/src/ax/saga"
 )
 
+// SagaMapper is an implementation of saga.Mapper that uses SQL persistence.
+type SagaMapper struct{}
+
+// FindByKey returns the instance ID of the saga instance that handles
+// messages with a specific mapping key.
+//
+// sn is the name of the saga, and k is the message's mapping key.
+func (SagaMapper) FindByKey(
+	ctx context.Context,
+	tx persistence.Tx,
+	sn, k string,
+) (saga.InstanceID, bool, error) {
+	stx := tx.(*Tx).sqlTx
+
+	row := stx.QueryRowContext(
+		ctx,
+		`SELECT k.instance_id
+		FROM saga_keyset AS k
+		WHERE k.saga = ?
+		AND k.mapping_key = ?`,
+		sn,
+		k,
+	)
+
+	var id saga.InstanceID
+
+	if err := row.Scan(&id); err != nil {
+		if err == sql.ErrNoRows {
+			return id, false, nil
+		}
+
+		return id, false, err
+	}
+
+	return id, true, nil
+}
+
+// SaveKeys persists the changes to a saga instance's mapping key set.
+//
+// sn is the name of the saga.
+func (SagaMapper) SaveKeys(
+	ctx context.Context,
+	tx persistence.Tx,
+	sn string,
+	id saga.InstanceID,
+	ks saga.KeySet,
+) error {
+	stx := tx.(*Tx).sqlTx
+
+	if _, err := stx.ExecContext(
+		ctx,
+		`DELETE FROM saga_keyset
+		WHERE instance_id = ?`,
+		id,
+	); err != nil {
+		return err
+	}
+
+	for k := range ks {
+		if _, err := stx.ExecContext(
+			ctx,
+			`INSERT INTO saga_keyset SET
+				saga = ?,
+				mapping_key = ?,
+				instance_id = ?`,
+			sn,
+			k,
+			id,
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // SagaRepository is an implementation of saga.Repository that uses SQL
 // persistence.
 //
@@ -29,8 +105,8 @@ type SagaRepository struct{}
 func (*SagaRepository) LoadSagaInstance(
 	ctx context.Context,
 	tx persistence.Tx,
-	sn, k string,
-) (i saga.Instance, ok bool, err error) {
+	id saga.InstanceID,
+) (i saga.Instance, err error) {
 	stx := tx.(*Tx).sqlTx
 
 	row := stx.QueryRowContext(
@@ -42,12 +118,8 @@ func (*SagaRepository) LoadSagaInstance(
 			i.snapshot_content_type,
 			i.snapshot_data
 		FROM saga_instance AS i
-		INNER JOIN saga_key AS k
-		ON k.instance_id = i.instance_id
-		WHERE k.saga = ?
-		AND k.mapping_key = ?`,
-		sn,
-		k,
+		WHERE i.instance_id = ?`,
+		id,
 	)
 
 	var (
@@ -64,24 +136,17 @@ func (*SagaRepository) LoadSagaInstance(
 		&snapData,
 	)
 
-	if err == sql.ErrNoRows {
-		return i, false, nil
-	}
-
 	if err != nil {
-		return i, false, err
+		return
 	}
 
 	if snapRev != i.Revision {
-		return i, false, errors.New("saga snapshot revision is not the current revision")
+		err = errors.New("saga snapshot revision is not the current revision")
+		return
 	}
 
 	i.Data, err = saga.UnmarshalData(snapType, snapData)
-	if err != nil {
-		return i, false, err
-	}
-
-	return i, true, nil
+	return
 }
 
 // SaveSagaInstance persists a saga instance and its associated mapping
@@ -95,9 +160,7 @@ func (*SagaRepository) LoadSagaInstance(
 func (*SagaRepository) SaveSagaInstance(
 	ctx context.Context,
 	tx persistence.Tx,
-	sn string,
 	i saga.Instance,
-	ks saga.KeySet,
 ) error {
 	stx := tx.(*Tx).sqlTx
 
@@ -111,14 +174,12 @@ func (*SagaRepository) SaveSagaInstance(
 			ctx,
 			`INSERT INTO saga_instance SET
 				instance_id = ?,
-				saga = ?,
 				current_revision = 1,
 				snapshot_revision = 1,
 				snapshot_description = ?,
 				snapshot_content_type = ?,
 				snapshot_data = ?`,
 			i.InstanceID,
-			sn,
 			i.Data.SagaDescription(),
 			snapType,
 			snapData,
@@ -166,30 +227,6 @@ func (*SagaRepository) SaveSagaInstance(
 		); err != nil {
 			return err
 		}
-
-		if _, err := stx.ExecContext(
-			ctx,
-			`DELETE FROM saga_key
-			WHERE instance_id = ?`,
-			i.InstanceID,
-		); err != nil {
-			return err
-		}
-	}
-
-	for k := range ks {
-		if _, err := stx.ExecContext(
-			ctx,
-			`INSERT INTO saga_key SET
-				saga = ?,
-				mapping_key = ?,
-				instance_id = ?`,
-			sn,
-			k,
-			i.InstanceID,
-		); err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -200,7 +237,6 @@ func (*SagaRepository) SaveSagaInstance(
 var SagaSchema = []string{
 	`CREATE TABLE IF NOT EXISTS saga_instance (
 		instance_id           VARBINARY(255) NOT NULL PRIMARY KEY,
-		saga                  VARBINARY(255) NOT NULL,
 		current_revision      BIGINT UNSIGNED NOT NULL,
 
 		snapshot_revision     BIGINT UNSIGNED,
@@ -210,7 +246,7 @@ var SagaSchema = []string{
 
 		INDEX (saga)
 	)`,
-	`CREATE TABLE IF NOT EXISTS saga_key (
+	`CREATE TABLE IF NOT EXISTS saga_keyset (
 		saga          VARBINARY(255) NOT NULL,
 		mapping_key   VARBINARY(255) NOT NULL,
 		instance_id   VARBINARY(255) NOT NULL,
@@ -218,13 +254,4 @@ var SagaSchema = []string{
 		PRIMARY KEY (saga, mapping_key),
 		INDEX (instance_id)
 	)`,
-	// `CREATE TABLE IF NOT EXISTS saga_event (
-	// 	instance_id  VARBINARY(255) NOT NULL,
-	// 	revision     BIGINT UNSIGNED NOT NULL,
-	// 	description  VARBINARY(255) NOT NULL,
-	// 	content_type VARBINARY(255) NOT NULL,
-	// 	data         BLOB NOT NULL,
-
-	// 	PRIMARY KEY (instance_id, revision)
-	// )`,
 }
