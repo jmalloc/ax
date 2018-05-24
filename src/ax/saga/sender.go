@@ -1,18 +1,18 @@
-package eventsourcing
+package saga
 
 import (
 	"context"
 
 	"github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/ax/saga"
 )
 
 // Sender is an implementation of ax.Sender that applies published
-// events to the state of an eventsourced saga.
+// events to an EventedData instance.
 type Sender struct {
-	Data   saga.EventedData
-	Events []ax.Envelope
-	Next   ax.Sender
+	Data          EventedData
+	Events        []ax.Envelope
+	CaptureEvents bool
+	Next          ax.Sender
 }
 
 // ExecuteCommand sends a command message.
@@ -33,7 +33,10 @@ func (s *Sender) PublishEvent(ctx context.Context, m ax.Event) (ax.Envelope, err
 		return ax.Envelope{}, err
 	}
 
-	s.Events = append(s.Events, env)
+	if s.CaptureEvents {
+		s.Events = append(s.Events, env)
+	}
+
 	s.Data.ApplyEvent(env)
 
 	return env, nil

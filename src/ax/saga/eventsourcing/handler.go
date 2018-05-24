@@ -46,9 +46,10 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 	}
 
 	if ok {
-		sender := &Sender{
-			Next: s,
-			Data: i.Data.(saga.EventedData),
+		sender := &saga.Sender{
+			Next:          s,
+			Data:          i.Data.(saga.EventedData),
+			CaptureEvents: true,
 		}
 
 		if err = h.Saga.HandleMessage(ctx, sender, env, i); err != nil {
