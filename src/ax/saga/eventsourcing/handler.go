@@ -48,7 +48,7 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 	if ok {
 		sender := &Sender{
 			Next: s,
-			Data: i.Data.(Data),
+			Data: i.Data.(saga.EventedData),
 		}
 
 		if err = h.Saga.HandleMessage(ctx, sender, env, i); err != nil {
@@ -91,7 +91,13 @@ func (h *MessageHandler) findInstance(
 			return saga.Instance{}, false, err
 		}
 
-		i, err := h.Instances.LoadSagaInstance(ctx, tx, id, zv.(Data))
+		i, err := h.Instances.LoadSagaInstance(
+			ctx,
+			tx,
+			id,
+			zv.(saga.EventedData),
+		)
+
 		return i, true, err
 	}
 

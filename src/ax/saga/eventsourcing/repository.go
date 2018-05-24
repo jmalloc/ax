@@ -9,6 +9,40 @@ import (
 	"github.com/jmalloc/ax/src/ax/saga"
 )
 
+// InstanceRepository is an interface for loading and saving eventsourced saga
+// instances.
+type InstanceRepository interface {
+	// LoadSagaInstance fetches a saga instance by its ID.
+	//
+	// If a saga instance is found; ok is true, otherwise it is false. A
+	// non-nil error indicates a problem with the store itself.
+	//
+	// It panics if the repository is not able to enlist in tx because it uses a
+	// different underlying storage system.
+	LoadSagaInstance(
+		ctx context.Context,
+		tx persistence.Tx,
+		id saga.InstanceID,
+		d saga.EventedData,
+	) (saga.Instance, error)
+
+	// SaveSagaInstance persists a saga instance.
+	//
+	// It returns an error if the saga instance has been modified since it was
+	// loaded, or if there is a problem communicating with the store itself.
+	//
+	// It panics if envs contains any messages that do not implement ax.Event.
+	//
+	// It panics if the repository is not able to enlist in tx because it uses a
+	// different underlying storage system.
+	SaveSagaInstance(
+		ctx context.Context,
+		tx persistence.Tx,
+		i saga.Instance,
+		envs []ax.Envelope,
+	) error
+}
+
 // DefaultSnapshotFrequency is the default number of revisions to allow between
 // storing snapshots.
 const DefaultSnapshotFrequency = 1000
@@ -36,7 +70,7 @@ func (r *StandardInstanceRepository) LoadSagaInstance(
 	ctx context.Context,
 	tx persistence.Tx,
 	id saga.InstanceID,
-	d Data,
+	d saga.EventedData,
 ) (saga.Instance, error) {
 	i := saga.Instance{
 		InstanceID: id,
@@ -148,7 +182,7 @@ func applyEvents(
 		return err
 	}
 
-	data := i.Data.(Data)
+	data := i.Data.(saga.EventedData)
 
 	for {
 		ok, err := s.Next(ctx)

@@ -4,12 +4,13 @@ import (
 	"context"
 
 	"github.com/jmalloc/ax/src/ax"
+	"github.com/jmalloc/ax/src/ax/saga"
 )
 
 // Sender is an implementation of ax.Sender that applies published
 // events to the state of an eventsourced saga.
 type Sender struct {
-	Data   Data
+	Data   saga.EventedData
 	Events []ax.Envelope
 	Next   ax.Sender
 }
