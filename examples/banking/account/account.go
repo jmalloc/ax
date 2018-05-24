@@ -59,8 +59,8 @@ func (aggregateRoot) GenerateInstanceID(ctx context.Context, env ax.Envelope) (i
 	return
 }
 
-func (aggregateRoot) InitialState(ctx context.Context) (saga.Data, error) {
-	return &Account{}, nil
+func (aggregateRoot) NewData() saga.Data {
+	return &Account{}
 }
 
 func (aggregateRoot) MappingKeyForMessage(ctx context.Context, env ax.Envelope) (string, error) {

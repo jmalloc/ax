@@ -99,14 +99,9 @@ func (h *MessageHandler) newInstance(ctx context.Context, env ax.Envelope) (Inst
 		return Instance{}, err
 	}
 
-	data, err := h.Saga.InitialState(ctx)
-	if err != nil {
-		return Instance{}, err
-	}
-
 	return Instance{
 		InstanceID: id,
-		Data:       data,
+		Data:       h.Saga.NewData(),
 	}, nil
 }
 

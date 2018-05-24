@@ -86,16 +86,11 @@ func (h *MessageHandler) findInstance(
 	}
 
 	if ok {
-		zv, err := h.Saga.InitialState(ctx)
-		if err != nil {
-			return saga.Instance{}, false, err
-		}
-
 		i, err := h.Instances.LoadSagaInstance(
 			ctx,
 			tx,
 			id,
-			zv.(saga.EventedData),
+			h.Saga.NewData().(saga.EventedData),
 		)
 
 		return i, true, err
@@ -116,14 +111,9 @@ func (h *MessageHandler) newInstance(ctx context.Context, env ax.Envelope) (saga
 		return saga.Instance{}, err
 	}
 
-	data, err := h.Saga.InitialState(ctx)
-	if err != nil {
-		return saga.Instance{}, err
-	}
-
 	return saga.Instance{
 		InstanceID: id,
-		Data:       data,
+		Data:       h.Saga.NewData(),
 	}, nil
 }
 

@@ -46,9 +46,9 @@ type Saga interface {
 	// If err is nil, id must be a valid InstanceID, and d must be non-nil.
 	GenerateInstanceID(ctx context.Context, env ax.Envelope) (id InstanceID, err error)
 
-	// InitialState returns a pointer to a new zero-value instance of the
+	// NewData returns a pointer to a new zero-value instance of the
 	// saga's data type.
-	InitialState(ctx context.Context) (Data, error)
+	NewData() Data
 
 	// MappingKeyForMessage returns the key used to locate the saga instance
 	// to which the given message is routed.
