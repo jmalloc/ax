@@ -40,9 +40,11 @@ func main() {
 	htable, err := routing.NewHandlerTable(
 		&eventsourcing.MessageHandler{
 			Saga:   account.AggregateRoot,
-			Mapper: &axmysql.SagaMapper{},
-			Repository: &eventsourcing.MessageStoreRepository{
-				MessageStore: &axmysql.MessageStore{},
+			Mapper: axmysql.SagaMapper{},
+			Repository: &eventsourcing.SnapshottingRepository{
+				MessageStore: axmysql.MessageStore{},
+				Snapshots:    axmysql.SnapshotRepository{},
+				Frequency:    3,
 			},
 		},
 	)
