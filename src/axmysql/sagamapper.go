@@ -20,25 +20,26 @@ func (SagaMapper) FindByKey(
 	ptx persistence.Tx,
 	sn, k string,
 ) (saga.InstanceID, bool, error) {
-	tx := sqlTx(ptx)
-
-	row := tx.QueryRowContext(
-		ctx,
-		`SELECT k.instance_id
-		FROM saga_keyset AS k
-		WHERE k.saga = ?
-		AND k.mapping_key = ?`,
-		sn,
-		k,
-	)
-
 	var id saga.InstanceID
 
-	if err := row.Scan(&id); err != nil {
-		if err == sql.ErrNoRows {
-			return id, false, nil
-		}
+	err := sqlTx(ptx).QueryRowContext(
+		ctx,
+		`SELECT
+			instance_id
+		FROM saga_map
+		WHERE saga = ?
+		AND mapping_key = ?`,
+		sn,
+		k,
+	).Scan(
+		&id,
+	)
 
+	if err == sql.ErrNoRows {
+		return id, false, nil
+	}
+
+	if err != nil {
 		return id, false, err
 	}
 
@@ -59,7 +60,7 @@ func (SagaMapper) SaveKeys(
 
 	if _, err := tx.ExecContext(
 		ctx,
-		`DELETE FROM saga_keyset
+		`DELETE FROM saga_map
 		WHERE instance_id = ?`,
 		id,
 	); err != nil {
@@ -69,7 +70,7 @@ func (SagaMapper) SaveKeys(
 	for k := range ks {
 		if _, err := tx.ExecContext(
 			ctx,
-			`INSERT INTO saga_keyset SET
+			`INSERT INTO saga_map SET
 				saga = ?,
 				mapping_key = ?,
 				instance_id = ?`,
@@ -77,6 +78,7 @@ func (SagaMapper) SaveKeys(
 			k,
 			id,
 		); err != nil {
+			// TODO: return a more meaningful error if we get a duplicate key error
 			return err
 		}
 	}
