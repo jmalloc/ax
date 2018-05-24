@@ -182,26 +182,3 @@ func insertOutboxMessage(
 
 	return err
 }
-
-// OutboxSchema is a collection of DDL queries that create the schema
-// used by OutboxRepository.
-var OutboxSchema = []string{
-	`CREATE TABLE IF NOT EXISTS outbox (
-	    message_id VARBINARY(255) PRIMARY KEY,
-	    time       TIMESTAMP NOT NULL,
-
-	    INDEX (time)
-	)`,
-	`CREATE TABLE IF NOT EXISTS outbox_message (
-	    message_id     VARBINARY(255) NOT NULL PRIMARY KEY,
-	    causation_id   VARBINARY(255) NOT NULL, -- outbox.message_id
-	    correlation_id VARBINARY(255) NOT NULL,
-	    time           VARBINARY(255) NOT NULL,
-	    content_type   VARBINARY(255) NOT NULL,
-	    body           BLOB NOT NULL,
-	    operation      INTEGER NOT NULL,
-	    destination    VARBINARY(255) NOT NULL,
-
-	    INDEX (causation_id)
-	)`,
-}
