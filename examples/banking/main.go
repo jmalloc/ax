@@ -47,6 +47,11 @@ func main() {
 				SnapshotFrequency: 3,
 			},
 		},
+		// &saga.MessageHandler{
+		// 	Saga:      account.AggregateRoot,
+		// 	Mapper:    axmysql.SagaMapper{},
+		// 	Instances: axmysql.SagaInstanceRepository{},
+		// },
 	)
 	if err != nil {
 		panic(err)

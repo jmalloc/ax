@@ -78,14 +78,21 @@ func (r *StandardInstanceRepository) LoadSagaInstance(
 	}
 
 	if r.Snapshots != nil {
-		var err error
-		i, _, err = r.Snapshots.LoadSagaSnapshot(ctx, tx, id)
+		sn, ok, err := r.Snapshots.LoadSagaSnapshot(ctx, tx, id)
 		if err != nil {
-			return i, err
+			return saga.Instance{}, err
+		}
+
+		if ok {
+			i = sn
 		}
 	}
 
-	return i, applyEvents(ctx, tx, r.MessageStore, &i)
+	if err := applyEvents(ctx, tx, r.MessageStore, &i); err != nil {
+		return saga.Instance{}, err
+	}
+
+	return i, nil
 }
 
 // SaveSagaInstance persists a saga instance.

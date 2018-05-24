@@ -45,6 +45,13 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 	}
 
 	if ok {
+		if ed, ok := i.Data.(EventedData); ok {
+			s = &Sender{
+				Data: ed,
+				Next: s,
+			}
+		}
+
 		if err = h.Saga.HandleMessage(ctx, s, env, i); err != nil {
 			return err
 		}
