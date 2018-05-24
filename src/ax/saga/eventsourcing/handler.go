@@ -40,7 +40,7 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 
 	ctx = persistence.WithTx(ctx, tx)
 
-	i, ok, err := h.findInstance(ctx, tx, env)
+	i, ok, err := h.loadInstance(ctx, tx, env)
 	if err != nil {
 		return err
 	}
@@ -68,9 +68,9 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 	return com.Commit()
 }
 
-// findInstance returns the saga instance that the given message is routed to,
+// loadInstance returns the saga instance that the given message is routed to,
 // creating a new instance if necessary.
-func (h *MessageHandler) findInstance(
+func (h *MessageHandler) loadInstance(
 	ctx context.Context,
 	tx persistence.Tx,
 	env ax.Envelope,
