@@ -41,10 +41,10 @@ func main() {
 		&eventsourcing.MessageHandler{
 			Saga:   account.AggregateRoot,
 			Mapper: axmysql.SagaMapper{},
-			Repository: &eventsourcing.SnapshottingRepository{
-				MessageStore: axmysql.MessageStore{},
-				Snapshots:    axmysql.SnapshotRepository{},
-				Frequency:    3,
+			Instances: &eventsourcing.StandardInstanceRepository{
+				MessageStore:      axmysql.MessageStore{},
+				Snapshots:         axmysql.SnapshotRepository{},
+				SnapshotFrequency: 3,
 			},
 		},
 	)

@@ -9,9 +9,9 @@ import (
 	"github.com/jmalloc/ax/src/ax/saga"
 )
 
-// SagaRepository is an implementation of saga.Repository that uses SQL
-// persistence.
-type SagaRepository struct{}
+// SagaInstanceRepository is an implementation of saga.InstanceRepository that
+// uses SQL persistence.
+type SagaInstanceRepository struct{}
 
 // LoadSagaInstance fetches a saga instance that has a specific mapping key
 // in its key set.
@@ -23,7 +23,7 @@ type SagaRepository struct{}
 //
 // It panics if the repository is not able to enlist in tx because it uses a
 // different underlying storage system.
-func (r SagaRepository) LoadSagaInstance(
+func (r SagaInstanceRepository) LoadSagaInstance(
 	ctx context.Context,
 	ptx persistence.Tx,
 	id saga.InstanceID,
@@ -41,7 +41,7 @@ func (r SagaRepository) LoadSagaInstance(
 			revision,
 			content_type,
 			data
-		FROM saga_data
+		FROM saga_instance
 		WHERE instance_id = ?`,
 		id,
 	).Scan(
@@ -67,7 +67,7 @@ func (r SagaRepository) LoadSagaInstance(
 //
 // It panics if the repository is not able to enlist in tx because it uses a
 // different underlying storage system.
-func (r SagaRepository) SaveSagaInstance(
+func (r SagaInstanceRepository) SaveSagaInstance(
 	ctx context.Context,
 	ptx persistence.Tx,
 	i saga.Instance,
@@ -87,7 +87,7 @@ func (r SagaRepository) SaveSagaInstance(
 }
 
 // insertInstance inserts a new saga instance.
-func (SagaRepository) insertInstance(
+func (SagaInstanceRepository) insertInstance(
 	ctx context.Context,
 	tx *sql.Tx,
 	i saga.Instance,
@@ -96,7 +96,7 @@ func (SagaRepository) insertInstance(
 ) error {
 	_, err := tx.ExecContext(
 		ctx,
-		`INSERT INTO saga_data SET
+		`INSERT INTO saga_instance SET
 			instance_id = ?,
 			revision = 1,
 			description = ?,
@@ -115,7 +115,7 @@ func (SagaRepository) insertInstance(
 
 // updateInstance updates an existing saga instance.
 // It returns an error if i.Revision is not the current revision.
-func (SagaRepository) updateInstance(
+func (SagaInstanceRepository) updateInstance(
 	ctx context.Context,
 	tx *sql.Tx,
 	i saga.Instance,
@@ -124,7 +124,7 @@ func (SagaRepository) updateInstance(
 ) error {
 	res, err := tx.ExecContext(
 		ctx,
-		`UPDATE saga_data SET
+		`UPDATE saga_instance SET
 			revision = revision + 1,
 			description = ?,
 			content_type = ?,

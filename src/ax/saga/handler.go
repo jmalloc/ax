@@ -11,9 +11,9 @@ import (
 // saga instance, forwards the message to the saga, then perists any changes
 // to the instance.
 type MessageHandler struct {
-	Saga       Saga
-	Mapper     Mapper
-	Repository Repository
+	Saga      Saga
+	Mapper    Mapper
+	Instances InstanceRepository
 }
 
 // MessageTypes returns the set of messages that the handler can handle.
@@ -80,7 +80,7 @@ func (h *MessageHandler) loadInstance(
 	}
 
 	if ok {
-		i, err := h.Repository.LoadSagaInstance(ctx, tx, id)
+		i, err := h.Instances.LoadSagaInstance(ctx, tx, id)
 		return i, true, err
 	}
 
@@ -116,7 +116,7 @@ func (h *MessageHandler) saveInstance(
 	tx persistence.Tx,
 	i Instance,
 ) error {
-	if err := h.Repository.SaveSagaInstance(ctx, tx, i); err != nil {
+	if err := h.Instances.SaveSagaInstance(ctx, tx, i); err != nil {
 		return err
 	}
 
