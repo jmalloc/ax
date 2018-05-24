@@ -57,6 +57,7 @@ func (r *OutboxRepository) LoadOutbox(
 	if err != nil {
 		return nil, false, err
 	}
+	defer rows.Close()
 
 	var envelopes []endpoint.OutboundEnvelope
 
