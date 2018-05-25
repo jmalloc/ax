@@ -57,6 +57,7 @@ func (r *OutboxRepository) LoadOutbox(
 	if err != nil {
 		return nil, false, err
 	}
+	defer rows.Close()
 
 	var envelopes []endpoint.OutboundEnvelope
 
@@ -76,13 +77,13 @@ func (r *OutboxRepository) LoadOutbox(
 // when the message identified by id was delivered.
 func (r *OutboxRepository) SaveOutbox(
 	ctx context.Context,
-	tx persistence.Tx,
+	ptx persistence.Tx,
 	id ax.MessageID,
 	envs []endpoint.OutboundEnvelope,
 ) error {
-	stx := tx.(*Tx).sqlTx
+	tx := sqlTx(ptx)
 
-	if _, err := stx.ExecContext(
+	if _, err := tx.ExecContext(
 		ctx,
 		`INSERT INTO outbox SET message_id = ?`,
 		id,
@@ -91,7 +92,7 @@ func (r *OutboxRepository) SaveOutbox(
 	}
 
 	for _, env := range envs {
-		if err := insertOutboxMessage(ctx, stx, env); err != nil {
+		if err := insertOutboxMessage(ctx, tx, env); err != nil {
 			return err
 		}
 	}
@@ -102,10 +103,10 @@ func (r *OutboxRepository) SaveOutbox(
 // MarkAsSent marks a message as sent, removing it from the outbox.
 func (r *OutboxRepository) MarkAsSent(
 	ctx context.Context,
-	tx persistence.Tx,
+	ptx persistence.Tx,
 	env endpoint.OutboundEnvelope,
 ) error {
-	_, err := tx.(*Tx).sqlTx.ExecContext(
+	_, err := sqlTx(ptx).ExecContext(
 		ctx,
 		`DELETE FROM outbox_message WHERE message_id = ?`,
 		env.MessageID,
@@ -181,27 +182,4 @@ func insertOutboxMessage(
 	)
 
 	return err
-}
-
-// OutboxSchema is a collection of DDL queries that create the schema
-// used by OutboxRepository.
-var OutboxSchema = []string{
-	`CREATE TABLE IF NOT EXISTS outbox (
-	    message_id VARBINARY(255) PRIMARY KEY,
-	    time       TIMESTAMP NOT NULL,
-
-	    INDEX (time)
-	)`,
-	`CREATE TABLE IF NOT EXISTS outbox_message (
-	    message_id     VARBINARY(255) NOT NULL PRIMARY KEY,
-	    causation_id   VARBINARY(255) NOT NULL, -- outbox.message_id
-	    correlation_id VARBINARY(255) NOT NULL,
-	    time           VARBINARY(255) NOT NULL,
-	    content_type   VARBINARY(255) NOT NULL,
-	    body           BLOB NOT NULL,
-	    operation      INTEGER NOT NULL,
-	    destination    VARBINARY(255) NOT NULL,
-
-	    INDEX (causation_id)
-	)`,
 }

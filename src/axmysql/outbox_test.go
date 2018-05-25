@@ -23,21 +23,8 @@ var _ = Describe("OutboxRepository", func() {
 			panic(err)
 		}
 
-		_, err = db.Exec("DROP TABLE IF EXISTS outbox")
-		if err != nil {
+		if err := createSchema(db, "outbox.sql"); err != nil {
 			panic(err)
-		}
-
-		_, err = db.Exec("DROP TABLE IF EXISTS outbox_message")
-		if err != nil {
-			panic(err)
-		}
-
-		for _, q := range OutboxSchema {
-			_, err = db.Exec(q)
-			if err != nil {
-				panic(err)
-			}
 		}
 	})
 

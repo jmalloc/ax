@@ -23,7 +23,7 @@ var _ = Describe("SinkSender", func() {
 
 	Describe("ExecuteCommand", func() {
 		It("sends a unicast message to the sink", func() {
-			err := sender.ExecuteCommand(context.Background(), &messagetest.Command{})
+			_, err := sender.ExecuteCommand(context.Background(), &messagetest.Command{})
 			Expect(err).ShouldNot(HaveOccurred())
 
 			Expect(sink.Envelopes()).To(HaveLen(1))
@@ -36,16 +36,22 @@ var _ = Describe("SinkSender", func() {
 			env := ax.NewEnvelope(&messagetest.Message{})
 			ctx := WithEnvelope(context.Background(), env)
 
-			_ = sender.ExecuteCommand(ctx, &messagetest.Command{})
+			_, _ = sender.ExecuteCommand(ctx, &messagetest.Command{})
 
 			Expect(sink.Envelopes()).To(HaveLen(1))
 			Expect(sink.Envelopes()[0].CausationID).To(Equal(env.MessageID))
+		})
+
+		It("returns the sent envelope", func() {
+			env, _ := sender.ExecuteCommand(context.Background(), &messagetest.Command{})
+
+			Expect(env).To(Equal(sink.Envelopes()[0].Envelope))
 		})
 	})
 
 	Describe("PublishEvent", func() {
 		It("sends a multicast message to the sink", func() {
-			err := sender.PublishEvent(context.Background(), &messagetest.Event{})
+			_, err := sender.PublishEvent(context.Background(), &messagetest.Event{})
 			Expect(err).ShouldNot(HaveOccurred())
 
 			Expect(sink.Envelopes()).To(HaveLen(1))
@@ -58,10 +64,16 @@ var _ = Describe("SinkSender", func() {
 			env := ax.NewEnvelope(&messagetest.Message{})
 			ctx := WithEnvelope(context.Background(), env)
 
-			_ = sender.PublishEvent(ctx, &messagetest.Event{})
+			_, _ = sender.PublishEvent(ctx, &messagetest.Event{})
 
 			Expect(sink.Envelopes()).To(HaveLen(1))
 			Expect(sink.Envelopes()[0].CausationID).To(Equal(env.MessageID))
+		})
+
+		It("returns the sent envelope", func() {
+			env, _ := sender.PublishEvent(context.Background(), &messagetest.Event{})
+
+			Expect(env).To(Equal(sink.Envelopes()[0].Envelope))
 		})
 	})
 })

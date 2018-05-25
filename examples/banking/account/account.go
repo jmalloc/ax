@@ -12,7 +12,26 @@ import (
 
 // SagaDescription returns a human-readable description of the saga instance.
 func (a *Account) SagaDescription() string {
-	return fmt.Sprintf("account %s", ident.Format(a.AccountId))
+	return fmt.Sprintf(
+		"account %s for %s, balance of %d",
+		ident.Format(a.AccountId),
+		a.Name,
+		a.Balance,
+	)
+}
+
+// ApplyEvent updates the data to reflect the fact that ev has occurred.
+func (a *Account) ApplyEvent(env ax.Envelope) {
+	switch ev := env.Message.(type) {
+	case *messages.AccountOpened:
+		a.AccountId = ev.AccountId
+		a.Name = ev.Name
+		a.IsOpen = true
+	case *messages.AccountCredited:
+		a.Balance += ev.Cents
+	case *messages.AccountDebited:
+		a.Balance -= ev.Cents
+	}
 }
 
 // AggregateRoot is a saga that implements the Account aggregate.
@@ -35,11 +54,13 @@ func (aggregateRoot) MessageTypes() (ax.MessageTypeSet, ax.MessageTypeSet) {
 		)
 }
 
-func (aggregateRoot) NewInstance(ctx context.Context, env ax.Envelope) (saga.InstanceID, saga.Data, error) {
-	var id saga.InstanceID
-	id.MustParse(env.Message.(*messages.OpenAccount).AccountId)
+func (aggregateRoot) GenerateInstanceID(ctx context.Context, env ax.Envelope) (id saga.InstanceID, err error) {
+	err = id.Parse(env.Message.(*messages.OpenAccount).AccountId)
+	return
+}
 
-	return id, &Account{}, nil
+func (aggregateRoot) NewData() saga.Data {
+	return &Account{}
 }
 
 func (aggregateRoot) MappingKeyForMessage(ctx context.Context, env ax.Envelope) (string, error) {
@@ -64,40 +85,32 @@ func (aggregateRoot) HandleMessage(
 	s ax.Sender,
 	env ax.Envelope,
 	i saga.Instance,
-) error {
+) (err error) {
 	acct := i.Data.(*Account)
 
 	switch m := env.Message.(type) {
 	case *messages.OpenAccount:
 		if acct.IsOpen {
-			return nil
+			return
 		}
 
-		acct.IsOpen = true
-		acct.AccountId = m.AccountId
-		acct.Name = m.Name
-
-		return s.PublishEvent(ctx, &messages.AccountOpened{
+		_, err = s.PublishEvent(ctx, &messages.AccountOpened{
 			AccountId: m.AccountId,
 			Name:      m.Name,
 		})
 
 	case *messages.CreditAccount:
-		acct.Balance += m.Cents
-
-		return s.PublishEvent(ctx, &messages.AccountCredited{
+		_, err = s.PublishEvent(ctx, &messages.AccountCredited{
 			AccountId: m.AccountId,
 			Cents:     m.Cents,
 		})
 
 	case *messages.DebitAccount:
-		acct.Balance -= m.Cents
-
-		return s.PublishEvent(ctx, &messages.AccountDebited{
+		_, err = s.PublishEvent(ctx, &messages.AccountDebited{
 			AccountId: m.AccountId,
 			Cents:     m.Cents,
 		})
 	}
 
-	return nil
+	return
 }
