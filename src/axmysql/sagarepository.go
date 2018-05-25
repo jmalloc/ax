@@ -13,13 +13,10 @@ import (
 // instances using SQL persistence.
 type SagaRepository struct{}
 
-// LoadSagaInstance fetches a saga instance that has a specific mapping key
-// in its key set.
+// LoadSagaInstance fetches a saga instance by its ID.
 //
-// sn is the saga name. k is the message mapping key.
-//
-// If a saga instance is found; ok is true, otherwise it is false. A
-// non-nil error indicates a problem with the store itself.
+// It returns an error if the instance does not exist, or a problem occurs
+// with the underlying data store.
 //
 // It panics if the repository is not able to enlist in tx because it uses a
 // different underlying storage system.
@@ -59,11 +56,10 @@ func (r SagaRepository) LoadSagaInstance(
 	return i, err
 }
 
-// SaveSagaInstance persists a saga instance and its associated mapping
-// table to the store as part of tx.
+// SaveSagaInstance persists a saga instance.
 //
 // It returns an error if the saga instance has been modified since it was
-// loaded, or if there is a problem communicating with the store itself.
+// loaded, or a problem occurs with the underlying data store.
 //
 // It panics if the repository is not able to enlist in tx because it uses a
 // different underlying storage system.
