@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS messagestore_message (
     global_offset  BIGINT UNSIGNED NOT NULL,
     insert_time    TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
 
-    stream_id 	   BIGINT UNSIGNED NOT NULL,
+    stream_id      BIGINT UNSIGNED NOT NULL,
     stream_offset  BIGINT UNSIGNED NOT NULL,
     description    VARBINARY(255) NOT NULL,
     message_id     VARBINARY(255) NOT NULL,
