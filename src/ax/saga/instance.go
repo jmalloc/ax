@@ -19,9 +19,11 @@ type Instance struct {
 	// Data is the application-defined data associated with this instance.
 	Data Data
 
-	// Revision is version of the instance that the data represents.
+	// Revision is the version of the instance that the Data field reflects.
+	// A value of zero indicates that the instance has not yet been persisted.
 	Revision Revision
 }
 
-// Revision is the version of a saga instance.
+// Revision is a one-based version of a saga instance.
+// An instance with a revision of zero has not yet been persisted.
 type Revision uint64
