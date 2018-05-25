@@ -14,3 +14,29 @@ message AccountOpened {
     string account_id = 1;
     string name = 2;
 }
+
+// CreditAccount is a command that credits funds to an account.
+message CreditAccount {
+    string account_id = 1;
+    int32 cents = 2;
+}
+
+// AccountCredited is an event that occurs when funds are credited to an
+// account.
+message AccountCredited {
+    string account_id = 1;
+    int32 cents = 2;
+}
+
+// DebitAccount is a command that debits funds from an account.
+message DebitAccount {
+    string account_id = 1;
+    int32 cents = 2;
+}
+
+// AccountDebited is an event that occurs when funds are debited from an
+// account.
+message AccountDebited {
+    string account_id = 1;
+    int32 cents = 2;
+}

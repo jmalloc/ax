@@ -8,8 +8,8 @@ import (
 
 // Tx is an implementation of persistence.Tx that wraps an SQL transaction.
 type Tx struct {
-	ds *DataStore
-	tx *sql.Tx
+	ds    *DataStore
+	sqlTx *sql.Tx
 }
 
 // DataStore returns the DataStore that the transaction operates on.
