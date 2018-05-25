@@ -12,11 +12,13 @@ type Mapper interface {
 	// messages with a specific mapping key.
 	//
 	// sn is the name of the saga, and k is the message's mapping key.
+	//
+	// ok is false if no saga instance is found.
 	FindByKey(
 		ctx context.Context,
 		tx persistence.Tx,
 		sn, k string,
-	) (InstanceID, bool, error)
+	) (i InstanceID, ok bool, err error)
 
 	// SaveKeys persists the changes to a saga instance's mapping key set.
 	//
