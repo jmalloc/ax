@@ -9,9 +9,9 @@ import (
 	"github.com/jmalloc/ax/src/ax/saga"
 )
 
-// SagaInstanceRepository is an implementation of saga.InstanceRepository that
-// uses SQL persistence.
-type SagaInstanceRepository struct{}
+// SagaRepository is an implementation of crud.Repository that stores saga
+// instances using SQL persistence.
+type SagaRepository struct{}
 
 // LoadSagaInstance fetches a saga instance that has a specific mapping key
 // in its key set.
@@ -23,7 +23,7 @@ type SagaInstanceRepository struct{}
 //
 // It panics if the repository is not able to enlist in tx because it uses a
 // different underlying storage system.
-func (r SagaInstanceRepository) LoadSagaInstance(
+func (r SagaRepository) LoadSagaInstance(
 	ctx context.Context,
 	ptx persistence.Tx,
 	id saga.InstanceID,
@@ -67,7 +67,7 @@ func (r SagaInstanceRepository) LoadSagaInstance(
 //
 // It panics if the repository is not able to enlist in tx because it uses a
 // different underlying storage system.
-func (r SagaInstanceRepository) SaveSagaInstance(
+func (r SagaRepository) SaveSagaInstance(
 	ctx context.Context,
 	ptx persistence.Tx,
 	i saga.Instance,
@@ -87,7 +87,7 @@ func (r SagaInstanceRepository) SaveSagaInstance(
 }
 
 // insertInstance inserts a new saga instance.
-func (SagaInstanceRepository) insertInstance(
+func (SagaRepository) insertInstance(
 	ctx context.Context,
 	tx *sql.Tx,
 	i saga.Instance,
@@ -115,7 +115,7 @@ func (SagaInstanceRepository) insertInstance(
 
 // updateInstance updates an existing saga instance.
 // It returns an error if i.Revision is not the current revision.
-func (SagaInstanceRepository) updateInstance(
+func (SagaRepository) updateInstance(
 	ctx context.Context,
 	tx *sql.Tx,
 	i saga.Instance,

@@ -13,7 +13,7 @@ import (
 type MessageHandler struct {
 	Saga      Saga
 	Mapper    Mapper
-	Instances InstanceRepository
+	Persister Persister
 }
 
 // MessageTypes returns the set of messages that the handler can handle.
@@ -36,70 +36,100 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 		return err
 	}
 	defer com.Rollback()
-
 	ctx = persistence.WithTx(ctx, tx)
 
-	i, ok, err := h.loadInstance(ctx, tx, env)
+	w, ok, err := h.startUnitOfWork(ctx, tx, s, env)
 	if err != nil {
 		return err
 	}
 
 	if ok {
-		if ed, ok := i.Data.(EventedData); ok {
-			s = &Sender{
-				Data: ed,
-				Next: s,
-			}
-		}
-
-		if err = h.Saga.HandleMessage(ctx, s, env, i); err != nil {
-			return err
-		}
-
-		if err := h.saveInstance(ctx, tx, i); err != nil {
-			return err
-		}
+		err = h.handleMessage(ctx, tx, w, env)
 	} else {
-		if err := h.Saga.HandleNotFound(ctx, s, env); err != nil {
-			return err
-		}
+		err = h.Saga.HandleNotFound(ctx, s, env)
+	}
+
+	if err != nil {
+		return err
 	}
 
 	return com.Commit()
 }
 
-// loadInstance returns the saga instance that the given message is routed to,
-// creating a new instance if necessary.
-func (h *MessageHandler) loadInstance(
+// startUnitOfWork begins a new unit of work, creating a new saga instance if
+// necessary.
+func (h *MessageHandler) startUnitOfWork(
 	ctx context.Context,
 	tx persistence.Tx,
+	s ax.Sender,
 	env ax.Envelope,
-) (Instance, bool, error) {
-	k, err := h.Saga.MappingKeyForMessage(ctx, env)
+) (UnitOfWork, bool, error) {
+	id, ok, err := h.findInstance(ctx, tx, env)
 	if err != nil {
-		return Instance{}, false, err
-	}
-
-	sn := h.Saga.SagaName()
-	id, ok, err := h.Mapper.FindByKey(ctx, tx, sn, k)
-	if err != nil {
-		return Instance{}, false, err
+		return nil, false, err
 	}
 
 	if ok {
-		i, err := h.Instances.LoadSagaInstance(ctx, tx, id)
-		return i, true, err
+		var w UnitOfWork
+		w, err = h.Persister.BeginUpdate(ctx, h.Saga, tx, s, id)
+		return w, true, err
 	}
 
 	triggers, _ := h.Saga.MessageTypes()
-	if triggers.Has(env.Type()) {
-		i, err := h.newInstance(ctx, env)
-		return i, true, err
+	if !triggers.Has(env.Type()) {
+		return nil, false, nil
 	}
 
-	return Instance{}, false, nil
+	i, err := h.newInstance(ctx, env)
+	if err != nil {
+		return nil, false, err
+	}
+
+	w, err := h.Persister.BeginCreate(ctx, h.Saga, tx, s, i)
+	return w, true, err
 }
 
+// findInstance returns the ID of the instance that env is routed to.
+// If there is no existing instance, ok is false.
+func (h *MessageHandler) findInstance(
+	ctx context.Context,
+	tx persistence.Tx,
+	env ax.Envelope,
+) (InstanceID, bool, error) {
+	k, err := h.Saga.MappingKeyForMessage(ctx, env)
+	if err != nil {
+		return InstanceID{}, false, err
+	}
+
+	return h.Mapper.FindByKey(
+		ctx,
+		tx,
+		h.Saga.SagaName(),
+		k,
+	)
+}
+
+// saveKeySet rebuilds and persists the mapping key set for the given instance.
+func (h *MessageHandler) saveKeySet(
+	ctx context.Context,
+	tx persistence.Tx,
+	i Instance,
+) error {
+	ks, err := h.Saga.MappingKeysForInstance(ctx, i)
+	if err != nil {
+		return err
+	}
+
+	return h.Mapper.SaveKeys(
+		ctx,
+		tx,
+		h.Saga.SagaName(),
+		i.InstanceID,
+		ks,
+	)
+}
+
+// newInstance returns a new saga instance.
 func (h *MessageHandler) newInstance(ctx context.Context, env ax.Envelope) (Instance, error) {
 	id, err := h.Saga.GenerateInstanceID(ctx, env)
 	if err != nil {
@@ -112,21 +142,37 @@ func (h *MessageHandler) newInstance(ctx context.Context, env ax.Envelope) (Inst
 	}, nil
 }
 
-// saveInstance persists updates to an instance's data and mapping key set.
-func (h *MessageHandler) saveInstance(
+func (h *MessageHandler) handleMessage(
 	ctx context.Context,
 	tx persistence.Tx,
-	i Instance,
+	w UnitOfWork,
+	env ax.Envelope,
 ) error {
-	if err := h.Instances.SaveSagaInstance(ctx, tx, i); err != nil {
+	i := w.Instance()
+	s := w.Sender()
+
+	if i.Data == nil {
+		panic("unit-of-work contains saga instance with nil data")
+	}
+
+	if d, ok := i.Data.(EventedData); ok {
+		s = &Applier{d, s}
+	}
+
+	if err := h.Saga.HandleMessage(ctx, s, env, i); err != nil {
 		return err
 	}
 
-	ks, err := h.Saga.MappingKeysForInstance(ctx, i)
+	ok, err := w.Save(ctx)
 	if err != nil {
 		return err
 	}
 
-	sn := h.Saga.SagaName()
-	return h.Mapper.SaveKeys(ctx, tx, sn, i.InstanceID, ks)
+	if ok {
+		if err := h.saveKeySet(ctx, tx, i); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
