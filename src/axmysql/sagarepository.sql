@@ -3,7 +3,7 @@
 --
 
 --
--- saga_data stores saga.Data instances for each instance of a CRUD saga.
+-- saga_instance stores saga.Data instances for each instance of a CRUD saga.
 --
 CREATE TABLE IF NOT EXISTS saga_instance (
     instance_id  VARBINARY(255) NOT NULL,
