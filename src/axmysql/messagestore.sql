@@ -3,7 +3,7 @@
 --
 
 --
--- messagestore_global stores the next global message offset across all streams.
+-- messagestore_offset stores the next global message offset across all streams.
 --
 -- It uses an ENUM field with a single value as the primary key to
 -- ensure there can only ever be a single row.
