@@ -21,6 +21,9 @@ type MessageStore interface {
 	) error
 
 	// OpenStream opens a stream of messages for reading from a specific offset.
+	//
+	// The offset may be past the end of the stream. It returns an error if
+	// the stream does not exist.
 	OpenStream(
 		ctx context.Context,
 		tx Tx,

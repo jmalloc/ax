@@ -69,6 +69,9 @@ func (s MessageStore) AppendMessages(
 }
 
 // OpenStream opens a stream of messages for reading from a specific offset.
+//
+// The offset may be past the end of the stream. It returns an error if
+// the stream does not exist.
 func (MessageStore) OpenStream(
 	ctx context.Context,
 	ptx persistence.Tx,
