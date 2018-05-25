@@ -100,7 +100,7 @@ func (SagaRepository) insertInstance(
 			content_type = ?,
 			data = ?`,
 		i.InstanceID,
-		i.Data.SagaDescription(),
+		i.Data.InstanceDescription(),
 		contentType,
 		data,
 	)
@@ -128,7 +128,7 @@ func (SagaRepository) updateInstance(
 			data = ?
 		WHERE instance_id = ?
 		AND revision = ?`,
-		i.Data.SagaDescription(),
+		i.Data.InstanceDescription(),
 		contentType,
 		data,
 		i.InstanceID,

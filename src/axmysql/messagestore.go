@@ -259,7 +259,7 @@ func (MessageStore) insertStreamMessage(
 		g,
 		id,
 		o,
-		env.Message.Description(),
+		env.Message.MessageDescription(),
 		env.MessageID,
 		env.CausationID,
 		env.CorrelationID,

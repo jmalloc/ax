@@ -10,8 +10,8 @@ import (
 	"github.com/jmalloc/ax/src/ax/saga"
 )
 
-// SagaDescription returns a human-readable description of the saga instance.
-func (a *Account) SagaDescription() string {
+// InstanceDescription returns a human-readable description of the saga instance.
+func (a *Account) InstanceDescription() string {
 	return fmt.Sprintf(
 		"account %s for %s, balance of %d",
 		ident.Format(a.AccountId),

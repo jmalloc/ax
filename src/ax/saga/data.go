@@ -10,7 +10,7 @@ import (
 type Data interface {
 	proto.Message
 
-	// SagaDescription returns a human-readable description of the saga
+	// InstanceDescription returns a human-readable description of the saga
 	// instance.
 	//
 	// Assume that the description will be used inside log messages or displayed
@@ -18,7 +18,7 @@ type Data interface {
 	//
 	// Follow the same conventions as for error messages:
 	// https://github.com/golang/go/wiki/CodeReviewComments#error-strings
-	SagaDescription() string
+	InstanceDescription() string
 }
 
 // EventedData is a specialization of Data for sagas that use events to update

@@ -18,14 +18,14 @@ type MessageID struct {
 type Message interface {
 	proto.Message
 
-	// Description returns a human-readable description of the message.
+	// MessageDescription returns a human-readable description of the message.
 	//
 	// Assume that the description will be used inside log messages or displayed
 	// in audit logs.
 	//
 	// Follow the same conventions as for error messages:
 	// https://github.com/golang/go/wiki/CodeReviewComments#error-strings
-	Description() string
+	MessageDescription() string
 }
 
 // Command is a message that requests some action take place.

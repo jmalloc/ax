@@ -9,8 +9,8 @@ import (
 // IsCommand marks the message as a command.
 func (*OpenAccount) IsCommand() {}
 
-// Description returns a human-readable description of the message.
-func (m *OpenAccount) Description() string {
+// MessageDescription returns a human-readable description of the message.
+func (m *OpenAccount) MessageDescription() string {
 	return fmt.Sprintf(
 		"open account %s for %s",
 		ident.Format(m.AccountId),
@@ -21,8 +21,8 @@ func (m *OpenAccount) Description() string {
 // IsEvent marks the message as an event.
 func (*AccountOpened) IsEvent() {}
 
-// Description returns a human-readable description of the message.
-func (m *AccountOpened) Description() string {
+// MessageDescription returns a human-readable description of the message.
+func (m *AccountOpened) MessageDescription() string {
 	return fmt.Sprintf(
 		"account %s opened for %s",
 		ident.Format(m.AccountId),
@@ -33,8 +33,8 @@ func (m *AccountOpened) Description() string {
 // IsCommand marks the message as a command.
 func (*CreditAccount) IsCommand() {}
 
-// Description returns a human-readable description of the message.
-func (m *CreditAccount) Description() string {
+// MessageDescription returns a human-readable description of the message.
+func (m *CreditAccount) MessageDescription() string {
 	return fmt.Sprintf(
 		"credit %d to account %s",
 		m.Cents,
@@ -45,8 +45,8 @@ func (m *CreditAccount) Description() string {
 // IsEvent marks the message as an event.
 func (*AccountCredited) IsEvent() {}
 
-// Description returns a human-readable description of the message.
-func (m *AccountCredited) Description() string {
+// MessageDescription returns a human-readable description of the message.
+func (m *AccountCredited) MessageDescription() string {
 	return fmt.Sprintf(
 		"credited %d to account %s",
 		m.Cents,
@@ -57,8 +57,8 @@ func (m *AccountCredited) Description() string {
 // IsCommand marks the message as a command.
 func (*DebitAccount) IsCommand() {}
 
-// Description returns a human-readable description of the message.
-func (m *DebitAccount) Description() string {
+// MessageDescription returns a human-readable description of the message.
+func (m *DebitAccount) MessageDescription() string {
 	return fmt.Sprintf(
 		"debit %d from account %s",
 		m.Cents,
@@ -69,8 +69,8 @@ func (m *DebitAccount) Description() string {
 // IsEvent marks the message as an event.
 func (*AccountDebited) IsEvent() {}
 
-// Description returns a human-readable description of the message.
-func (m *AccountDebited) Description() string {
+// MessageDescription returns a human-readable description of the message.
+func (m *AccountDebited) MessageDescription() string {
 	return fmt.Sprintf(
 		"debited %d from account %s",
 		m.Cents,

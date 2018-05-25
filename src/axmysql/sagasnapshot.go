@@ -77,7 +77,7 @@ func (SnapshotRepository) SaveSagaSnapshot(
 			data = ?`,
 		i.InstanceID,
 		i.Revision,
-		i.Data.SagaDescription(),
+		i.Data.InstanceDescription(),
 		contentType,
 		data,
 	)
