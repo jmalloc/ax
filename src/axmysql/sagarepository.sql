@@ -1,5 +1,5 @@
 --
--- This file defines the SQL schema used by SagaInstanceRepository.
+-- This file defines the SQL schema used by SagaRepository.
 --
 
 --
