@@ -11,8 +11,8 @@ import (
 type Repository interface {
 	// LoadSagaInstance fetches a saga instance by its ID.
 	//
-	// If a saga instance is found; ok is true, otherwise it is false. A
-	// non-nil error indicates a problem with the store itself.
+	// It returns an error if the instance does not exist, or a problem occurs
+	// with the underlying data store.
 	//
 	// It panics if the repository is not able to enlist in tx because it uses a
 	// different underlying storage system.
@@ -21,7 +21,7 @@ type Repository interface {
 	// SaveSagaInstance persists a saga instance.
 	//
 	// It returns an error if the saga instance has been modified since it was
-	// loaded, or if there is a problem communicating with the store itself.
+	// loaded, or a problem occurs with the underlying data store.
 	//
 	// It panics if the repository is not able to enlist in tx because it uses a
 	// different underlying storage system.
