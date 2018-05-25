@@ -15,14 +15,14 @@ type SagaMapper struct{}
 // messages with a specific mapping key.
 //
 // sn is the name of the saga, and k is the message's mapping key.
+//
+// ok is false if no saga instance is found.
 func (SagaMapper) FindByKey(
 	ctx context.Context,
 	ptx persistence.Tx,
 	sn, k string,
-) (saga.InstanceID, bool, error) {
-	var id saga.InstanceID
-
-	err := sqlTx(ptx).QueryRowContext(
+) (id saga.InstanceID, ok bool, err error) {
+	err = sqlTx(ptx).QueryRowContext(
 		ctx,
 		`SELECT
 			instance_id
@@ -35,15 +35,13 @@ func (SagaMapper) FindByKey(
 		&id,
 	)
 
-	if err == sql.ErrNoRows {
-		return id, false, nil
+	if err == nil {
+		ok = true
+	} else if err == sql.ErrNoRows {
+		err = nil
 	}
 
-	if err != nil {
-		return id, false, err
-	}
-
-	return id, true, nil
+	return
 }
 
 // SaveKeys persists the changes to a saga instance's mapping key set.
