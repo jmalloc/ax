@@ -103,7 +103,8 @@ func (MessageStore) OpenStream(
 }
 
 // insertStream inserts a new stream and returns its ID.
-// n is the number of events being appended.
+//
+// s is the name of the stream, n is the number of events being appended.
 func (MessageStore) insertStream(
 	ctx context.Context,
 	tx *sql.Tx,
@@ -126,7 +127,9 @@ func (MessageStore) insertStream(
 }
 
 // incrStreamOffset increments the offset for the given stream by n.
-// It returns an error if o is not the next free offset.
+//
+// s is the name of the stream. It returns an error if o is not the next free
+// offset.
 func (MessageStore) incrStreamOffset(
 	ctx context.Context,
 	tx *sql.Tx,
@@ -179,6 +182,7 @@ func (MessageStore) incrStreamOffset(
 }
 
 // incrGlobalOffset increments the global stream offset by n.
+//
 // It returns the offset before it was incremented.
 func (MessageStore) incrGlobalOffset(
 	ctx context.Context,
