@@ -1,5 +1,5 @@
 --
--- This file defines the SQL schema used by SagaSnapshotRepository.
+-- This file defines the SQL schema used by SnapshotRepository.
 --
 
 --
