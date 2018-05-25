@@ -58,8 +58,9 @@ func (r SagaRepository) LoadSagaInstance(
 
 // SaveSagaInstance persists a saga instance.
 //
-// It returns an error if the saga instance has been modified since it was
-// loaded, or a problem occurs with the underlying data store.
+// It returns an error if i.Revision is not the current revision of the
+// instance as it exists within the store, or a problem occurs with the
+// underlying data store.
 //
 // It panics if the repository is not able to enlist in tx because it uses a
 // different underlying storage system.
