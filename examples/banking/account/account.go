@@ -49,12 +49,12 @@ func (aggregateRoot) NewData() saga.Data {
 	return &Account{}
 }
 
-func (aggregateRoot) MappingKeyForMessage(ctx context.Context, env ax.Envelope) (string, error) {
+func (aggregateRoot) MappingKeyForMessage(ctx context.Context, env ax.Envelope) (string, bool, error) {
 	type hasAccountID interface {
 		GetAccountId() string
 	}
 
-	return env.Message.(hasAccountID).GetAccountId(), nil
+	return env.Message.(hasAccountID).GetAccountId(), true, nil
 }
 
 func (aggregateRoot) MappingKeysForInstance(
