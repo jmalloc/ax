@@ -31,6 +31,11 @@ func (h *MessageHandler) MessageTypes() ax.MessageTypeSet {
 // Changes to the saga are persisted within the existing transaction in ctx, if
 // present.
 func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope) error {
+	k, ok, err := h.Saga.MappingKeyForMessage(ctx, env)
+	if !ok || err != nil {
+		return err
+	}
+
 	tx, com, err := persistence.GetOrBeginTx(ctx)
 	if err != nil {
 		return err
@@ -38,7 +43,7 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 	defer com.Rollback()
 	ctx = persistence.WithTx(ctx, tx)
 
-	w, ok, err := h.startUnitOfWork(ctx, tx, s, env)
+	w, ok, err := h.startUnitOfWork(ctx, tx, k, s, env)
 	if err != nil {
 		return err
 	}
@@ -61,10 +66,16 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 func (h *MessageHandler) startUnitOfWork(
 	ctx context.Context,
 	tx persistence.Tx,
+	k string,
 	s ax.Sender,
 	env ax.Envelope,
 ) (UnitOfWork, bool, error) {
-	id, ok, err := h.findInstance(ctx, tx, env)
+	id, ok, err := h.Mapper.FindByKey(
+		ctx,
+		tx,
+		h.Saga.SagaName(),
+		k,
+	)
 	if err != nil {
 		return nil, false, err
 	}
@@ -87,26 +98,6 @@ func (h *MessageHandler) startUnitOfWork(
 
 	w, err := h.Persister.BeginCreate(ctx, h.Saga, tx, s, i)
 	return w, true, err
-}
-
-// findInstance returns the ID of the instance that env is routed to.
-// If there is no existing instance, ok is false.
-func (h *MessageHandler) findInstance(
-	ctx context.Context,
-	tx persistence.Tx,
-	env ax.Envelope,
-) (InstanceID, bool, error) {
-	k, err := h.Saga.MappingKeyForMessage(ctx, env)
-	if err != nil {
-		return InstanceID{}, false, err
-	}
-
-	return h.Mapper.FindByKey(
-		ctx,
-		tx,
-		h.Saga.SagaName(),
-		k,
-	)
 }
 
 // saveKeySet rebuilds and persists the mapping key set for the given instance.
