@@ -86,16 +86,19 @@ func (sg *Saga) NewData() saga.Data {
 }
 
 // MappingKeyForMessage returns the key used to locate the saga instance
-// to which the given message is routed.
+// to which the given message is routed, if any.
 //
-// The message is routed to the saga instance that contains k in its
-// associated key set.
+// If ok is false the message is ignored; otherwise, the message is routed
+// to the saga instance that contains k in its associated key set.
 //
-// If no saga instance is found and the message is a "trigger" message, a
-// new instance is created; otherwise, HandleNotFound() is called.
-func (sg *Saga) MappingKeyForMessage(ctx context.Context, env ax.Envelope) (k string, err error) {
+// New saga instances are created when no matching instance can be found
+// and the message is declared as a "trigger" by the saga's MessageTypes()
+// method; otherwise, HandleNotFound() is called.
+func (sg *Saga) MappingKeyForMessage(ctx context.Context, env ax.Envelope) (k string, ok bool, err error) {
 	m := env.Message.(ax.Command)
-	return sg.Identifier.AggregateID(m)
+	ok = true
+	k, err = sg.Identifier.AggregateID(m)
+	return
 }
 
 // MappingKeysForInstance returns the set of mapping keys associated with
