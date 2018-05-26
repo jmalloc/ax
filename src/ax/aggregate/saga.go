@@ -34,6 +34,7 @@ func New(agg Aggregate, opts ...Option) saga.EventedSaga {
 
 // Saga is an implementation of saga.Saga that wraps an AggregateRoot.
 type Saga struct {
+	saga.MapByInstanceID
 	saga.ErrorIfNotFound
 
 	HandlerSet *HandlerSet
@@ -99,28 +100,6 @@ func (sg *Saga) MappingKeyForMessage(ctx context.Context, env ax.Envelope) (k st
 	ok = true
 	k, err = sg.Identifier.AggregateID(m)
 	return
-}
-
-// MappingKeysForInstance returns the set of mapping keys associated with
-// the given instance.
-//
-// When a message is received, a mapping key is produced by calling
-// MappingKeyForMessage(). The message is routed to the saga instance that
-// contains this key in its key set.
-//
-// Key sets must be disjoint. That is, no two instances of the same saga
-// may share any keys.
-//
-// The key set is rebuilt whenever a message is received. It is persisted
-// alongside the saga instance by the Repository.
-//
-// Extra care must be taken when introducing a new key to the set, as the key
-// set for existing saga instances will not be updated until they next receive
-// a message.
-func (sg *Saga) MappingKeysForInstance(_ context.Context, i saga.Instance) (saga.KeySet, error) {
-	return saga.NewKeySet(
-		i.InstanceID.Get(),
-	), nil
 }
 
 // HandleMessage handles a message for a particular saga instance.
