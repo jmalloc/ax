@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package ax.examples.banking;
+option go_package = "messages";
+
+// StartTransfer is a command that starts a new funds transfer.
+message StartTransfer {
+    string transfer_id = 1;
+    string from_account_id = 2;
+    string to_account_id = 3;
+    int32 amount_in_cents = 4;
+}
+
+// TransferStarted is an event that occurs when a funds transfer is started.
+message TransferStarted {
+    string transfer_id = 1;
+    string from_account_id = 2;
+    string to_account_id = 3;
+    int32 amount_in_cents = 4;
+}
+
+// MarkTransferApproved is a command that marks a transfer as approved.
+message MarkTransferApproved {
+    string transfer_id = 1;
+}
+
+// TransferApproved is an event that occurs when a funds transfer is completed.
+message TransferApproved {
+    string transfer_id = 1;
+}

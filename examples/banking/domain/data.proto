@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package ax.examples.banking;
+option go_package = "domain";
+
+// Account contains data for the account aggregate.
+message Account {
+    string account_id = 1;
+    bool is_open = 2;
+    string name = 3;
+    int32 balance_in_cents = 4;
+}
+
+// Transfer contains data for the transfer aggregate.
+message Transfer {
+    string transfer_id = 1;
+    string from_account_id = 2;
+    string to_account_id = 3;
+    int32 amount_in_cents = 4;
+    bool is_complete = 5;
+}
+
+message TransferWorkflow {
+    string transfer_id = 1;
+    string from_account_id = 2;
+    string to_account_id = 3;
+    int32 amount_in_cents = 4;
+}
