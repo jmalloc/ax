@@ -155,8 +155,8 @@ func (h *MessageHandler) handleMessage(
 		panic("unit-of-work contains saga instance with nil data")
 	}
 
-	if d, ok := i.Data.(EventedData); ok {
-		s = &Applier{d, s}
+	if es, ok := h.Saga.(EventedSaga); ok {
+		s = &Applier{es, i.Data, s}
 	}
 
 	if err := h.Saga.HandleMessage(ctx, s, env, i); err != nil {

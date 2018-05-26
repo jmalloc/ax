@@ -62,7 +62,13 @@ func (p *Persister) BeginUpdate(
 		}
 	}
 
-	if err := applyEvents(ctx, tx, p.MessageStore, &i); err != nil {
+	if err := applyEvents(
+		ctx,
+		tx,
+		p.MessageStore,
+		sg.(saga.EventedSaga),
+		&i,
+	); err != nil {
 		return nil, err
 	}
 

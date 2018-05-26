@@ -85,3 +85,15 @@ type Saga interface {
 	// that could not be found.
 	HandleNotFound(context.Context, ax.Sender, ax.Envelope) error
 }
+
+// EventedSaga is a saga that only mutates its data when an event occurs.
+// CRUD sagas may be evented or non-evented, but eventsourced sagas are always
+// evented.
+type EventedSaga interface {
+	Saga
+
+	// ApplyEvent updates d to reflect the fact that an event has occurred.
+	//
+	// It may panic if env.Message does not implement ax.Event.
+	ApplyEvent(d Data, env ax.Envelope)
+}

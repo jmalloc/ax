@@ -45,6 +45,7 @@ func applyEvents(
 	ctx context.Context,
 	tx persistence.Tx,
 	ms persistence.MessageStore,
+	sg saga.EventedSaga,
 	i *saga.Instance,
 ) error {
 	s, err := ms.OpenStream(
@@ -56,8 +57,6 @@ func applyEvents(
 	if err != nil {
 		return err
 	}
-
-	data := i.Data.(saga.EventedData)
 
 	for {
 		ok, err := s.Next(ctx)
@@ -78,7 +77,7 @@ func applyEvents(
 			)
 		}
 
-		data.ApplyEvent(env)
+		sg.ApplyEvent(i.Data, env)
 		i.Revision++
 	}
 }

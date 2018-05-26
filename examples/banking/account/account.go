@@ -20,20 +20,6 @@ func (a *Account) InstanceDescription() string {
 	)
 }
 
-// ApplyEvent updates the data to reflect the fact that ev has occurred.
-func (a *Account) ApplyEvent(env ax.Envelope) {
-	switch ev := env.Message.(type) {
-	case *messages.AccountOpened:
-		a.AccountId = ev.AccountId
-		a.Name = ev.Name
-		a.IsOpen = true
-	case *messages.AccountCredited:
-		a.Balance += ev.Cents
-	case *messages.AccountDebited:
-		a.Balance -= ev.Cents
-	}
-}
-
 // AggregateRoot is a saga that implements the Account aggregate.
 var AggregateRoot saga.Saga = &aggregateRoot{}
 
@@ -113,4 +99,20 @@ func (aggregateRoot) HandleMessage(
 	}
 
 	return
+}
+
+// ApplyEvent updates the data to reflect the fact that ev has occurred.
+func (aggregateRoot) ApplyEvent(d saga.Data, env ax.Envelope) {
+	acct := d.(*Account)
+
+	switch ev := env.Message.(type) {
+	case *messages.AccountOpened:
+		acct.AccountId = ev.AccountId
+		acct.Name = ev.Name
+		acct.IsOpen = true
+	case *messages.AccountCredited:
+		acct.Balance += ev.Cents
+	case *messages.AccountDebited:
+		acct.Balance -= ev.Cents
+	}
 }

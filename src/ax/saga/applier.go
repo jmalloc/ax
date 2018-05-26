@@ -7,9 +7,11 @@ import (
 )
 
 // Applier is an implementation of ax.Sender that applies published
-// events to an EventedData instance.
+// events to saga data for evented sagas.
 type Applier struct {
-	Data EventedData
+	Saga EventedSaga
+	Data Data
+
 	Next ax.Sender
 }
 
@@ -31,7 +33,7 @@ func (s *Applier) PublishEvent(ctx context.Context, m ax.Event) (ax.Envelope, er
 		return ax.Envelope{}, err
 	}
 
-	s.Data.ApplyEvent(env)
+	s.Saga.ApplyEvent(s.Data, env)
 
 	return env, nil
 }
