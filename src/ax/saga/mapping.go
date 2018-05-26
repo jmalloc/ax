@@ -35,12 +35,16 @@ type Mapper interface {
 // KeySet is a set of "mapping keys" that are associated with a saga instance.
 type KeySet map[string]struct{}
 
-// NewKeySet returns a key set containing the keys in k.
-func NewKeySet(k ...string) KeySet {
-	s := make(KeySet, len(k))
+// NewKeySet returns a key set containing the given keys.
+func NewKeySet(keys ...string) KeySet {
+	s := make(KeySet, len(keys))
 
-	for _, key := range k {
-		s[key] = struct{}{}
+	for _, k := range keys {
+		if k == "" {
+			panic("mapping keys must not be empty")
+		}
+
+		s[k] = struct{}{}
 	}
 
 	return s
