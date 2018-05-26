@@ -2,7 +2,6 @@ package ax
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/jmalloc/ax/src/ax/ident"
@@ -49,11 +48,6 @@ type Event interface {
 	// intended to be used as an event.
 	IsEvent()
 }
-
-var (
-	commandType = reflect.TypeOf((*Command)(nil)).Elem()
-	eventType   = reflect.TypeOf((*Event)(nil)).Elem()
-)
 
 // MarshalMessage marshals m to a binary representation.
 func MarshalMessage(m Message) (contentType string, data []byte, err error) {

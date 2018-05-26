@@ -36,16 +36,13 @@ func TypeOf(m Message) MessageType {
 // Note that messages are only added to the registry when their respective Go
 // package is imported.
 func TypeByName(n string) (mt MessageType, ok bool) {
-
 	rt := proto.MessageType(n)
 
 	if rt == nil {
 		return MessageType{}, false
 	}
 
-	axMessageType := reflect.TypeOf((*Message)(nil)).Elem()
-
-	if !rt.Implements(axMessageType) {
+	if !rt.Implements(messageType) {
 		return MessageType{}, false
 	}
 
@@ -193,3 +190,9 @@ func (s MessageTypeSet) Union(o MessageTypeSet) MessageTypeSet {
 
 	return MessageTypeSet{members}
 }
+
+var (
+	messageType = reflect.TypeOf((*Message)(nil)).Elem()
+	commandType = reflect.TypeOf((*Command)(nil)).Elem()
+	eventType   = reflect.TypeOf((*Event)(nil)).Elem()
+)
