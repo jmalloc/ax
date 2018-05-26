@@ -87,8 +87,12 @@ type Saga interface {
 }
 
 // EventedSaga is a saga that only mutates its data when an event occurs.
+//
 // CRUD sagas may be evented or non-evented, but eventsourced sagas are always
 // evented.
+//
+// Implementors should take care not to mutate the saga data directly inside the
+// saga HandleMessage() method, only in ApplyEvent().
 type EventedSaga interface {
 	Saga
 
