@@ -25,7 +25,7 @@ func (v *DefaultValidator) Validate(
 	msg ax.Message,
 ) error {
 
-	// first check if the context is already cancelled
+	// first check if the context is already canceled
 	select {
 	case <-ctx.Done():
 		return ctx.Err()

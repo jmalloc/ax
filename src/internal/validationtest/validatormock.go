@@ -5,9 +5,8 @@ package validationtest
 
 import (
 	"context"
-	"sync"
-
 	"github.com/jmalloc/ax/src/ax"
+	"sync"
 )
 
 var (
