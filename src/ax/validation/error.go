@@ -6,25 +6,26 @@ import (
 	"github.com/jmalloc/ax/src/ax"
 )
 
-// ValidationError is an error type that contains
-// specifics about superficial message validation
-type ValidationError struct {
-	env   ax.Envelope
-	cause error
+// Error is an error type that contains specifics about message validation.
+// Typically Error designates an unrecoverable message state that cannot
+// be retried within either an outbound or inbound message pipeline
+type Error struct {
+	msg ax.Message
+	err error
 }
 
-// NewValidationError returns a pointer to a new ValidationError struct
-func NewValidationError(err error, env ax.Envelope) *ValidationError {
-	return &ValidationError{
-		env:   env,
-		cause: err,
+// NewError returns a pointer to a new Error struct
+func NewError(err error, msg ax.Message) *Error {
+	return &Error{
+		msg: msg,
+		err: err,
 	}
 }
 
 // Error returns a string message of an error
-func (ve *ValidationError) Error() string {
+func (e *Error) Error() string {
 	return fmt.Sprintf(
-		"validation error, cause: %v",
-		ve.cause,
+		"validation error: %v",
+		e.err,
 	)
 }
