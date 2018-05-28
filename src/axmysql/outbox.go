@@ -26,7 +26,7 @@ func (r *OutboxRepository) LoadOutbox(
 	row := db.QueryRowContext(
 		ctx,
 		`SELECT EXISTS (
-			SELECT * FROM outbox WHERE message_id = ?
+			SELECT * FROM outbox WHERE causation_id = ?
 		)`,
 		id,
 	)
@@ -85,7 +85,7 @@ func (r *OutboxRepository) SaveOutbox(
 
 	if _, err := tx.ExecContext(
 		ctx,
-		`INSERT INTO outbox SET message_id = ?`,
+		`INSERT INTO outbox SET causation_id = ?`,
 		id,
 	); err != nil {
 		return err
