@@ -9,10 +9,10 @@
 -- been handled, even if the outbox is now empty.
 --
 CREATE TABLE IF NOT EXISTS outbox (
-    message_id  VARBINARY(255) NOT NULL,
-    insert_time TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    causation_id VARBINARY(255) NOT NULL,
+    insert_time  TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
 
-    PRIMARY KEY (message_id),
+    PRIMARY KEY (causation_id),
     INDEX (insert_time)
 );
 
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS outbox (
 --
 CREATE TABLE IF NOT EXISTS outbox_message (
     message_id     VARBINARY(255) NOT NULL,
-    causation_id   VARBINARY(255) NOT NULL, -- outbox.message_id
+    causation_id   VARBINARY(255) NOT NULL, -- outbox.causation_id
     correlation_id VARBINARY(255) NOT NULL,
     time           VARBINARY(255) NOT NULL,
     content_type   VARBINARY(255) NOT NULL,
