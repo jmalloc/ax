@@ -25,15 +25,12 @@ var _ = Describe("TimeLimiter", func() {
 	})
 
 	Describe("Initialize", func() {
-		It("calls the next pipeline with the timeout set on the context", func() {
-			ctxOriginal := context.Background()
-
+		It("calls the next pipeline", func() {
 			next.InitializeFunc = func(ctx context.Context, _ *Endpoint) error {
-				Expect(ctx).To(Equal(ctxOriginal))
 				return nil
 			}
 
-			tl.Initialize(ctxOriginal, &Endpoint{})
+			tl.Initialize(context.Background(), &Endpoint{})
 
 			Expect(next.InitializeCalls()).To(HaveLen(1))
 		})
@@ -41,31 +38,29 @@ var _ = Describe("TimeLimiter", func() {
 
 	Describe("Accept", func() {
 		It("calls the next pipeline with the timeout set on the context", func() {
-			ctxOriginal := context.Background()
-
 			next.AcceptFunc = func(ctx context.Context, _ MessageSink, _ InboundEnvelope) error {
-				Expect(ctx).To(Not(Equal(ctxOriginal)))
+				_, ok := ctx.Deadline()
+				Expect(ok).To(BeTrue())
 				return nil
 			}
 
-			tl.Accept(ctxOriginal, nil /* sink */, InboundEnvelope{})
+			tl.Accept(context.Background(), nil /* sink */, InboundEnvelope{})
 
 			Expect(next.AcceptCalls()).To(HaveLen(1))
 		})
 
-		It("calls the next pipeline with the default timeout set on the context", func() {
+		It("calls the next pipeline with the default timeout set on the context if none given", func() {
 			tl = &TimeLimiter{
 				Next: next,
 			}
 
-			ctxOriginal := context.Background()
-
 			next.AcceptFunc = func(ctx context.Context, _ MessageSink, _ InboundEnvelope) error {
-				Expect(ctx).To(Not(Equal(ctxOriginal)))
+				_, ok := ctx.Deadline()
+				Expect(ok).To(BeTrue())
 				return nil
 			}
 
-			tl.Accept(ctxOriginal, nil /* sink */, InboundEnvelope{})
+			tl.Accept(context.Background(), nil /* sink */, InboundEnvelope{})
 
 			Expect(next.AcceptCalls()).To(HaveLen(1))
 		})

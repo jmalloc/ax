@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// The default timeout duration if none given.
+// DefaultTimeout is the default timeout duration to use if none is given.
 const DefaultTimeout = 5 * time.Second
 
 // TimeLimiter is an inbound pipeline that sets a context timeout before
