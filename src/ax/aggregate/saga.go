@@ -87,8 +87,6 @@ func (sg *Saga) MessageTypes() (tr ax.MessageTypeSet, mt ax.MessageTypeSet) {
 //
 // It is called when a "trigger" message is received and there is no
 // existing saga instance. env contains the "trigger" message.
-//
-// If err is nil, id must be a valid InstanceID, and d must be non-nil.
 func (sg *Saga) GenerateInstanceID(ctx context.Context, env ax.Envelope) (id saga.InstanceID, err error) {
 	m := env.Message.(ax.Command)
 	v, err := sg.Identifier.AggregateID(m)
