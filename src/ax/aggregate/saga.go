@@ -7,6 +7,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/saga"
+	"github.com/jmalloc/ax/src/internal/reflectx"
 )
 
 // Aggregate is an alias for saga.Data.
@@ -18,15 +19,32 @@ type Aggregate = saga.Data
 // New returns a new saga instance that handles messages for the given
 // aggregate.
 func New(agg Aggregate, opts ...Option) saga.EventedSaga {
-	rt := reflect.TypeOf(agg)
-
 	sg := &Saga{
-		HandlerSet: NewHandlerSet(rt),
-		Prototype:  agg,
+		Prototype: agg,
 	}
 
 	for _, opt := range opts {
 		opt(sg)
+	}
+
+	commandTypes := reflectx.MakeDispatcher(
+		&sg.CommandHandler,
+		reflect.TypeOf((*ax.Command)(nil)).Elem(),
+		reflect.TypeOf(agg),
+	)
+
+	reflectx.MakeDispatcher(
+		&sg.EventApplier,
+		reflect.TypeOf((*ax.Event)(nil)).Elem(),
+		reflect.TypeOf(agg),
+	)
+
+	for _, t := range commandTypes {
+		sg.CommandTypes = sg.CommandTypes.Add(
+			ax.TypeOf(
+				reflect.Zero(t).Interface().(ax.Message),
+			),
+		)
 	}
 
 	return sg
@@ -37,9 +55,11 @@ type Saga struct {
 	saga.MapByInstanceID
 	saga.ErrorIfNotFound
 
-	HandlerSet *HandlerSet
-	Prototype  Aggregate
-	Identifier Identifier
+	Prototype      Aggregate
+	Identifier     Identifier
+	CommandTypes   ax.MessageTypeSet
+	CommandHandler func(Aggregate, ax.Command, Recorder)
+	EventApplier   func(Aggregate, ax.Event)
 }
 
 // SagaName returns a unique name for the saga.
@@ -60,7 +80,7 @@ func (sg *Saga) SagaName() string {
 // they can not be routed to an existing instance, the HandleNotFound()
 // method is called instead.
 func (sg *Saga) MessageTypes() (tr ax.MessageTypeSet, mt ax.MessageTypeSet) {
-	return sg.HandlerSet.CommandTypes, ax.MessageTypeSet{}
+	return sg.CommandTypes, ax.MessageTypeSet{}
 }
 
 // GenerateInstanceID returns the saga ID to use for a new instance.
@@ -120,7 +140,7 @@ func (sg *Saga) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope,
 		}
 	}
 
-	sg.HandlerSet.HandleCommand(
+	sg.CommandHandler(
 		i.Data,
 		env.Message.(ax.Command),
 		rec,
@@ -134,5 +154,5 @@ func (sg *Saga) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope,
 // It may panic if env.Message does not implement ax.Event.
 func (sg *Saga) ApplyEvent(d saga.Data, env ax.Envelope) {
 	m := env.Message.(ax.Event)
-	sg.HandlerSet.HandleEvent(d, m)
+	sg.EventApplier(d, m)
 }
