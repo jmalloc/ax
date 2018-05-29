@@ -2,7 +2,6 @@ package ax
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/jmalloc/ax/src/ax/ident"
@@ -18,14 +17,14 @@ type MessageID struct {
 type Message interface {
 	proto.Message
 
-	// Description returns a human-readable description of the message.
+	// MessageDescription returns a human-readable description of the message.
 	//
 	// Assume that the description will be used inside log messages or displayed
 	// in audit logs.
 	//
 	// Follow the same conventions as for error messages:
 	// https://github.com/golang/go/wiki/CodeReviewComments#error-strings
-	Description() string
+	MessageDescription() string
 }
 
 // Command is a message that requests some action take place.
@@ -49,11 +48,6 @@ type Event interface {
 	// intended to be used as an event.
 	IsEvent()
 }
-
-var (
-	commandType = reflect.TypeOf((*Command)(nil)).Elem()
-	eventType   = reflect.TypeOf((*Event)(nil)).Elem()
-)
 
 // MarshalMessage marshals m to a binary representation.
 func MarshalMessage(m Message) (contentType string, data []byte, err error) {

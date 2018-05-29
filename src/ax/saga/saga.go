@@ -38,23 +38,28 @@ type Saga interface {
 	// method is called instead.
 	MessageTypes() (tr ax.MessageTypeSet, mt ax.MessageTypeSet)
 
-	// NewInstance returns a new saga instance.
+	// GenerateInstanceID returns the saga ID to use for a new instance.
 	//
 	// It is called when a "trigger" message is received and there is no
 	// existing saga instance. env contains the "trigger" message.
 	//
 	// If err is nil, id must be a valid InstanceID, and d must be non-nil.
-	NewInstance(ctx context.Context, env ax.Envelope) (id InstanceID, d Data, err error)
+	GenerateInstanceID(ctx context.Context, env ax.Envelope) (id InstanceID, err error)
+
+	// NewData returns a pointer to a new zero-value instance of the
+	// saga's data type.
+	NewData() Data
 
 	// MappingKeyForMessage returns the key used to locate the saga instance
-	// to which the given message is routed.
+	// to which the given message is routed, if any.
 	//
-	// The message is routed to the saga instance that contains k in its
-	// associated key set.
+	// If ok is false the message is ignored; otherwise, the message is routed
+	// to the saga instance that contains k in its associated key set.
 	//
-	// If no saga instance is found and the message is a "trigger" message, a
-	// new instance is created; otherwise, HandleNotFound() is called.
-	MappingKeyForMessage(ctx context.Context, env ax.Envelope) (k string, err error)
+	// New saga instances are created when no matching instance can be found
+	// and the message is declared as a "trigger" by the saga's MessageTypes()
+	// method; otherwise, HandleNotFound() is called.
+	MappingKeyForMessage(ctx context.Context, env ax.Envelope) (k string, ok bool, err error)
 
 	// MappingKeysForInstance returns the set of mapping keys associated with
 	// the given instance.
@@ -80,4 +85,20 @@ type Saga interface {
 	// HandleNotFound handles a message that is intended for a saga instance
 	// that could not be found.
 	HandleNotFound(context.Context, ax.Sender, ax.Envelope) error
+}
+
+// EventedSaga is a saga that only mutates its data when an event occurs.
+//
+// CRUD sagas may be evented or non-evented, but eventsourced sagas are always
+// evented.
+//
+// Implementors should take care not to mutate the saga data directly inside the
+// saga HandleMessage() method, only in ApplyEvent().
+type EventedSaga interface {
+	Saga
+
+	// ApplyEvent updates d to reflect the fact that an event has occurred.
+	//
+	// It may panic if env.Message does not implement ax.Event.
+	ApplyEvent(d Data, env ax.Envelope)
 }

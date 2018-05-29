@@ -1,6 +1,8 @@
 package ax
 
-import "context"
+import (
+	"context"
+)
 
 // Sender is an interface for sending messages.
 type Sender interface {
@@ -8,10 +10,10 @@ type Sender interface {
 	//
 	// Commands are routed to a single endpoint as per the routing rules of the
 	// outbound message pipeline.
-	ExecuteCommand(context.Context, Command) error
+	ExecuteCommand(context.Context, Command) (Envelope, error)
 
 	// PublishEvent sends an event message.
 	//
 	// Events are routed to endpoints that subscribe to messages of that type.
-	PublishEvent(context.Context, Event) error
+	PublishEvent(context.Context, Event) (Envelope, error)
 }

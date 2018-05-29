@@ -18,7 +18,7 @@ func (o *LoggingObserver) BeforeInbound(ctx context.Context, env endpoint.Inboun
 
 	o.log(
 		"recv: %s  [%s msg:%s cause:%s corr:%s]",
-		env.Message.Description(),
+		env.Message.MessageDescription(),
 		mt,
 		env.MessageID,
 		env.CausationID,
@@ -31,7 +31,7 @@ func (o *LoggingObserver) AfterInbound(ctx context.Context, env endpoint.Inbound
 	if err != nil {
 		o.log(
 			"error: %s  %s  [%s msg:%s cause:%s corr:%s]",
-			env.Message.Description(),
+			env.Message.MessageDescription(),
 			err,
 			env.Type(),
 			env.MessageID,
@@ -46,7 +46,7 @@ func (o *LoggingObserver) AfterOutbound(ctx context.Context, env endpoint.Outbou
 	if err == nil {
 		o.log(
 			"send: %s  [%s msg:%s cause:%s corr:%s]",
-			env.Message.Description(),
+			env.Message.MessageDescription(),
 			env.Type(),
 			env.MessageID,
 			env.CausationID,

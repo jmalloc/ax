@@ -8,7 +8,7 @@ import (
 
 // MarshalData marshals d to a binary representation.
 func MarshalData(d Data) (contentType string, data []byte, err error) {
-	return marshaling.MarshalJSON(d)
+	return marshaling.MarshalProtobuf(d)
 }
 
 // UnmarshalData unmarshals a saga instance from some serialized

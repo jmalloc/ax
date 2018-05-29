@@ -17,6 +17,7 @@ import (
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/ax/routing"
 	"github.com/jmalloc/ax/src/ax/saga"
+	"github.com/jmalloc/ax/src/ax/saga/eventsourcing"
 	"github.com/jmalloc/ax/src/axcli"
 	"github.com/jmalloc/ax/src/axmysql"
 	"github.com/jmalloc/ax/src/axrmq"
@@ -37,10 +38,23 @@ func main() {
 	}
 	defer rmq.Close()
 
+	// p := &crud.Persister{
+	// 	Repository: axmysql.SagaRepository{},
+	// }
+
+	p := &eventsourcing.Persister{
+		MessageStore:      axmysql.MessageStore{},
+		Snapshots:         axmysql.SnapshotRepository{},
+		SnapshotFrequency: 3,
+	}
+
+	mapper := axmysql.SagaMapper{}
+
 	htable, err := routing.NewHandlerTable(
 		&saga.MessageHandler{
-			Saga:       account.AggregateRoot,
-			Repository: &axmysql.SagaRepository{},
+			Saga:      account.AggregateRoot,
+			Mapper:    mapper,
+			Persister: p,
 		},
 	)
 	if err != nil {
