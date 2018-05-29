@@ -16,6 +16,9 @@ import (
 // implementation.
 type Aggregate = saga.Data
 
+// Recorder is a function that records the events produced by an aggregate.
+type Recorder func(ax.Event)
+
 // New returns a new saga instance that handles messages for the given
 // aggregate.
 func New(agg Aggregate, opts ...Option) saga.EventedSaga {
