@@ -12,7 +12,7 @@ import (
 // fn is a pointer to a function variable that describes the signature to match.
 // It is assigned the generated function.
 //
-// It returns the types that that are supported by the generated type-switch.
+// It returns the types that are supported by the generated type-switch.
 func MakeDispatcher(fn interface{}, arg, impl reflect.Type) []reflect.Type {
 	if arg.Kind() != reflect.Interface {
 		panic(fmt.Sprintf("can not dispatch based on %s, expected an interface", arg))
