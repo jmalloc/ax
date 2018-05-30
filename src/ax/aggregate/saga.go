@@ -7,7 +7,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/saga"
-	"github.com/jmalloc/ax/src/internal/reflectx"
+	"github.com/jmalloc/ax/src/internal/visitor"
 )
 
 // Aggregate is an alias for saga.Data.
@@ -30,13 +30,13 @@ func New(agg Aggregate, opts ...Option) saga.EventedSaga {
 		opt(sg)
 	}
 
-	commandTypes := reflectx.MakeDispatcher(
+	commandTypes := visitor.MakeAcceptor(
 		&sg.CommandHandler,
 		reflect.TypeOf((*ax.Command)(nil)).Elem(),
 		reflect.TypeOf(agg),
 	)
 
-	reflectx.MakeDispatcher(
+	visitor.MakeAcceptor(
 		&sg.EventApplier,
 		reflect.TypeOf((*ax.Event)(nil)).Elem(),
 		reflect.TypeOf(agg),
