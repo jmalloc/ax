@@ -14,8 +14,8 @@ type ValidationError struct {
 	err error
 }
 
-// NewError returns a pointer to a new Error struct
-func NewError(err error, msg ax.Message) *ValidationError {
+// NewValidationError returns a pointer to a new ValidationError struct
+func NewValidationError(err error, msg ax.Message) *ValidationError {
 	return &ValidationError{
 		msg: msg,
 		err: err,
