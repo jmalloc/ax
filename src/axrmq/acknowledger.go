@@ -2,6 +2,7 @@ package axrmq
 
 import (
 	"context"
+	"time"
 
 	"github.com/streadway/amqp"
 )
@@ -19,7 +20,10 @@ func (a *Acknowledger) Ack(_ context.Context) error {
 
 // Retry requeues the message so that it is redelivered at some point in the
 // future.
-func (a *Acknowledger) Retry(_ context.Context, _ error) error {
+//
+// d is a hint as to how long the transport should wait before redelivering
+// this message.
+func (a *Acknowledger) Retry(_ context.Context, _ error, _ time.Duration) error {
 	return a.Delivery.Reject(true) // true = requeue
 }
 
