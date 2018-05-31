@@ -6,23 +6,24 @@ import (
 	"github.com/jmalloc/ax/src/ax/persistence"
 )
 
-// Mapper is an interface for finding saga instances by their mapping key.
-type Mapper interface {
-	// FindByKey returns the instance ID of the saga instance that handles
-	// messages with a specific mapping key.
+// KeySetRepository is an interface for storing and querying saga instances
+// "key sets".
+type KeySetRepository interface {
+	// FindByKey returns the ID of the saga instance that contains k in its
+	// key set for the saga named sn.
 	//
-	// sn is the name of the saga, and k is the message's mapping key.
-	//
-	// ok is false if no saga instance is found.
+	// ok is false if no saga instance has a key set containing k.
 	FindByKey(
 		ctx context.Context,
 		tx persistence.Tx,
 		sn, k string,
 	) (i InstanceID, ok bool, err error)
 
-	// SaveKeys persists the changes to a saga instance's mapping key set.
+	// SaveKeys associates a key set with the saga instance identified by id
+	// for the saga named sn.
 	//
-	// sn is the name of the saga.
+	// Key sets must be disjoint. That is, no two instances of the same saga
+	// may share any keys.
 	SaveKeys(
 		ctx context.Context,
 		tx persistence.Tx,

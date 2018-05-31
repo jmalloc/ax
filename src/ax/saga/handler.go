@@ -12,7 +12,7 @@ import (
 // to the instance.
 type MessageHandler struct {
 	Saga      Saga
-	Mapper    Mapper
+	KeySets   KeySetRepository
 	Persister Persister
 }
 
@@ -70,7 +70,7 @@ func (h *MessageHandler) startUnitOfWork(
 	s ax.Sender,
 	env ax.Envelope,
 ) (UnitOfWork, bool, error) {
-	id, ok, err := h.Mapper.FindByKey(
+	id, ok, err := h.KeySets.FindByKey(
 		ctx,
 		tx,
 		h.Saga.SagaName(),
@@ -111,7 +111,7 @@ func (h *MessageHandler) saveKeySet(
 		return err
 	}
 
-	return h.Mapper.SaveKeys(
+	return h.KeySets.SaveKeys(
 		ctx,
 		tx,
 		h.Saga.SagaName(),

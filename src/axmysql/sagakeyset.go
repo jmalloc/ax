@@ -8,16 +8,15 @@ import (
 	"github.com/jmalloc/ax/src/ax/saga"
 )
 
-// SagaMapper is an implementation of saga.Mapper that uses SQL persistence.
-type SagaMapper struct{}
+// SagaKeySetRepository is an implementation of saga.KeySetRepository that uses
+// SQL persistence.
+type SagaKeySetRepository struct{}
 
-// FindByKey returns the instance ID of the saga instance that handles
-// messages with a specific mapping key.
+// FindByKey returns the ID of the saga instance that contains k in its
+// key set for the saga named sn.
 //
-// sn is the name of the saga, and k is the message's mapping key.
-//
-// ok is false if no saga instance is found.
-func (SagaMapper) FindByKey(
+// ok is false if no saga instance has a key set containing k.
+func (SagaKeySetRepository) FindByKey(
 	ctx context.Context,
 	ptx persistence.Tx,
 	sn, k string,
@@ -26,7 +25,7 @@ func (SagaMapper) FindByKey(
 		ctx,
 		`SELECT
 			instance_id
-		FROM saga_map
+		FROM saga_keyset
 		WHERE saga = ?
 		AND mapping_key = ?`,
 		sn,
@@ -44,10 +43,12 @@ func (SagaMapper) FindByKey(
 	return
 }
 
-// SaveKeys persists the changes to a saga instance's mapping key set.
+// SaveKeys associates a key set with the saga instance identified by id
+// for the saga named sn.
 //
-// sn is the name of the saga.
-func (SagaMapper) SaveKeys(
+// Key sets must be disjoint. That is, no two instances of the same saga
+// may share any keys.
+func (SagaKeySetRepository) SaveKeys(
 	ctx context.Context,
 	ptx persistence.Tx,
 	sn string,
@@ -58,7 +59,7 @@ func (SagaMapper) SaveKeys(
 
 	if _, err := tx.ExecContext(
 		ctx,
-		`DELETE FROM saga_map
+		`DELETE FROM saga_keyset
 		WHERE instance_id = ?`,
 		id,
 	); err != nil {
@@ -68,7 +69,7 @@ func (SagaMapper) SaveKeys(
 	for k := range ks {
 		if _, err := tx.ExecContext(
 			ctx,
-			`INSERT INTO saga_map SET
+			`INSERT INTO saga_keyset SET
 				saga = ?,
 				mapping_key = ?,
 				instance_id = ?`,
