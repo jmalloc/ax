@@ -75,7 +75,7 @@ type Saga interface {
 	// Extra care must be taken when introducing a new key to the set, as the key
 	// set for existing saga instances will not be updated until they next receive
 	// a message.
-	MappingKeysForInstance(context.Context, Instance) (KeySet, error)
+	MappingKeysForInstance(context.Context, Instance) ([]string, error)
 
 	// HandleMessage handles a message for a particular saga instance.
 	HandleMessage(context.Context, ax.Sender, ax.Envelope, Instance) error

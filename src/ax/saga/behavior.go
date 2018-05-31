@@ -31,8 +31,8 @@ func (ErrorIfNotFound) HandleNotFound(_ context.Context, _ ax.Sender, _ ax.Envel
 type MapByInstanceID struct{}
 
 // MappingKeysForInstance always returns a key set containing only the instance ID.
-func (MapByInstanceID) MappingKeysForInstance(_ context.Context, i Instance) (KeySet, error) {
-	return NewKeySet(
+func (MapByInstanceID) MappingKeysForInstance(_ context.Context, i Instance) ([]string, error) {
+	return []string{
 		i.InstanceID.Get(),
-	), nil
+	}, nil
 }

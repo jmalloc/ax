@@ -53,7 +53,7 @@ func (SagaKeySetRepository) SaveKeys(
 	ptx persistence.Tx,
 	sn string,
 	id saga.InstanceID,
-	ks saga.KeySet,
+	ks []string,
 ) error {
 	tx := sqlTx(ptx)
 
@@ -66,7 +66,7 @@ func (SagaKeySetRepository) SaveKeys(
 		return err
 	}
 
-	for k := range ks {
+	for _, k := range ks {
 		if _, err := tx.ExecContext(
 			ctx,
 			`INSERT INTO saga_keyset SET

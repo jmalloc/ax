@@ -111,6 +111,11 @@ func (h *MessageHandler) saveKeySet(
 		return err
 	}
 
+	ks, err = validateKeySet(ks)
+	if err != nil {
+		return err
+	}
+
 	return h.KeySets.SaveKeys(
 		ctx,
 		tx,

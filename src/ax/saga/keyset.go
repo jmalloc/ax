@@ -2,6 +2,8 @@ package saga
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/jmalloc/ax/src/ax/persistence"
 )
@@ -24,29 +26,35 @@ type KeySetRepository interface {
 	//
 	// Key sets must be disjoint. That is, no two instances of the same saga
 	// may share any keys.
+	//
+	// SaveKeys() may panic if ks contains duplicate keys.
 	SaveKeys(
 		ctx context.Context,
 		tx persistence.Tx,
 		sn string,
 		id InstanceID,
-		ks KeySet,
+		ks []string,
 	) error
 }
 
-// KeySet is a set of "mapping keys" that are associated with a saga instance.
-type KeySet map[string]struct{}
+// validateKeySet returns a copy of ks with duplicate keys removed.
+// It returns an error of any of the keys is the empty string.
+func validateKeySet(ks []string) ([]string, error) {
+	dedup := make([]string, 0, len(ks))
+	seen := make(map[string]struct{}, len(ks))
 
-// NewKeySet returns a key set containing the given keys.
-func NewKeySet(keys ...string) KeySet {
-	s := make(KeySet, len(keys))
-
-	for _, k := range keys {
+	for _, k := range ks {
 		if k == "" {
-			panic("mapping keys must not be empty")
+			return nil, errors.New("mapping keys must not be empty")
 		}
 
-		s[k] = struct{}{}
+		if _, ok := seen[k]; ok {
+			return nil, fmt.Errorf("the mapping key %s is repeated in the key set", k)
+		}
+
+		seen[k] = struct{}{}
+		dedup = append(dedup, k)
 	}
 
-	return s
+	return dedup, nil
 }
