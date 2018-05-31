@@ -9,7 +9,7 @@ import (
 // InboundStage is the validation stage in the
 // message inbound pipeline
 type InboundStage struct {
-	Validators []Validator
+	Validators []endpoint.Validator
 	Next       endpoint.InboundPipeline
 }
 

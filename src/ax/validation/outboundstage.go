@@ -9,7 +9,7 @@ import (
 // OutboundStage is the validation stage in the
 // message outbound pipeline
 type OutboundStage struct {
-	Validators []Validator
+	Validators []endpoint.Validator
 	Next       endpoint.OutboundPipeline
 }
 

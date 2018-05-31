@@ -62,7 +62,7 @@ var _ = Describe("InboundStage", func() {
 		It("initializes the following stage", func() {
 			os := &InboundStage{
 				Next: next,
-				Validators: []Validator{
+				Validators: []endpoint.Validator{
 					validator1, validator2, validator3,
 				},
 			}
@@ -83,7 +83,7 @@ var _ = Describe("InboundStage", func() {
 
 			os := &InboundStage{
 				Next:       next,
-				Validators: []Validator{},
+				Validators: []endpoint.Validator{},
 			}
 
 			err := os.Initialize(context.Background(), &endpoint.Endpoint{})
@@ -102,7 +102,7 @@ var _ = Describe("InboundStage", func() {
 		It("passes message to next stage's Accept method if none of validators fails", func() {
 			os := &InboundStage{
 				Next: next,
-				Validators: []Validator{
+				Validators: []endpoint.Validator{
 					validator1, validator2, validator3,
 				},
 			}
@@ -117,7 +117,7 @@ var _ = Describe("InboundStage", func() {
 
 			os := &InboundStage{
 				Next: next,
-				Validators: []Validator{
+				Validators: []endpoint.Validator{
 					validator1, validator2, validator3,
 				},
 			}
