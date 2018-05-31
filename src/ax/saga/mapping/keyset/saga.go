@@ -11,6 +11,12 @@ import (
 type Saga interface {
 	saga.Saga
 
+	// GenerateInstanceID returns the saga ID to use for a new instance.
+	//
+	// It is called when a "trigger" message is received and there is no
+	// existing saga instance. env contains the "trigger" message.
+	GenerateInstanceID(ctx context.Context, env ax.Envelope) (id saga.InstanceID, err error)
+
 	// MappingKeyForMessage returns the key used to locate the saga instance
 	// to which the given message is routed, if any.
 	//

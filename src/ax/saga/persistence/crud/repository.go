@@ -11,12 +11,16 @@ import (
 type Repository interface {
 	// LoadSagaInstance fetches a saga instance by its ID.
 	//
-	// It returns an error if the instance does not exist, or a problem occurs
-	// with the underlying data store.
+	// It returns an false if the instance does not exist. It returns an error
+	// if a problem occurs with the underlying data store.
 	//
 	// It panics if the repository is not able to enlist in tx because it uses a
 	// different underlying storage system.
-	LoadSagaInstance(ctx context.Context, tx persistence.Tx, id saga.InstanceID) (saga.Instance, error)
+	LoadSagaInstance(
+		ctx context.Context,
+		tx persistence.Tx,
+		id saga.InstanceID,
+	) (saga.Instance, bool, error)
 
 	// SaveSagaInstance persists a saga instance.
 	//
