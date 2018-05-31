@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/jmalloc/ax/src/internal/validationtest"
-
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	. "github.com/jmalloc/ax/src/ax/validation"
@@ -20,7 +18,7 @@ import (
 var _ = Describe("InboundStage", func() {
 	var (
 		next                               *endpointtest.InboundPipelineMock
-		validator1, validator2, validator3 *validationtest.ValidatorMock
+		validator1, validator2, validator3 *endpointtest.ValidatorMock
 	)
 
 	BeforeEach(func() {
@@ -39,17 +37,17 @@ var _ = Describe("InboundStage", func() {
 				return nil
 			},
 		}
-		validator1 = &validationtest.ValidatorMock{
+		validator1 = &endpointtest.ValidatorMock{
 			ValidateFunc: func(ctx context.Context, msg ax.Message) error {
 				return nil
 			},
 		}
-		validator2 = &validationtest.ValidatorMock{
+		validator2 = &endpointtest.ValidatorMock{
 			ValidateFunc: func(ctx context.Context, msg ax.Message) error {
 				return nil
 			},
 		}
-		validator3 = &validationtest.ValidatorMock{
+		validator3 = &endpointtest.ValidatorMock{
 			ValidateFunc: func(ctx context.Context, msg ax.Message) error {
 				return nil
 			},

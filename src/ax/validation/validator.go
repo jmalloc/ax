@@ -28,7 +28,7 @@ func (v *DefaultValidator) Validate(
 
 	// check if message is nil, if it is return a non-recoverable error
 	if msg == nil {
-		return NewError(errors.New("message cannot be nil"), nil)
+		return NewValidationError(errors.New("message cannot be nil"), nil)
 	}
 
 	// check if message can perform self-validation
