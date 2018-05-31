@@ -11,7 +11,7 @@ import (
 // targets.
 type Identifier interface {
 	// AggregateID returns the ID of the aggregate that m targets.
-	AggregateID(m ax.Command) (string, error)
+	AggregateID(m ax.Command) (ID, error)
 }
 
 // ByFieldIdentifier is an Identifier instance that treats a specific field of
@@ -21,12 +21,12 @@ type ByFieldIdentifier struct {
 }
 
 // AggregateID returns the ID of the aggregate that m targets.
-func (i *ByFieldIdentifier) AggregateID(m ax.Command) (string, error) {
+func (i *ByFieldIdentifier) AggregateID(m ax.Command) (ID, error) {
 	mt := ax.TypeOf(m)
 
 	f, ok := mt.StructType.FieldByName(i.FieldName)
 	if !ok {
-		return "", fmt.Errorf(
+		return ID{}, fmt.Errorf(
 			"%s does not contain a field named %s",
 			reflect.TypeOf(m),
 			i.FieldName,
@@ -34,16 +34,21 @@ func (i *ByFieldIdentifier) AggregateID(m ax.Command) (string, error) {
 	}
 
 	if f.Type.Kind() != reflect.String {
-		return "", fmt.Errorf(
+		return ID{}, fmt.Errorf(
 			"%s.%s is not a string",
 			reflect.TypeOf(m),
 			i.FieldName,
 		)
 	}
 
-	return reflect.
+	v := reflect.
 		ValueOf(m).
 		Elem().
 		FieldByIndex(f.Index).
-		Interface().(string), nil
+		Interface().(string)
+
+	var id ID
+	err := id.Parse(v)
+
+	return id, err
 }

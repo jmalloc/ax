@@ -10,18 +10,21 @@ import (
 	"github.com/jmalloc/ax/src/internal/visitor"
 )
 
-// Aggregate is an alias for saga.Data.
-//
-// Aggregates are implemented by adding "message handler methods" to a saga.Data
-// implementation.
-type Aggregate = saga.Data
+// Saga is an implementation of saga.Saga that wraps an Aggregate.
+type Saga struct {
+	saga.MapByInstanceID
+	saga.ErrorIfNotFound
 
-// Recorder is a function that records the events produced by an aggregate.
-type Recorder func(ax.Event)
+	Prototype  Aggregate
+	Identifier Identifier
 
-// New returns a new saga instance that handles messages for the given
-// aggregate.
-func New(agg Aggregate, opts ...Option) saga.EventedSaga {
+	Triggers ax.MessageTypeSet
+	Handle   func(Aggregate, ax.Command, Recorder)
+	Apply    func(Aggregate, ax.Event)
+}
+
+// New returns a saga that forwards to the given aggregate.
+func New(agg Aggregate, opts ...Option) *Saga {
 	sg := &Saga{
 		Prototype: agg,
 	}
@@ -31,19 +34,19 @@ func New(agg Aggregate, opts ...Option) saga.EventedSaga {
 	}
 
 	commandTypes := visitor.MakeAcceptor(
-		&sg.CommandHandler,
+		&sg.Handle,
 		reflect.TypeOf((*ax.Command)(nil)).Elem(),
 		reflect.TypeOf(agg),
 	)
 
 	visitor.MakeAcceptor(
-		&sg.EventApplier,
+		&sg.Apply,
 		reflect.TypeOf((*ax.Event)(nil)).Elem(),
 		reflect.TypeOf(agg),
 	)
 
 	for _, t := range commandTypes {
-		sg.CommandTypes = sg.CommandTypes.Add(
+		sg.Triggers = sg.Triggers.Add(
 			ax.TypeOf(
 				reflect.Zero(t).Interface().(ax.Message),
 			),
@@ -51,18 +54,6 @@ func New(agg Aggregate, opts ...Option) saga.EventedSaga {
 	}
 
 	return sg
-}
-
-// Saga is an implementation of saga.Saga that wraps an AggregateRoot.
-type Saga struct {
-	saga.MapByInstanceID
-	saga.ErrorIfNotFound
-
-	Prototype      Aggregate
-	Identifier     Identifier
-	CommandTypes   ax.MessageTypeSet
-	CommandHandler func(Aggregate, ax.Command, Recorder)
-	EventApplier   func(Aggregate, ax.Event)
 }
 
 // SagaName returns a unique name for the saga.
@@ -83,22 +74,19 @@ func (sg *Saga) SagaName() string {
 // they can not be routed to an existing instance, the HandleNotFound()
 // method is called instead.
 func (sg *Saga) MessageTypes() (tr ax.MessageTypeSet, mt ax.MessageTypeSet) {
-	return sg.CommandTypes, ax.MessageTypeSet{}
+	return sg.Triggers, ax.MessageTypeSet{}
 }
 
 // GenerateInstanceID returns the saga ID to use for a new instance.
 //
 // It is called when a "trigger" message is received and there is no
 // existing saga instance. env contains the "trigger" message.
-func (sg *Saga) GenerateInstanceID(ctx context.Context, env ax.Envelope) (id saga.InstanceID, err error) {
-	m := env.Message.(ax.Command)
-	v, err := sg.Identifier.AggregateID(m)
-	if err != nil {
-		return
-	}
+func (sg *Saga) GenerateInstanceID(ctx context.Context, env ax.Envelope) (saga.InstanceID, error) {
+	id, err := sg.Identifier.AggregateID(
+		env.Message.(ax.Command),
+	)
 
-	err = id.Parse(v)
-	return
+	return saga.InstanceID{ID: id.ID}, err
 }
 
 // NewData returns a pointer to a new zero-value instance of the
@@ -117,9 +105,15 @@ func (sg *Saga) NewData() saga.Data {
 // and the message is declared as a "trigger" by the saga's MessageTypes()
 // method; otherwise, HandleNotFound() is called.
 func (sg *Saga) MappingKeyForMessage(ctx context.Context, env ax.Envelope) (k string, ok bool, err error) {
-	m := env.Message.(ax.Command)
-	ok = true
-	k, err = sg.Identifier.AggregateID(m)
+	id, err := sg.Identifier.AggregateID(
+		env.Message.(ax.Command),
+	)
+
+	if err == nil {
+		k = id.Get()
+		ok = true
+	}
+
 	return
 }
 
@@ -141,7 +135,7 @@ func (sg *Saga) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope,
 		}
 	}
 
-	sg.CommandHandler(
+	sg.Handle(
 		i.Data,
 		env.Message.(ax.Command),
 		rec,
@@ -155,5 +149,5 @@ func (sg *Saga) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope,
 // It may panic if env.Message does not implement ax.Event.
 func (sg *Saga) ApplyEvent(d saga.Data, env ax.Envelope) {
 	m := env.Message.(ax.Event)
-	sg.EventApplier(d, m)
+	sg.Apply(d, m)
 }
