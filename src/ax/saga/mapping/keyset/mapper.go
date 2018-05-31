@@ -21,23 +21,28 @@ type Mapper struct {
 
 // MapMessageToInstance returns the ID of the saga instance that is the target
 // of the given message.
+//
+// It returns false if the message should be ignored.
 func (m *Mapper) MapMessageToInstance(
 	ctx context.Context,
 	sg saga.Saga,
 	tx persistence.Tx,
 	env ax.Envelope,
-) (saga.MapResult, saga.InstanceID, error) {
-	k, ok, err := sg.(Saga).MappingKeyForMessage(ctx, env)
+) (saga.InstanceID, bool, error) {
+	s := sg.(Saga)
+
+	k, ok, err := s.MappingKeyForMessage(ctx, env)
 	if !ok || err != nil {
-		return saga.MapResultIgnore, saga.InstanceID{}, err
+		return saga.InstanceID{}, false, err
 	}
 
 	id, ok, err := m.Repository.FindByKey(ctx, tx, sg.SagaName(), k)
-	if !ok || err != nil {
-		return saga.MapResultNotFound, saga.InstanceID{}, err
+	if ok || err != nil {
+		return id, true, err
 	}
 
-	return saga.MapResultFound, id, nil
+	id, err = s.GenerateInstanceID(ctx, env)
+	return id, true, err
 }
 
 // UpdateMapping notifies the mapper that a message has been handled by

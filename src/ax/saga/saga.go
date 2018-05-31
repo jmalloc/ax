@@ -38,12 +38,6 @@ type Saga interface {
 	// method is called instead.
 	MessageTypes() (tr ax.MessageTypeSet, mt ax.MessageTypeSet)
 
-	// GenerateInstanceID returns the saga ID to use for a new instance.
-	//
-	// It is called when a "trigger" message is received and there is no
-	// existing saga instance. env contains the "trigger" message.
-	GenerateInstanceID(ctx context.Context, env ax.Envelope) (id InstanceID, err error)
-
 	// NewData returns a pointer to a new zero-value instance of the
 	// saga's data type.
 	NewData() Data

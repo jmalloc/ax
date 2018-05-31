@@ -15,47 +15,36 @@ type Persister struct {
 	Repository Repository
 }
 
-// BeginCreate starts a new unit-of-work that persists a new saga instance.
-func (p *Persister) BeginCreate(
+// BeginUnitOfWork starts a new unit-of-work that modifies a saga instance.
+//
+// If the saga instance does not exist, it returns a UnitOfWork with an
+// instance at revision zero.
+func (p *Persister) BeginUnitOfWork(
 	ctx context.Context,
-	_ saga.Saga,
-	tx persistence.Tx,
-	s ax.Sender,
-	i saga.Instance,
-) (saga.UnitOfWork, error) {
-	return p.newUnitOfWork(tx, s, i), nil
-}
-
-// BeginUpdate starts a new unit-of-work that updates an existing saga
-// instance.
-func (p *Persister) BeginUpdate(
-	ctx context.Context,
-	_ saga.Saga,
+	sg saga.Saga,
 	tx persistence.Tx,
 	s ax.Sender,
 	id saga.InstanceID,
 ) (saga.UnitOfWork, error) {
-	i, err := p.Repository.LoadSagaInstance(ctx, tx, id)
+	i, ok, err := p.Repository.LoadSagaInstance(ctx, tx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	return p.newUnitOfWork(tx, s, i), nil
-}
+	if !ok {
+		i = saga.Instance{
+			InstanceID: id,
+			Data:       sg.NewData(),
+		}
+	}
 
-// newUnitOfWork returns a new unit-of-work.
-func (p *Persister) newUnitOfWork(
-	tx persistence.Tx,
-	s ax.Sender,
-	i saga.Instance,
-) *unitOfWork {
 	return &unitOfWork{
 		p.Repository,
 		tx,
 		s,
 		proto.Clone(i.Data).(saga.Data),
 		i,
-	}
+	}, nil
 }
 
 // unitOfWork is an implementation of saga.UnitOfWork that saves saga instances
@@ -87,4 +76,9 @@ func (w *unitOfWork) Save(ctx context.Context) (bool, error) {
 	}
 
 	return true, w.repository.SaveSagaInstance(ctx, w.tx, w.instance)
+}
+
+// Close is called when the unit-of-work has ended, regardless of whether
+// Save() has been called.
+func (w *unitOfWork) Close() {
 }

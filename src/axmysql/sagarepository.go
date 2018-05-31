@@ -15,8 +15,8 @@ type SagaRepository struct{}
 
 // LoadSagaInstance fetches a saga instance by its ID.
 //
-// It returns an error if the instance does not exist, or a problem occurs
-// with the underlying data store.
+// It returns an false if the instance does not exist. It returns an error
+// if a problem occurs with the underlying data store.
 //
 // It panics if the repository is not able to enlist in tx because it uses a
 // different underlying storage system.
@@ -24,7 +24,7 @@ func (r SagaRepository) LoadSagaInstance(
 	ctx context.Context,
 	ptx persistence.Tx,
 	id saga.InstanceID,
-) (saga.Instance, error) {
+) (saga.Instance, bool, error) {
 	var (
 		i           saga.Instance
 		contentType string
@@ -47,13 +47,17 @@ func (r SagaRepository) LoadSagaInstance(
 		&contentType,
 		&data,
 	); err != nil {
-		return saga.Instance{}, err
+		if err == sql.ErrNoRows {
+			err = nil
+		}
+
+		return saga.Instance{}, false, err
 	}
 
 	var err error
 	i.Data, err = saga.UnmarshalData(contentType, data)
 
-	return i, err
+	return i, true, err
 }
 
 // SaveSagaInstance persists a saga instance.

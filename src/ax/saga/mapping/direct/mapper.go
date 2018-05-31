@@ -9,7 +9,8 @@ import (
 )
 
 // Mapper is an implementation of saga.Mapper that maps messages to saga
-// by treating a particular field in the message as the instance ID.
+// instances by having the saga implement a method that returns the instance ID
+// directly.
 //
 // The saga must implement the direct.Saga interface to use direct mapping.
 type Mapper struct{}
@@ -17,19 +18,14 @@ type Mapper struct{}
 // MapMessageToInstance returns the ID of the saga instance that is the target
 // of the given message.
 //
-// If no existing saga instance is found, it returns false.
+// It returns false if the message should be ignored.
 func (m *Mapper) MapMessageToInstance(
 	ctx context.Context,
 	sg saga.Saga,
 	tx persistence.Tx,
 	env ax.Envelope,
-) (saga.MapResult, saga.InstanceID, error) {
-	id, ok, err := sg.(Saga).InstanceIDForMessage(ctx, env)
-	if !ok || err != nil {
-		return saga.MapResultIgnore, saga.InstanceID{}, err
-	}
-
-	return saga.MapResultFound, id, nil
+) (saga.InstanceID, bool, error) {
+	return sg.(Saga).InstanceIDForMessage(ctx, env)
 }
 
 // UpdateMapping notifies the mapper that a message has been handled by

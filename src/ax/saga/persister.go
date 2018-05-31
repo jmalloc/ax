@@ -10,18 +10,11 @@ import (
 // Persister is an interface for loading saga instances, and persisting the
 // changes that occur to them.
 type Persister interface {
-	// BeginCreate starts a new unit-of-work that persists a new saga instance.
-	BeginCreate(
-		ctx context.Context,
-		sg Saga,
-		tx persistence.Tx,
-		s ax.Sender,
-		i Instance,
-	) (UnitOfWork, error)
-
-	// BeginUpdate starts a new unit-of-work that updates an existing saga
-	// instance.
-	BeginUpdate(
+	// BeginUnitOfWork starts a new unit-of-work that modifies a saga instance.
+	//
+	// If the saga instance does not exist, it returns a UnitOfWork with an
+	// instance at revision zero.
+	BeginUnitOfWork(
 		ctx context.Context,
 		sg Saga,
 		tx persistence.Tx,
@@ -42,4 +35,8 @@ type UnitOfWork interface {
 	// Save persists changes to the instance.
 	// It returns true if any changes have occurred.
 	Save(ctx context.Context) (bool, error)
+
+	// Close is called when the unit-of-work has ended, regardless of whether
+	// Save() has been called.
+	Close()
 }
