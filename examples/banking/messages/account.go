@@ -3,6 +3,7 @@ package messages
 import (
 	"fmt"
 
+	"github.com/jmalloc/ax/examples/banking/format"
 	"github.com/jmalloc/ax/src/ax/ident"
 )
 
@@ -36,8 +37,8 @@ func (*CreditAccount) IsCommand() {}
 // MessageDescription returns a human-readable description of the message.
 func (m *CreditAccount) MessageDescription() string {
 	return fmt.Sprintf(
-		"credit %d to account %s",
-		m.Cents,
+		"credit %s to account %s",
+		format.Amount(m.AmountInCents),
 		ident.Format(m.AccountId),
 	)
 }
@@ -48,8 +49,8 @@ func (*AccountCredited) IsEvent() {}
 // MessageDescription returns a human-readable description of the message.
 func (m *AccountCredited) MessageDescription() string {
 	return fmt.Sprintf(
-		"credited %d to account %s",
-		m.Cents,
+		"credited %s to account %s",
+		format.Amount(m.AmountInCents),
 		ident.Format(m.AccountId),
 	)
 }
@@ -60,8 +61,8 @@ func (*DebitAccount) IsCommand() {}
 // MessageDescription returns a human-readable description of the message.
 func (m *DebitAccount) MessageDescription() string {
 	return fmt.Sprintf(
-		"debit %d from account %s",
-		m.Cents,
+		"debit %s from account %s",
+		format.Amount(m.AmountInCents),
 		ident.Format(m.AccountId),
 	)
 }
@@ -72,8 +73,8 @@ func (*AccountDebited) IsEvent() {}
 // MessageDescription returns a human-readable description of the message.
 func (m *AccountDebited) MessageDescription() string {
 	return fmt.Sprintf(
-		"debited %d from account %s",
-		m.Cents,
+		"debited %s from account %s",
+		format.Amount(m.AmountInCents),
 		ident.Format(m.AccountId),
 	)
 }

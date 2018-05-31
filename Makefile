@@ -13,7 +13,7 @@ REQ += src/internal/validationtest/validatormock.go
 .PHONY: banking
 banking:
 	protoc --go_out=. examples/banking/messages/*.proto
-	protoc --go_out=. examples/banking/account/*.proto
+	protoc --go_out=. examples/banking/domain/*.proto
 	AX_RMQ_DSN="amqp://localhost" \
 	AX_MYSQL_DSN="ax:ax@tcp(127.0.0.1:3306)/ax" \
 		go run examples/banking/main.go $(RUN_ARGS)

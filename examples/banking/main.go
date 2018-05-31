@@ -8,7 +8,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	"github.com/jmalloc/ax/examples/banking/account"
+	"github.com/jmalloc/ax/examples/banking/domain"
 	"github.com/jmalloc/ax/examples/banking/messages"
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
@@ -17,7 +17,10 @@ import (
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/ax/routing"
 	"github.com/jmalloc/ax/src/ax/saga"
-	"github.com/jmalloc/ax/src/ax/saga/eventsourcing"
+	"github.com/jmalloc/ax/src/ax/saga/mapping/direct"
+	"github.com/jmalloc/ax/src/ax/saga/mapping/keyset"
+	"github.com/jmalloc/ax/src/ax/saga/persistence/crud"
+	"github.com/jmalloc/ax/src/ax/saga/persistence/eventsourcing"
 	"github.com/jmalloc/ax/src/axcli"
 	"github.com/jmalloc/ax/src/axmysql"
 	"github.com/jmalloc/ax/src/axrmq"
@@ -38,23 +41,40 @@ func main() {
 	}
 	defer rmq.Close()
 
-	// p := &crud.Persister{
-	// 	Repository: axmysql.SagaRepository{},
-	// }
+	crudPersister := &crud.Persister{
+		Repository: axmysql.SagaRepository{},
+	}
 
-	p := &eventsourcing.Persister{
+	esPersister := &eventsourcing.Persister{
 		MessageStore:      axmysql.MessageStore{},
 		Snapshots:         axmysql.SnapshotRepository{},
 		SnapshotFrequency: 3,
 	}
 
-	mapper := axmysql.SagaMapper{}
+	directMapper := &direct.Mapper{}
+
+	ksMapper := &keyset.Mapper{
+		Repository: axmysql.KeySetRepository{},
+	}
 
 	htable, err := routing.NewHandlerTable(
+		// event sourced saga ...
 		&saga.MessageHandler{
-			Saga:      account.AggregateRoot,
-			Mapper:    mapper,
-			Persister: p,
+			Saga:      domain.AccountAggregate,
+			Mapper:    directMapper,
+			Persister: esPersister,
+		},
+		&saga.MessageHandler{
+			Saga:      domain.TransferAggregate,
+			Mapper:    directMapper,
+			Persister: esPersister,
+		},
+
+		// crud sagas ...
+		&saga.MessageHandler{
+			Saga:      domain.TransferWorkflowSaga,
+			Mapper:    ksMapper,
+			Persister: crudPersister,
 		},
 	)
 	if err != nil {
@@ -116,6 +136,8 @@ func main() {
 			&messages.OpenAccount{},
 			&messages.CreditAccount{},
 			&messages.DebitAccount{},
+
+			&messages.StartTransfer{},
 		),
 	)
 	if err != nil {

@@ -24,15 +24,3 @@ type ErrorIfNotFound struct{}
 func (ErrorIfNotFound) HandleNotFound(_ context.Context, _ ax.Sender, _ ax.Envelope) error {
 	return errors.New("could not find a saga instance to handle message")
 }
-
-// MapByInstanceID is an embeddable struct that implements a
-// Saga.MappingKeysForInstance() method that always returns a key set containing
-// only the instance ID.
-type MapByInstanceID struct{}
-
-// MappingKeysForInstance always returns a key set containing only the instance ID.
-func (MapByInstanceID) MappingKeysForInstance(_ context.Context, i Instance) (KeySet, error) {
-	return NewKeySet(
-		i.InstanceID.Get(),
-	), nil
-}

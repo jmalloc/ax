@@ -13,7 +13,7 @@ type Persister interface {
 	// BeginCreate starts a new unit-of-work that persists a new saga instance.
 	BeginCreate(
 		ctx context.Context,
-		saga Saga,
+		sg Saga,
 		tx persistence.Tx,
 		s ax.Sender,
 		i Instance,
@@ -23,7 +23,7 @@ type Persister interface {
 	// instance.
 	BeginUpdate(
 		ctx context.Context,
-		saga Saga,
+		sg Saga,
 		tx persistence.Tx,
 		s ax.Sender,
 		id InstanceID,
