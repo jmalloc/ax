@@ -29,8 +29,6 @@ const (
 type Mapper interface {
 	// MapMessageToInstance returns the ID of the saga instance that is the
 	// target of the given message.
-	//
-	// If no existing saga instance is found, it returns false.
 	MapMessageToInstance(
 		ctx context.Context,
 		sg Saga,
@@ -39,7 +37,7 @@ type Mapper interface {
 	) (MapResult, InstanceID, error)
 
 	// UpdateMapping notifies the mapper that a message has been handled by
-	// an instance. Giving it the oppurtunity to update mapping data to reflect
+	// an instance. Giving it the opportunity to update mapping data to reflect
 	// the changes, if necessary.
 	UpdateMapping(
 		ctx context.Context,

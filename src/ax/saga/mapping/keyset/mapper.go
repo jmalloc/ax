@@ -9,7 +9,7 @@ import (
 )
 
 // Mapper is an implementation of saga.Mapper that maps messages to saga
-// using disjoint "key sets".
+// instances using disjoint "key sets".
 //
 // This is a flexible mapping strategy that allows the saga precise control over
 // which instance to load on a per-message basis.
@@ -21,8 +21,6 @@ type Mapper struct {
 
 // MapMessageToInstance returns the ID of the saga instance that is the target
 // of the given message.
-//
-// If no existing saga instance is found, it returns false.
 func (m *Mapper) MapMessageToInstance(
 	ctx context.Context,
 	sg saga.Saga,
@@ -43,7 +41,7 @@ func (m *Mapper) MapMessageToInstance(
 }
 
 // UpdateMapping notifies the mapper that a message has been handled by
-// an instance. Giving it the oppurtunity to update mapping data to reflect
+// an instance. Giving it the opportunity to update mapping data to reflect
 // the changes, if necessary.
 func (m *Mapper) UpdateMapping(
 	ctx context.Context,
