@@ -12,7 +12,7 @@ import (
 // to the instance.
 type MessageHandler struct {
 	Saga      Saga
-	KeySets   KeySetRepository
+	Mapper    Mapper
 	Persister Persister
 }
 
@@ -31,11 +31,6 @@ func (h *MessageHandler) MessageTypes() ax.MessageTypeSet {
 // Changes to the saga are persisted within the existing transaction in ctx, if
 // present.
 func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope) error {
-	k, ok, err := h.Saga.MappingKeyForMessage(ctx, env)
-	if !ok || err != nil {
-		return err
-	}
-
 	tx, com, err := persistence.GetOrBeginTx(ctx)
 	if err != nil {
 		return err
@@ -43,15 +38,20 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 	defer com.Rollback()
 	ctx = persistence.WithTx(ctx, tx)
 
-	w, ok, err := h.startUnitOfWork(ctx, tx, k, s, env)
+	res, id, err := h.Mapper.MapMessageToInstance(ctx, h.Saga, tx, env)
 	if err != nil {
 		return err
 	}
 
-	if ok {
-		err = h.handleMessage(ctx, tx, w, env)
-	} else {
-		err = h.Saga.HandleNotFound(ctx, s, env)
+	switch res {
+	case MapResultFound:
+		err = h.handleUpdate(ctx, tx, s, env, id)
+	case MapResultNotFound:
+		err = h.handleCreate(ctx, tx, s, env)
+	case MapResultIgnore:
+		return nil
+	default:
+		panic("unexpected map result type")
 	}
 
 	if err != nil {
@@ -61,68 +61,46 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 	return com.Commit()
 }
 
-// startUnitOfWork begins a new unit of work, creating a new saga instance if
-// necessary.
-func (h *MessageHandler) startUnitOfWork(
+// handleCreate handles a message that applies to a new saga instance.
+// It calls the not-found handler if the message is not a "trigger" message.
+func (h *MessageHandler) handleCreate(
 	ctx context.Context,
 	tx persistence.Tx,
-	k string,
 	s ax.Sender,
 	env ax.Envelope,
-) (UnitOfWork, bool, error) {
-	id, ok, err := h.KeySets.FindByKey(
-		ctx,
-		tx,
-		h.Saga.SagaName(),
-		k,
-	)
-	if err != nil {
-		return nil, false, err
-	}
-
-	if ok {
-		var w UnitOfWork
-		w, err = h.Persister.BeginUpdate(ctx, h.Saga, tx, s, id)
-		return w, true, err
-	}
-
+) error {
 	triggers, _ := h.Saga.MessageTypes()
 	if !triggers.Has(env.Type()) {
-		return nil, false, nil
+		return h.Saga.HandleNotFound(ctx, s, env)
 	}
 
 	i, err := h.newInstance(ctx, env)
 	if err != nil {
-		return nil, false, err
+		return err
 	}
 
 	w, err := h.Persister.BeginCreate(ctx, h.Saga, tx, s, i)
-	return w, true, err
+	if err != nil {
+		return err
+	}
+
+	return h.handleMessage(ctx, tx, w, env)
 }
 
-// saveKeySet rebuilds and persists the mapping key set for the given instance.
-func (h *MessageHandler) saveKeySet(
+// handleUpdate handles a message that applies to an existing saga instance.
+func (h *MessageHandler) handleUpdate(
 	ctx context.Context,
 	tx persistence.Tx,
-	i Instance,
+	s ax.Sender,
+	env ax.Envelope,
+	id InstanceID,
 ) error {
-	ks, err := h.Saga.MappingKeysForInstance(ctx, i)
+	w, err := h.Persister.BeginUpdate(ctx, h.Saga, tx, s, id)
 	if err != nil {
 		return err
 	}
 
-	ks, err = validateKeySet(ks)
-	if err != nil {
-		return err
-	}
-
-	return h.KeySets.SaveKeys(
-		ctx,
-		tx,
-		h.Saga.SagaName(),
-		i.InstanceID,
-		ks,
-	)
+	return h.handleMessage(ctx, tx, w, env)
 }
 
 // newInstance returns a new saga instance.
@@ -138,6 +116,8 @@ func (h *MessageHandler) newInstance(ctx context.Context, env ax.Envelope) (Inst
 	}, nil
 }
 
+// handleMessage passes the message to the saga for handling, then persists
+// any changes to the instance.
 func (h *MessageHandler) handleMessage(
 	ctx context.Context,
 	tx persistence.Tx,
@@ -165,7 +145,7 @@ func (h *MessageHandler) handleMessage(
 	}
 
 	if ok {
-		if err := h.saveKeySet(ctx, tx, i); err != nil {
+		if err := h.Mapper.UpdateMapping(ctx, h.Saga, tx, i); err != nil {
 			return err
 		}
 	}

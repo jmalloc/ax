@@ -55,10 +55,10 @@ func (transferWorkflowSaga) MappingKeyForMessage(ctx context.Context, env ax.Env
 	return transferID, transferID != "", nil
 }
 
-func (transferWorkflowSaga) MappingKeysForInstance(_ context.Context, i saga.Instance) (saga.KeySet, error) {
-	return saga.NewKeySet(
+func (transferWorkflowSaga) MappingKeysForInstance(_ context.Context, i saga.Instance) ([]string, error) {
+	return []string{
 		i.Data.(*TransferWorkflow).TransferId, // map based on the transfer ID
-	), nil
+	}, nil
 }
 
 func (transferWorkflowSaga) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope, i saga.Instance) error {

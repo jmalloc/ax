@@ -1,10 +1,10 @@
 --
--- This file defines the SQL schema used by SagaKeySetRepository.
+-- This file defines the SQL schema used by KeySetRepository.
 --
 
 --
 -- saga_keyset contains the "key sets" that are associated with saga instances
--- that use key-based mapping.
+-- that use keyset.Mapper.
 --
 CREATE TABLE IF NOT EXISTS saga_keyset (
     saga        VARBINARY(255) NOT NULL,

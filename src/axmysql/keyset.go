@@ -8,15 +8,15 @@ import (
 	"github.com/jmalloc/ax/src/ax/saga"
 )
 
-// SagaKeySetRepository is an implementation of saga.KeySetRepository that uses
+// KeySetRepository is an implementation of keyset.Repository that uses
 // SQL persistence.
-type SagaKeySetRepository struct{}
+type KeySetRepository struct{}
 
 // FindByKey returns the ID of the saga instance that contains k in its
 // key set for the saga named sn.
 //
 // ok is false if no saga instance has a key set containing k.
-func (SagaKeySetRepository) FindByKey(
+func (KeySetRepository) FindByKey(
 	ctx context.Context,
 	ptx persistence.Tx,
 	sn, k string,
@@ -48,7 +48,7 @@ func (SagaKeySetRepository) FindByKey(
 //
 // Key sets must be disjoint. That is, no two instances of the same saga
 // may share any keys.
-func (SagaKeySetRepository) SaveKeys(
+func (KeySetRepository) SaveKeys(
 	ctx context.Context,
 	ptx persistence.Tx,
 	sn string,
