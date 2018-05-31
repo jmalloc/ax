@@ -19,6 +19,7 @@ import (
 	"github.com/jmalloc/ax/src/ax/saga"
 	"github.com/jmalloc/ax/src/ax/saga/crud"
 	"github.com/jmalloc/ax/src/ax/saga/eventsourcing"
+	"github.com/jmalloc/ax/src/ax/saga/mapping/keyset"
 	"github.com/jmalloc/ax/src/axcli"
 	"github.com/jmalloc/ax/src/axmysql"
 	"github.com/jmalloc/ax/src/axrmq"
@@ -49,7 +50,9 @@ func main() {
 		SnapshotFrequency: 3,
 	}
 
-	mapper := axmysql.SagaMapper{}
+	mapper := &keyset.Mapper{
+		Repository: axmysql.KeySetRepository{},
+	}
 
 	htable, err := routing.NewHandlerTable(
 		// event sourced saga ...
