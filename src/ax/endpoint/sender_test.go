@@ -2,23 +2,48 @@ package endpoint_test
 
 import (
 	"context"
+	"errors"
 
 	"github.com/jmalloc/ax/src/ax"
 	. "github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/internal/messagetest"
+	"github.com/jmalloc/ax/src/internal/validationtest"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("SinkSender", func() {
 	var (
-		sink   *BufferedSink
-		sender SinkSender
+		sink                               *BufferedSink
+		validator1, validator2, validator3 *validationtest.ValidatorMock
+		sender                             SinkSender
 	)
 
 	BeforeEach(func() {
 		sink = &BufferedSink{}
-		sender = SinkSender{Sink: sink}
+		validator1 = &validationtest.ValidatorMock{
+			ValidateFunc: func(ctx context.Context, msg ax.Message) error {
+				return nil
+			},
+		}
+		validator2 = &validationtest.ValidatorMock{
+			ValidateFunc: func(ctx context.Context, msg ax.Message) error {
+				return nil
+			},
+		}
+		validator3 = &validationtest.ValidatorMock{
+			ValidateFunc: func(ctx context.Context, msg ax.Message) error {
+				return nil
+			},
+		}
+		sender = SinkSender{
+			Sink: sink,
+			Validators: []Validator{
+				validator1,
+				validator2,
+				validator3,
+			},
+		}
 	})
 
 	Describe("ExecuteCommand", func() {
@@ -47,6 +72,19 @@ var _ = Describe("SinkSender", func() {
 
 			Expect(env).To(Equal(sink.Envelopes()[0].Envelope))
 		})
+
+		It("should return a validation error if one of validators fails", func() {
+			expected := errors.New("test validation error")
+			validator2.ValidateFunc = func(ctx context.Context, msg ax.Message) error {
+				return expected
+			}
+
+			env := ax.NewEnvelope(&messagetest.Message{})
+			ctx := WithEnvelope(context.Background(), env)
+
+			_, err := sender.ExecuteCommand(ctx, &messagetest.Command{})
+			Expect(err).Should(MatchError(expected))
+		})
 	})
 
 	Describe("PublishEvent", func() {
@@ -74,6 +112,19 @@ var _ = Describe("SinkSender", func() {
 			env, _ := sender.PublishEvent(context.Background(), &messagetest.Event{})
 
 			Expect(env).To(Equal(sink.Envelopes()[0].Envelope))
+		})
+
+		It("should return a validation error if one of validators fails", func() {
+			expected := errors.New("test validation error")
+			validator2.ValidateFunc = func(ctx context.Context, msg ax.Message) error {
+				return expected
+			}
+
+			env := ax.NewEnvelope(&messagetest.Message{})
+			ctx := WithEnvelope(context.Background(), env)
+
+			_, err := sender.PublishEvent(ctx, &messagetest.Event{})
+			Expect(err).Should(MatchError(expected))
 		})
 	})
 })
