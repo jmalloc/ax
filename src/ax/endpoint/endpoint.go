@@ -20,12 +20,18 @@ type Endpoint struct {
 }
 
 // NewSender returns an ax.Sender that can be used to send messages from this endpoint.
-func (ep *Endpoint) NewSender(ctx context.Context) (ax.Sender, error) {
+func (ep *Endpoint) NewSender(
+	ctx context.Context,
+	validators []Validator,
+) (ax.Sender, error) {
 	if err := ep.initialize(ctx); err != nil {
 		return nil, err
 	}
 
-	return SinkSender{Sink: ep.Out}, nil
+	return SinkSender{
+		Sink:       ep.Out,
+		Validators: validators,
+	}, nil
 }
 
 // StartReceiving processes inbound messages until an error occurrs or ctx is canceled.
