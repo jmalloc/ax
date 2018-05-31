@@ -12,7 +12,6 @@ import (
 
 // Saga is an implementation of saga.Saga that wraps an Aggregate.
 type Saga struct {
-	saga.MapByInstanceID
 	saga.ErrorIfNotFound
 
 	Prototype  Aggregate
@@ -95,26 +94,17 @@ func (sg *Saga) NewData() saga.Data {
 	return proto.Clone(sg.Prototype).(saga.Data)
 }
 
-// MappingKeyForMessage returns the key used to locate the saga instance
-// to which the given message is routed, if any.
+// InstanceIDForMessage returns the ID of the saga instance to which the
+// given message is routed, if any.
 //
 // If ok is false the message is ignored; otherwise, the message is routed
-// to the saga instance that contains k in its associated key set.
-//
-// New saga instances are created when no matching instance can be found
-// and the message is declared as a "trigger" by the saga's MessageTypes()
-// method; otherwise, HandleNotFound() is called.
-func (sg *Saga) MappingKeyForMessage(ctx context.Context, env ax.Envelope) (k string, ok bool, err error) {
+// to the saga instance with the returned ID.
+func (sg *Saga) InstanceIDForMessage(ctx context.Context, env ax.Envelope) (saga.InstanceID, bool, error) {
 	id, err := sg.Identifier.AggregateID(
 		env.Message.(ax.Command),
 	)
 
-	if err == nil {
-		k = id.Get()
-		ok = true
-	}
-
-	return
+	return saga.InstanceID{ID: id.ID}, true, err
 }
 
 // HandleMessage handles a message for a particular saga instance.

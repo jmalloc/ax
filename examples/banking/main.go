@@ -17,7 +17,10 @@ import (
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/ax/routing"
 	"github.com/jmalloc/ax/src/ax/saga"
+	"github.com/jmalloc/ax/src/ax/saga/mapping/direct"
 	"github.com/jmalloc/ax/src/ax/saga/mapping/keyset"
+	"github.com/jmalloc/ax/src/ax/saga/persistence/crud"
+	"github.com/jmalloc/ax/src/ax/saga/persistence/eventsourcing"
 	"github.com/jmalloc/ax/src/axcli"
 	"github.com/jmalloc/ax/src/axmysql"
 	"github.com/jmalloc/ax/src/axrmq"
@@ -48,7 +51,9 @@ func main() {
 		SnapshotFrequency: 3,
 	}
 
-	mapper := &keyset.Mapper{
+	directMapper := &direct.Mapper{}
+
+	ksMapper := &keyset.Mapper{
 		Repository: axmysql.KeySetRepository{},
 	}
 
@@ -56,19 +61,19 @@ func main() {
 		// event sourced saga ...
 		&saga.MessageHandler{
 			Saga:      domain.AccountAggregate,
-			Mapper:    mapper,
+			Mapper:    directMapper,
 			Persister: esPersister,
 		},
 		&saga.MessageHandler{
 			Saga:      domain.TransferAggregate,
-			Mapper:    mapper,
+			Mapper:    directMapper,
 			Persister: esPersister,
 		},
 
 		// crud sagas ...
 		&saga.MessageHandler{
 			Saga:      domain.TransferWorkflowSaga,
-			Mapper:    mapper,
+			Mapper:    ksMapper,
 			Persister: crudPersister,
 		},
 	)
