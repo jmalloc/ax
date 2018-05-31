@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package ax.examples.banking.account;
+package ax.examples.banking;
 option go_package = "account";
 
 // Account is the saga.Instance for the account aggregate.

@@ -42,8 +42,6 @@ type Saga interface {
 	//
 	// It is called when a "trigger" message is received and there is no
 	// existing saga instance. env contains the "trigger" message.
-	//
-	// If err is nil, id must be a valid InstanceID, and d must be non-nil.
 	GenerateInstanceID(ctx context.Context, env ax.Envelope) (id InstanceID, err error)
 
 	// NewData returns a pointer to a new zero-value instance of the
