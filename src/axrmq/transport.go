@@ -110,7 +110,7 @@ func (t *Transport) Receive(ctx context.Context) (env endpoint.InboundEnvelope, 
 
 		env, err = unmarshalMessage(del)
 		if err == nil {
-			ack = &Acknowledger{del}
+			ack = &Acknowledger{t.con, del}
 			return
 		}
 
@@ -132,7 +132,7 @@ func (t *Transport) startConsumer() error {
 		preFetch = DefaultReceiveConcurrency
 	}
 
-	con, err := newConsumer(t.Conn, t.ep, t.Exclusive, preFetch)
+	con, err := newConsumer(t.Conn, t.ep, t.Exclusive, preFetch, preFetch*10)
 	if err != nil {
 		return err
 	}
