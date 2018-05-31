@@ -8,7 +8,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	"github.com/jmalloc/ax/examples/banking/account"
+	"github.com/jmalloc/ax/examples/banking/domain"
 	"github.com/jmalloc/ax/examples/banking/messages"
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
@@ -17,6 +17,7 @@ import (
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/ax/routing"
 	"github.com/jmalloc/ax/src/ax/saga"
+	"github.com/jmalloc/ax/src/ax/saga/crud"
 	"github.com/jmalloc/ax/src/ax/saga/eventsourcing"
 	"github.com/jmalloc/ax/src/axcli"
 	"github.com/jmalloc/ax/src/axmysql"
@@ -38,11 +39,11 @@ func main() {
 	}
 	defer rmq.Close()
 
-	// p := &crud.Persister{
-	// 	Repository: axmysql.SagaRepository{},
-	// }
+	crudPersister := &crud.Persister{
+		Repository: axmysql.SagaRepository{},
+	}
 
-	p := &eventsourcing.Persister{
+	esPersister := &eventsourcing.Persister{
 		MessageStore:      axmysql.MessageStore{},
 		Snapshots:         axmysql.SnapshotRepository{},
 		SnapshotFrequency: 3,
@@ -51,10 +52,23 @@ func main() {
 	mapper := axmysql.SagaMapper{}
 
 	htable, err := routing.NewHandlerTable(
+		// event sourced saga ...
 		&saga.MessageHandler{
-			Saga:      account.AggregateRoot,
+			Saga:      domain.AccountAggregate,
 			Mapper:    mapper,
-			Persister: p,
+			Persister: esPersister,
+		},
+		&saga.MessageHandler{
+			Saga:      domain.TransferAggregate,
+			Mapper:    mapper,
+			Persister: esPersister,
+		},
+
+		// crud sagas ...
+		&saga.MessageHandler{
+			Saga:      domain.TransferWorkflowSaga,
+			Mapper:    mapper,
+			Persister: crudPersister,
 		},
 	)
 	if err != nil {
@@ -116,6 +130,8 @@ func main() {
 			&messages.OpenAccount{},
 			&messages.CreditAccount{},
 			&messages.DebitAccount{},
+
+			&messages.StartTransfer{},
 		),
 	)
 	if err != nil {
