@@ -48,8 +48,6 @@ func unmarshalMessage(del amqp.Delivery) (endpoint.InboundEnvelope, error) {
 	var err error
 	env.Message, err = ax.UnmarshalMessage(del.ContentType, del.Body)
 
-	env.DeliveryCount = countDeliveries(del)
-
 	return env, err
 }
 
