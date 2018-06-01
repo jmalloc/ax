@@ -9,6 +9,8 @@ import (
 
 // Acknowledger is an implementation of bus.Acknowledger that acknowledges AMQP messages.
 type Acknowledger struct {
+	ep  string
+	pub *publisher
 	con *consumer
 	del amqp.Delivery
 }
@@ -31,14 +33,24 @@ func (a *Acknowledger) Retry(ctx context.Context, _ error, d time.Duration) erro
 		}
 	}
 
-	return a.del.Reject(true) // true = requeue
+	// Rejecting the message causes it to be requeued in the *same queue* via
+	// the DLX configuration. This allows us to use the DLX x-death header to
+	// get a redelivery count.
+	return a.del.Reject(false) // true = don't requeue
 }
 
 // Reject indicates that the message could not be handled and should not be
 // retried. Depending on the transport, this may move the message to some form
 // of error queue or otherwise drop the message completely.
-func (a *Acknowledger) Reject(_ context.Context, _ error) error {
-	return a.del.Reject(false) // false = don't requeue
+func (a *Acknowledger) Reject(ctx context.Context, _ error) error {
+	// When rejecting a message, we need to manually shovel it to the error queue
+	// and then acknowledge the original message so that it is not requeued by the
+	// DLX configuration. This may result on duplicate messages on the error queue.
+	if err := a.pub.RepublishAsError(ctx, a.del); err != nil {
+		return err
+	}
+
+	return a.del.Ack(false) // false = single message
 }
 
 func (a *Acknowledger) delay(ctx context.Context, d time.Duration) error {
