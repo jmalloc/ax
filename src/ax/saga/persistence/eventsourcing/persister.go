@@ -22,20 +22,11 @@ type Persister struct {
 	SnapshotFrequency saga.Revision
 }
 
-// BeginCreate starts a new unit-of-work that persists a new saga instance.
-func (p *Persister) BeginCreate(
-	ctx context.Context,
-	_ saga.Saga,
-	tx persistence.Tx,
-	s ax.Sender,
-	i saga.Instance,
-) (saga.UnitOfWork, error) {
-	return p.newUnitOfWork(tx, s, i), nil
-}
-
-// BeginUpdate starts a new unit-of-work that updates an existing saga
-// instance.
-func (p *Persister) BeginUpdate(
+// BeginUnitOfWork starts a new unit-of-work that modifies a saga instance.
+//
+// If the saga instance does not exist, it returns a UnitOfWork with an
+// instance at revision zero.
+func (p *Persister) BeginUnitOfWork(
 	ctx context.Context,
 	sg saga.Saga,
 	tx persistence.Tx,
@@ -72,15 +63,6 @@ func (p *Persister) BeginUpdate(
 		return nil, err
 	}
 
-	return p.newUnitOfWork(tx, s, i), nil
-}
-
-// newUnitOfWork returns a new unit-of-work.
-func (p *Persister) newUnitOfWork(
-	tx persistence.Tx,
-	s ax.Sender,
-	i saga.Instance,
-) *unitOfWork {
 	return &unitOfWork{
 		p.MessageStore,
 		p.Snapshots,
@@ -88,7 +70,7 @@ func (p *Persister) newUnitOfWork(
 		tx,
 		&Recorder{Next: s},
 		i,
-	}
+	}, nil
 }
 
 // unitOfWork is an implementation of saga.UnitOfWork that perists saga
@@ -142,6 +124,11 @@ func (w *unitOfWork) Save(ctx context.Context) (bool, error) {
 	}
 
 	return true, nil
+}
+
+// Close is called when the unit-of-work has ended, regardless of whether
+// Save() has been called.
+func (w *unitOfWork) Close() {
 }
 
 // shouldSnapshot returns true if a new snapshot should be stored.

@@ -22,14 +22,14 @@ type MessageStore interface {
 
 	// OpenStream opens a stream of messages for reading from a specific offset.
 	//
-	// The offset may be past the end of the stream. It returns an error if
-	// the stream does not exist.
+	// The offset may be past the end of the stream. It returns false if the
+	// stream does not exist.
 	OpenStream(
 		ctx context.Context,
 		tx Tx,
 		stream string,
 		offset uint64,
-	) (MessageStream, error)
+	) (MessageStream, bool, error)
 }
 
 // MessageStream is a stream of messages stored in a MessageStore.

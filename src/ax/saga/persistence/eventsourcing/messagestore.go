@@ -48,13 +48,13 @@ func applyEvents(
 	sg saga.EventedSaga,
 	i *saga.Instance,
 ) error {
-	s, err := ms.OpenStream(
+	s, ok, err := ms.OpenStream(
 		ctx,
 		tx,
 		streamName(i.InstanceID),
 		uint64(i.Revision),
 	)
-	if err != nil {
+	if !ok || err != nil {
 		return err
 	}
 

@@ -70,14 +70,14 @@ func (s MessageStore) AppendMessages(
 
 // OpenStream opens a stream of messages for reading from a specific offset.
 //
-// The offset may be past the end of the stream. It returns an error if
-// the stream does not exist.
+// The offset may be past the end of the stream. It returns false if the stream
+// does not exist.
 func (MessageStore) OpenStream(
 	ctx context.Context,
 	ptx persistence.Tx,
 	stream string,
 	offset uint64,
-) (persistence.MessageStream, error) {
+) (persistence.MessageStream, bool, error) {
 	tx := sqlTx(ptx)
 
 	var id int64
@@ -92,14 +92,18 @@ func (MessageStore) OpenStream(
 	).Scan(
 		&id,
 	); err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			err = nil
+		}
+
+		return nil, false, err
 	}
 
 	return &MessageStream{
 		tx:     tx,
 		id:     id,
 		offset: offset,
-	}, nil
+	}, true, nil
 }
 
 // insertStream inserts a new stream and returns its ID.
