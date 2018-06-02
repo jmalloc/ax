@@ -13,18 +13,20 @@ type Validator interface {
 }
 
 // DefaultValidators is the array of validators used by default
-// when sending a message
+// when sending a message in case none of user-defined validators
+// have been defined.
 var DefaultValidators = []Validator{
 	&BasicValidator{},
 }
 
-// BasicValidator is one of  the default message validators
+// BasicValidator is one of the default message validators
 // that performs basic checks on the message such as
 // if a message is nil, etc.
 type BasicValidator struct{}
 
-// Validate validates the message by determining if the message
-// implements SelfValidatingMessage interface
+// Validate validates the message by checking if the message
+// is nil and if the message implements SelfValidatingMessage
+// interface to call its Validate method.
 func (v *BasicValidator) Validate(
 	ctx context.Context,
 	msg ax.Message,

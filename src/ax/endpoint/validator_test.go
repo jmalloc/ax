@@ -2,7 +2,6 @@ package endpoint_test
 
 import (
 	"context"
-	"errors"
 
 	. "github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/internal/endpointtest"
@@ -28,7 +27,7 @@ var _ = Describe("Default Validators", func() {
 			Expect(ok).Should(BeTrue())
 		})
 
-		It("invokes Validate method on a message if it implements SelfValidatingMessage interface", func() {
+		It("invokes Validate method on the message if it implements SelfValidatingMessage interface", func() {
 			v := BasicValidator{}
 			svm := &endpointtest.SelfValidatingMessageMock{
 				ValidateFunc: func() error {
@@ -42,11 +41,10 @@ var _ = Describe("Default Validators", func() {
 
 		It("returns an error if SelfValidatingMessage.Validate method fails", func() {
 			v := BasicValidator{}
-			expected := errors.New("self-validating message test error")
-			svm := &endpointtest.SelfValidatingMessageMock{
-				ValidateFunc: func() error {
-					return expected
-				},
+			svm := &endpointtest.SelfValidatingMessageMock{}
+			expected := NewValidationError("self-validating message test error", svm)
+			svm.ValidateFunc = func() error {
+				return expected
 			}
 			err := v.Validate(context.Background(), svm)
 			Expect(err).Should(HaveOccurred())

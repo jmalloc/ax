@@ -7,8 +7,8 @@ import (
 )
 
 // ValidationError is an error type that contains specifics about message validation.
-// Typically Error designates an unrecoverable message state that should
-// be retried within either an outbound or inbound message pipeline
+// Typically, ValidationError designates an unrecoverable message state that should not
+// be retried within either an outbound or inbound message pipelines.
 type ValidationError struct {
 	InvalidMsg ax.Message
 	s          string
@@ -22,7 +22,7 @@ func NewValidationError(s string, msg ax.Message) *ValidationError {
 	}
 }
 
-// Error returns a string containing an error message
+// Error returns a string containing a validation error message
 func (e *ValidationError) Error() string {
 	return fmt.Sprintf(
 		"validation error: %s",

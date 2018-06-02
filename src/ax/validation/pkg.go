@@ -1,3 +1,3 @@
-// Package validation performs default and user-defined validation
-// of the inbound and outbound message pipelines.
+// Package validation contain message pipeline validation stages
+// both for inbound and outbound pipeline.
 package validation
