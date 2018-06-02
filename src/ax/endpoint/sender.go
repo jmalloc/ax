@@ -40,6 +40,11 @@ func (s SinkSender) send(ctx context.Context, op Operation, m ax.Message) (ax.En
 		env = ax.NewEnvelope(m)
 	}
 
+	if len(s.Validators) == 0 {
+		// insert default validation
+		s.Validators = DefaultValidators
+	}
+
 	for _, v := range s.Validators {
 		if err := v.Validate(ctx, m); err != nil {
 			return ax.Envelope{}, err

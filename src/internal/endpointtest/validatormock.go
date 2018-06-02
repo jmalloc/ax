@@ -78,3 +78,204 @@ func (mock *ValidatorMock) ValidateCalls() []struct {
 	lockValidatorMockValidate.RUnlock()
 	return calls
 }
+
+var (
+	lockSelfValidatingMessageMockMessageDescription sync.RWMutex
+	lockSelfValidatingMessageMockProtoMessage       sync.RWMutex
+	lockSelfValidatingMessageMockReset              sync.RWMutex
+	lockSelfValidatingMessageMockString             sync.RWMutex
+	lockSelfValidatingMessageMockValidate           sync.RWMutex
+)
+
+// SelfValidatingMessageMock is a mock implementation of SelfValidatingMessage.
+//
+//     func TestSomethingThatUsesSelfValidatingMessage(t *testing.T) {
+//
+//         // make and configure a mocked SelfValidatingMessage
+//         mockedSelfValidatingMessage := &SelfValidatingMessageMock{
+//             MessageDescriptionFunc: func() string {
+// 	               panic("TODO: mock out the MessageDescription method")
+//             },
+//             ProtoMessageFunc: func()  {
+// 	               panic("TODO: mock out the ProtoMessage method")
+//             },
+//             ResetFunc: func()  {
+// 	               panic("TODO: mock out the Reset method")
+//             },
+//             StringFunc: func() string {
+// 	               panic("TODO: mock out the String method")
+//             },
+//             ValidateFunc: func() error {
+// 	               panic("TODO: mock out the Validate method")
+//             },
+//         }
+//
+//         // TODO: use mockedSelfValidatingMessage in code that requires SelfValidatingMessage
+//         //       and then make assertions.
+//
+//     }
+type SelfValidatingMessageMock struct {
+	// MessageDescriptionFunc mocks the MessageDescription method.
+	MessageDescriptionFunc func() string
+
+	// ProtoMessageFunc mocks the ProtoMessage method.
+	ProtoMessageFunc func()
+
+	// ResetFunc mocks the Reset method.
+	ResetFunc func()
+
+	// StringFunc mocks the String method.
+	StringFunc func() string
+
+	// ValidateFunc mocks the Validate method.
+	ValidateFunc func() error
+
+	// calls tracks calls to the methods.
+	calls struct {
+		// MessageDescription holds details about calls to the MessageDescription method.
+		MessageDescription []struct {
+		}
+		// ProtoMessage holds details about calls to the ProtoMessage method.
+		ProtoMessage []struct {
+		}
+		// Reset holds details about calls to the Reset method.
+		Reset []struct {
+		}
+		// String holds details about calls to the String method.
+		String []struct {
+		}
+		// Validate holds details about calls to the Validate method.
+		Validate []struct {
+		}
+	}
+}
+
+// MessageDescription calls MessageDescriptionFunc.
+func (mock *SelfValidatingMessageMock) MessageDescription() string {
+	if mock.MessageDescriptionFunc == nil {
+		panic("moq: SelfValidatingMessageMock.MessageDescriptionFunc is nil but SelfValidatingMessage.MessageDescription was just called")
+	}
+	callInfo := struct {
+	}{}
+	lockSelfValidatingMessageMockMessageDescription.Lock()
+	mock.calls.MessageDescription = append(mock.calls.MessageDescription, callInfo)
+	lockSelfValidatingMessageMockMessageDescription.Unlock()
+	return mock.MessageDescriptionFunc()
+}
+
+// MessageDescriptionCalls gets all the calls that were made to MessageDescription.
+// Check the length with:
+//     len(mockedSelfValidatingMessage.MessageDescriptionCalls())
+func (mock *SelfValidatingMessageMock) MessageDescriptionCalls() []struct {
+} {
+	var calls []struct {
+	}
+	lockSelfValidatingMessageMockMessageDescription.RLock()
+	calls = mock.calls.MessageDescription
+	lockSelfValidatingMessageMockMessageDescription.RUnlock()
+	return calls
+}
+
+// ProtoMessage calls ProtoMessageFunc.
+func (mock *SelfValidatingMessageMock) ProtoMessage() {
+	if mock.ProtoMessageFunc == nil {
+		panic("moq: SelfValidatingMessageMock.ProtoMessageFunc is nil but SelfValidatingMessage.ProtoMessage was just called")
+	}
+	callInfo := struct {
+	}{}
+	lockSelfValidatingMessageMockProtoMessage.Lock()
+	mock.calls.ProtoMessage = append(mock.calls.ProtoMessage, callInfo)
+	lockSelfValidatingMessageMockProtoMessage.Unlock()
+	mock.ProtoMessageFunc()
+}
+
+// ProtoMessageCalls gets all the calls that were made to ProtoMessage.
+// Check the length with:
+//     len(mockedSelfValidatingMessage.ProtoMessageCalls())
+func (mock *SelfValidatingMessageMock) ProtoMessageCalls() []struct {
+} {
+	var calls []struct {
+	}
+	lockSelfValidatingMessageMockProtoMessage.RLock()
+	calls = mock.calls.ProtoMessage
+	lockSelfValidatingMessageMockProtoMessage.RUnlock()
+	return calls
+}
+
+// Reset calls ResetFunc.
+func (mock *SelfValidatingMessageMock) Reset() {
+	if mock.ResetFunc == nil {
+		panic("moq: SelfValidatingMessageMock.ResetFunc is nil but SelfValidatingMessage.Reset was just called")
+	}
+	callInfo := struct {
+	}{}
+	lockSelfValidatingMessageMockReset.Lock()
+	mock.calls.Reset = append(mock.calls.Reset, callInfo)
+	lockSelfValidatingMessageMockReset.Unlock()
+	mock.ResetFunc()
+}
+
+// ResetCalls gets all the calls that were made to Reset.
+// Check the length with:
+//     len(mockedSelfValidatingMessage.ResetCalls())
+func (mock *SelfValidatingMessageMock) ResetCalls() []struct {
+} {
+	var calls []struct {
+	}
+	lockSelfValidatingMessageMockReset.RLock()
+	calls = mock.calls.Reset
+	lockSelfValidatingMessageMockReset.RUnlock()
+	return calls
+}
+
+// String calls StringFunc.
+func (mock *SelfValidatingMessageMock) String() string {
+	if mock.StringFunc == nil {
+		panic("moq: SelfValidatingMessageMock.StringFunc is nil but SelfValidatingMessage.String was just called")
+	}
+	callInfo := struct {
+	}{}
+	lockSelfValidatingMessageMockString.Lock()
+	mock.calls.String = append(mock.calls.String, callInfo)
+	lockSelfValidatingMessageMockString.Unlock()
+	return mock.StringFunc()
+}
+
+// StringCalls gets all the calls that were made to String.
+// Check the length with:
+//     len(mockedSelfValidatingMessage.StringCalls())
+func (mock *SelfValidatingMessageMock) StringCalls() []struct {
+} {
+	var calls []struct {
+	}
+	lockSelfValidatingMessageMockString.RLock()
+	calls = mock.calls.String
+	lockSelfValidatingMessageMockString.RUnlock()
+	return calls
+}
+
+// Validate calls ValidateFunc.
+func (mock *SelfValidatingMessageMock) Validate() error {
+	if mock.ValidateFunc == nil {
+		panic("moq: SelfValidatingMessageMock.ValidateFunc is nil but SelfValidatingMessage.Validate was just called")
+	}
+	callInfo := struct {
+	}{}
+	lockSelfValidatingMessageMockValidate.Lock()
+	mock.calls.Validate = append(mock.calls.Validate, callInfo)
+	lockSelfValidatingMessageMockValidate.Unlock()
+	return mock.ValidateFunc()
+}
+
+// ValidateCalls gets all the calls that were made to Validate.
+// Check the length with:
+//     len(mockedSelfValidatingMessage.ValidateCalls())
+func (mock *SelfValidatingMessageMock) ValidateCalls() []struct {
+} {
+	var calls []struct {
+	}
+	lockSelfValidatingMessageMockValidate.RLock()
+	calls = mock.calls.Validate
+	lockSelfValidatingMessageMockValidate.RUnlock()
+	return calls
+}

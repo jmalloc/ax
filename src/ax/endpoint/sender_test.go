@@ -73,7 +73,7 @@ var _ = Describe("SinkSender", func() {
 			Expect(env).To(Equal(sink.Envelopes()[0].Envelope))
 		})
 
-		It("should return a validation error if one of validators fails", func() {
+		It("returns a validation error if one of validators fails", func() {
 			expected := errors.New("test validation error")
 			validator2.ValidateFunc = func(ctx context.Context, msg ax.Message) error {
 				return expected
@@ -84,6 +84,21 @@ var _ = Describe("SinkSender", func() {
 
 			_, err := sender.ExecuteCommand(ctx, &messagetest.Command{})
 			Expect(err).Should(MatchError(expected))
+		})
+
+		It("uses default message validator if none of validators are assigned", func() {
+			sink = &BufferedSink{}
+			sender = SinkSender{
+				Sink: sink,
+			}
+			// execute a command with nil passed instead of valid message
+			// to verify that default validator will emit an error
+			_, err := sender.ExecuteCommand(context.Background(), nil)
+			Expect(err).Should(HaveOccurred())
+
+			// assert that error emitted is a validation error
+			_, ok := err.(*ValidationError)
+			Expect(ok).Should(BeTrue())
 		})
 	})
 
@@ -114,7 +129,7 @@ var _ = Describe("SinkSender", func() {
 			Expect(env).To(Equal(sink.Envelopes()[0].Envelope))
 		})
 
-		It("should return a validation error if one of validators fails", func() {
+		It("returns a validation error if one of validators fails", func() {
 			expected := errors.New("test validation error")
 			validator2.ValidateFunc = func(ctx context.Context, msg ax.Message) error {
 				return expected
@@ -125,6 +140,21 @@ var _ = Describe("SinkSender", func() {
 
 			_, err := sender.PublishEvent(ctx, &messagetest.Event{})
 			Expect(err).Should(MatchError(expected))
+		})
+
+		It("uses default message validator if none of validators are assigned", func() {
+			sink = &BufferedSink{}
+			sender = SinkSender{
+				Sink: sink,
+			}
+			// publish an event with nil passed instead of valid message
+			// to verify that default validator will emit an error
+			_, err := sender.PublishEvent(context.Background(), nil)
+			Expect(err).Should(HaveOccurred())
+
+			// assert that error emitted is a validation error
+			_, ok := err.(*ValidationError)
+			Expect(ok).Should(BeTrue())
 		})
 	})
 })

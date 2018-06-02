@@ -1,4 +1,4 @@
-package validation
+package endpoint
 
 import (
 	"fmt"
@@ -10,22 +10,22 @@ import (
 // Typically Error designates an unrecoverable message state that should
 // be retried within either an outbound or inbound message pipeline
 type ValidationError struct {
-	msg ax.Message
-	err error
+	InvalidMsg ax.Message
+	s          string
 }
 
 // NewValidationError returns a pointer to a new ValidationError struct
-func NewValidationError(err error, msg ax.Message) *ValidationError {
+func NewValidationError(s string, msg ax.Message) *ValidationError {
 	return &ValidationError{
-		msg: msg,
-		err: err,
+		s:          s,
+		InvalidMsg: msg,
 	}
 }
 
-// Error returns a string message of an error
+// Error returns a string containing an error message
 func (e *ValidationError) Error() string {
 	return fmt.Sprintf(
-		"validation error: %v",
-		e.err,
+		"validation error: %s",
+		e.s,
 	)
 }
