@@ -12,7 +12,7 @@ import (
 // appropriate MessageHandler instances according to a "handler table".
 type Dispatcher struct {
 	Routes     HandlerTable
-	Validators []endpoint.Validator
+	validators []endpoint.Validator
 }
 
 // Initialize is called during initialization of the endpoint, after the
@@ -32,6 +32,8 @@ func (d *Dispatcher) Initialize(ctx context.Context, ep *endpoint.Endpoint) erro
 		}
 	}
 
+	d.validators = ep.Validators
+
 	if err := ep.Transport.Subscribe(ctx, endpoint.OpSendUnicast, unicast); err != nil {
 		return err
 	}
@@ -50,7 +52,7 @@ func (d *Dispatcher) Accept(ctx context.Context, s endpoint.MessageSink, env end
 	ctx = endpoint.WithEnvelope(ctx, env.Envelope)
 	sender := endpoint.SinkSender{
 		Sink:       s,
-		Validators: d.Validators,
+		Validators: d.validators,
 	}
 
 	for _, h := range d.Routes.Lookup(env.Type()) {

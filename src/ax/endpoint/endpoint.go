@@ -15,22 +15,20 @@ type Endpoint struct {
 	In          InboundPipeline
 	Out         OutboundPipeline
 	RetryPolicy RetryPolicy
+	Validators  []Validator
 
 	initOnce sync.Once
 }
 
 // NewSender returns an ax.Sender that can be used to send messages from this endpoint.
-func (ep *Endpoint) NewSender(
-	ctx context.Context,
-	validators []Validator,
-) (ax.Sender, error) {
+func (ep *Endpoint) NewSender(ctx context.Context) (ax.Sender, error) {
 	if err := ep.initialize(ctx); err != nil {
 		return nil, err
 	}
 
 	return SinkSender{
 		Sink:       ep.Out,
-		Validators: validators,
+		Validators: ep.Validators,
 	}, nil
 }
 
