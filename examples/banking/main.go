@@ -10,6 +10,7 @@ import (
 
 	"github.com/jmalloc/ax/examples/banking/domain"
 	"github.com/jmalloc/ax/examples/banking/messages"
+	"github.com/jmalloc/ax/examples/banking/projections"
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/observability"
@@ -76,6 +77,9 @@ func main() {
 			Mapper:    ksMapper,
 			Persister: crudPersister,
 		},
+
+		// projections ...
+		projections.AccountProjector,
 	)
 	if err != nil {
 		panic(err)

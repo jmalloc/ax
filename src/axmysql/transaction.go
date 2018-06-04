@@ -1,6 +1,7 @@
 package axmysql
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/jmalloc/ax/src/ax/persistence"
@@ -15,6 +16,13 @@ type Tx struct {
 // DataStore returns the DataStore that the transaction operates on.
 func (tx *Tx) DataStore() persistence.DataStore {
 	return tx.ds
+}
+
+// GetTx returns the SQL transaction contained in ctx.
+// It panics if ctx does not contain an SQL transaction.
+func GetTx(ctx context.Context) *sql.Tx {
+	tx, _ := persistence.GetTx(ctx)
+	return sqlTx(tx)
 }
 
 // sqlTx returns the standard SQL transaction wrapped by tx.
