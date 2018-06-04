@@ -27,7 +27,7 @@ type Store interface {
 	// stream does not exist.
 	OpenStream(
 		ctx context.Context,
-		tx persistence.Tx,
+		ds persistence.DataStore,
 		stream string,
 		offset uint64,
 	) (Stream, bool, error)

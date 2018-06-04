@@ -51,7 +51,7 @@ func applyEvents(
 ) error {
 	s, ok, err := ms.OpenStream(
 		ctx,
-		tx,
+		tx.DataStore(),
 		streamName(i.InstanceID),
 		uint64(i.Revision),
 	)

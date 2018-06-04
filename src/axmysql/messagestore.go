@@ -75,15 +75,15 @@ func (s MessageStore) AppendMessages(
 // does not exist.
 func (MessageStore) OpenStream(
 	ctx context.Context,
-	ptx persistence.Tx,
+	pds persistence.DataStore,
 	stream string,
 	offset uint64,
 ) (messagestore.Stream, bool, error) {
-	tx := sqlTx(ptx)
+	db := pds.(*DataStore).DB
 
 	var id int64
 
-	if err := tx.QueryRowContext(
+	if err := db.QueryRowContext(
 		ctx,
 		`SELECT
 			stream_id
@@ -101,7 +101,7 @@ func (MessageStore) OpenStream(
 	}
 
 	return &MessageStream{
-		tx:     tx,
+		db:     db,
 		id:     id,
 		offset: offset,
 	}, true, nil
@@ -282,7 +282,7 @@ const streamFetchLimit = 100
 
 // MessageStream is a stream of messages stored in an SQL MessageStore.
 type MessageStream struct {
-	tx     *sql.Tx
+	db     *sql.DB
 	id     int64
 	offset uint64
 	rows   *sql.Rows
@@ -346,7 +346,7 @@ func (s *MessageStream) Close() error {
 
 // fetchRows selects the next batch of messages from the stream.
 func (s *MessageStream) fetchRows(ctx context.Context) error {
-	rows, err := s.tx.QueryContext(
+	rows, err := s.db.QueryContext(
 		ctx,
 		`SELECT
 			message_id,

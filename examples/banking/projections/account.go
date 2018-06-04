@@ -67,7 +67,7 @@ func updateBalance(
 		ctx,
 		`INSERT INTO account SET
 			id = ?,
-			balance = ?
+			balance = ? / 100
 		ON DUPLICATE KEY UPDATE
 			balance = balance + VALUE(balance)`,
 		id,
