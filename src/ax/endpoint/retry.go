@@ -5,10 +5,10 @@ import (
 	"time"
 )
 
-// RetryPolicy returns is a function responsible for determining whether or not
-// a message should be retried.
+// RetryPolicy is a function responsible for determining whether or not a
+// message should be retried.
 //
-// It returns the delay that occur before retrying, and a bool indicating
+// It returns the delay that should occur before retrying, and a bool indicating
 // whether or not the message should be retried at all.
 type RetryPolicy func(InboundEnvelope, error) (time.Duration, bool)
 
