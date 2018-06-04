@@ -60,7 +60,7 @@ func applyEvents(
 	}
 
 	for {
-		ok, err := s.Next(ctx)
+		ok, err := s.TryNext(ctx)
 		if !ok || err != nil {
 			return err
 		}

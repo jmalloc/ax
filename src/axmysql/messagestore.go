@@ -288,9 +288,10 @@ type MessageStream struct {
 	rows   *sql.Rows
 }
 
-// Next advances the stream to the next message.
+// TryNext advances the stream to the next message.
+//
 // It returns false if there are no more messages in the stream.
-func (s *MessageStream) Next(ctx context.Context) (bool, error) {
+func (s *MessageStream) TryNext(ctx context.Context) (bool, error) {
 	if s.rows != nil {
 		if s.advance() {
 			return true, nil
