@@ -8,6 +8,11 @@ import (
 
 // Stream is an interface for reading an ordered stream of messages.
 type Stream interface {
+	// Next advances the stream to the next message.
+	//
+	// It blocks until a message is available, or ctx is canceled.
+	Next(ctx context.Context) error
+
 	// TryNext advances the stream to the next message.
 	//
 	// It returns false if there are no more messages in the stream.

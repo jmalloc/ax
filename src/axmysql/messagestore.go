@@ -276,9 +276,14 @@ func (MessageStore) insertStreamMessage(
 	return err
 }
 
-// streamFetchLimit is the number of messages to fetch in each select query on
-// a message stream.
-const streamFetchLimit = 100
+const (
+	// streamFetchLimit is the number of messages to fetch in each select query on
+	// a message stream.
+	streamFetchLimit = 100
+
+	// defaultPollInterval is the default time to wait between polls in MessageStream.Next().
+	defaultPollInterval = 500 * time.Millisecond
+)
 
 // MessageStream is a stream of messages stored in an SQL MessageStore.
 type MessageStream struct {
@@ -286,6 +291,37 @@ type MessageStream struct {
 	id     int64
 	offset uint64
 	rows   *sql.Rows
+	poll   time.Duration
+}
+
+// Next advances the stream to the next message.
+//
+// It blocks until a message is available, or ctx is canceled.
+func (s *MessageStream) Next(ctx context.Context) error {
+	ok, err := s.TryNext(ctx)
+	if ok || err != nil {
+		return err
+	}
+
+	p := s.poll
+	if p == 0 {
+		p = defaultPollInterval
+	}
+
+	tick := time.NewTicker(p)
+	defer tick.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-tick.C:
+			ok, err := s.TryNext(ctx)
+			if ok || err != nil {
+				return err
+			}
+		}
+	}
 }
 
 // TryNext advances the stream to the next message.
