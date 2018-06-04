@@ -43,7 +43,7 @@ var _ = Describe("OutboxRepository", func() {
 		"OutboxRepository",
 		outboxtest.RepositorySuite(
 			func() persistence.DataStore {
-				return &DataStore{DB: db}
+				return NewDataStore(db)
 			},
 			func() outbox.Repository {
 				return &OutboxRepository{}

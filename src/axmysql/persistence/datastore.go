@@ -1,4 +1,4 @@
-package axmysql
+package persistence
 
 import (
 	"context"

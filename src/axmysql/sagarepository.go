@@ -7,6 +7,7 @@ import (
 
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/ax/saga"
+	mysqlpersistence "github.com/jmalloc/ax/src/axmysql/persistence"
 )
 
 // SagaRepository is an implementation of crud.Repository that stores saga
@@ -31,7 +32,7 @@ func (r SagaRepository) LoadSagaInstance(
 		data        []byte
 	)
 
-	if err := sqlTx(ptx).QueryRowContext(
+	if err := mysqlpersistence.ExtractTx(ptx).QueryRowContext(
 		ctx,
 		`SELECT
 			instance_id,
@@ -73,7 +74,7 @@ func (r SagaRepository) SaveSagaInstance(
 	ptx persistence.Tx,
 	i saga.Instance,
 ) error {
-	tx := sqlTx(ptx)
+	tx := mysqlpersistence.ExtractTx(ptx)
 
 	contentType, data, err := saga.MarshalData(i.Data)
 	if err != nil {

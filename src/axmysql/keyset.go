@@ -6,6 +6,7 @@ import (
 
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/ax/saga"
+	mysqlpersistence "github.com/jmalloc/ax/src/axmysql/persistence"
 )
 
 // KeySetRepository is an implementation of keyset.Repository that uses
@@ -21,7 +22,7 @@ func (KeySetRepository) FindByKey(
 	ptx persistence.Tx,
 	sn, k string,
 ) (id saga.InstanceID, ok bool, err error) {
-	err = sqlTx(ptx).QueryRowContext(
+	err = mysqlpersistence.ExtractTx(ptx).QueryRowContext(
 		ctx,
 		`SELECT
 			instance_id
@@ -55,7 +56,7 @@ func (KeySetRepository) SaveKeys(
 	id saga.InstanceID,
 	ks []string,
 ) error {
-	tx := sqlTx(ptx)
+	tx := mysqlpersistence.ExtractTx(ptx)
 
 	if _, err := tx.ExecContext(
 		ctx,

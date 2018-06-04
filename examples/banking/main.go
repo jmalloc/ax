@@ -47,7 +47,7 @@ func main() {
 	}
 
 	esPersister := &eventsourcing.Persister{
-		MessageStore:      axmysql.MessageStore{},
+		MessageStore:      axmysql.MessageStore,
 		Snapshots:         axmysql.SnapshotRepository{},
 		SnapshotFrequency: 3,
 	}
@@ -102,7 +102,7 @@ func main() {
 		In: &observability.InboundHook{
 			Observers: observers,
 			Next: &persistence.Injector{
-				DataStore: &axmysql.DataStore{DB: db},
+				DataStore: axmysql.NewDataStore(db),
 				Next: &outbox.Deduplicator{
 					Repository: &axmysql.OutboxRepository{},
 					Next: &routing.Dispatcher{

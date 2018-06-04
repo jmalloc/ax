@@ -8,6 +8,7 @@ import (
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/persistence"
+	mysqlpersistence "github.com/jmalloc/ax/src/axmysql/persistence"
 )
 
 // OutboxRepository is an implementation of outbox.Repository that uses SQL
@@ -21,7 +22,7 @@ func (r *OutboxRepository) LoadOutbox(
 	ds persistence.DataStore,
 	id ax.MessageID,
 ) ([]endpoint.OutboundEnvelope, bool, error) {
-	db := ds.(*DataStore).DB
+	db := mysqlpersistence.ExtractDB(ds)
 
 	row := db.QueryRowContext(
 		ctx,
@@ -81,7 +82,7 @@ func (r *OutboxRepository) SaveOutbox(
 	id ax.MessageID,
 	envs []endpoint.OutboundEnvelope,
 ) error {
-	tx := sqlTx(ptx)
+	tx := mysqlpersistence.ExtractTx(ptx)
 
 	if _, err := tx.ExecContext(
 		ctx,
@@ -106,7 +107,7 @@ func (r *OutboxRepository) MarkAsSent(
 	ptx persistence.Tx,
 	env endpoint.OutboundEnvelope,
 ) error {
-	_, err := sqlTx(ptx).ExecContext(
+	_, err := mysqlpersistence.ExtractTx(ptx).ExecContext(
 		ctx,
 		`DELETE FROM outbox_message WHERE message_id = ?`,
 		env.MessageID,
