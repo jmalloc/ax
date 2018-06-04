@@ -23,7 +23,7 @@ type Store interface {
 
 	// OpenStream opens a stream of messages for reading from a specific offset.
 	//
-	// The offset may be past the end of the stream. It returns false if the
+	// The offset may be beyond the end of the stream. It returns false if the
 	// stream does not exist.
 	OpenStream(
 		ctx context.Context,
@@ -31,4 +31,19 @@ type Store interface {
 		stream string,
 		offset uint64,
 	) (Stream, bool, error)
+}
+
+// GloballyOrderedStore is a Store that can exposed all of its messages as a
+// single stream.
+type GloballyOrderedStore interface {
+	Store
+
+	// OpenGlobal opens the entire store for reading as a single stream.
+	//
+	// The offset may be beyond the end of the stream.
+	OpenGlobal(
+		ctx context.Context,
+		ds persistence.DataStore,
+		offset uint64,
+	) (Stream, error)
 }

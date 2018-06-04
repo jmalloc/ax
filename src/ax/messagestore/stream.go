@@ -15,6 +15,9 @@ type Stream interface {
 	// Get returns the message at the current offset in the stream.
 	Get(ctx context.Context) (ax.Envelope, error)
 
+	// Offset returns the offset of the message returned by Get().
+	Offset() (uint64, error)
+
 	// Close closes the stream.
 	Close() error
 }

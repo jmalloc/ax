@@ -339,6 +339,11 @@ func (s *MessageStream) Get(ctx context.Context) (ax.Envelope, error) {
 	return env, err
 }
 
+// Offset returns the offset of the message returned by Get().
+func (s *MessageStream) Offset() (uint64, error) {
+	return s.offset, nil
+}
+
 // Close closes the stream.
 func (s *MessageStream) Close() error {
 	return s.replaceRows(nil)
