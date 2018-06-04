@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/jmalloc/ax/src/ax"
+	"github.com/jmalloc/ax/src/ax/messagestore"
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/ax/saga"
 )
@@ -17,7 +18,7 @@ const DefaultSnapshotFrequency saga.Revision = 1000
 //
 // The saga data MUST implement saga.EventedData.
 type Persister struct {
-	MessageStore      persistence.MessageStore
+	MessageStore      messagestore.Store
 	Snapshots         SnapshotRepository
 	SnapshotFrequency saga.Revision
 }
@@ -76,7 +77,7 @@ func (p *Persister) BeginUnitOfWork(
 // unitOfWork is an implementation of saga.UnitOfWork that perists saga
 // instances as a stream of events, with optional snapshots.
 type unitOfWork struct {
-	messageStore persistence.MessageStore
+	messageStore messagestore.Store
 	snapshots    SnapshotRepository
 	frequency    saga.Revision
 

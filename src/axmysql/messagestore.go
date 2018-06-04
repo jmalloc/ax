@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/jmalloc/ax/src/ax"
+	"github.com/jmalloc/ax/src/ax/messagestore"
 	"github.com/jmalloc/ax/src/ax/persistence"
 )
 
-// MessageStore is an implementation of persistence.MessageStore that uses SQL
+// MessageStore is an implementation of messagestore.Store that uses SQL
 // persistence.
 type MessageStore struct{}
 
@@ -77,7 +78,7 @@ func (MessageStore) OpenStream(
 	ptx persistence.Tx,
 	stream string,
 	offset uint64,
-) (persistence.MessageStream, bool, error) {
+) (messagestore.Stream, bool, error) {
 	tx := sqlTx(ptx)
 
 	var id int64

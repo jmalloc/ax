@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jmalloc/ax/src/ax"
+	"github.com/jmalloc/ax/src/ax/messagestore"
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/ax/saga"
 )
@@ -23,7 +24,7 @@ func streamName(id saga.InstanceID) string {
 func appendEvents(
 	ctx context.Context,
 	tx persistence.Tx,
-	ms persistence.MessageStore,
+	ms messagestore.Store,
 	i saga.Instance,
 	envs []ax.Envelope,
 ) error {
@@ -44,7 +45,7 @@ func appendEvents(
 func applyEvents(
 	ctx context.Context,
 	tx persistence.Tx,
-	ms persistence.MessageStore,
+	ms messagestore.Store,
 	sg saga.EventedSaga,
 	i *saga.Instance,
 ) error {
