@@ -6,11 +6,12 @@ import (
 
 	"github.com/jmalloc/ax/examples/banking/messages"
 	"github.com/jmalloc/ax/src/ax"
+	"github.com/jmalloc/ax/src/ax/projection"
 	"github.com/jmalloc/ax/src/axmysql"
 )
 
 // AccountProjector is a message handler that builds the "account" read-model.
-var AccountProjector accountProjector
+var AccountProjector projection.Projector = accountProjector{}
 
 type accountProjector struct{}
 
@@ -22,7 +23,7 @@ func (accountProjector) MessageTypes() ax.MessageTypeSet {
 	)
 }
 
-func (accountProjector) HandleMessage(ctx context.Context, _ ax.Sender, env ax.Envelope) error {
+func (accountProjector) HandleMessage(ctx context.Context, env ax.Envelope) error {
 	tx := axmysql.GetTx(ctx)
 
 	switch m := env.Message.(type) {

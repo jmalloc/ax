@@ -16,6 +16,7 @@ import (
 	"github.com/jmalloc/ax/src/ax/observability"
 	"github.com/jmalloc/ax/src/ax/outbox"
 	"github.com/jmalloc/ax/src/ax/persistence"
+	"github.com/jmalloc/ax/src/ax/projection"
 	"github.com/jmalloc/ax/src/ax/routing"
 	"github.com/jmalloc/ax/src/ax/saga"
 	"github.com/jmalloc/ax/src/ax/saga/mapping/direct"
@@ -79,7 +80,9 @@ func main() {
 		},
 
 		// projections ...
-		projections.AccountProjector,
+		&projection.MessageHandler{
+			Projector: projections.AccountProjector,
+		},
 	)
 	if err != nil {
 		panic(err)
