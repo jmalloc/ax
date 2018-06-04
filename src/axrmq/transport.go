@@ -50,6 +50,7 @@ func (t *Transport) Initialize(ctx context.Context, ep string) error {
 
 	t.pub = newPublisher(
 		t.Conn,
+		ep,
 		poolSize,
 	)
 
@@ -110,12 +111,22 @@ func (t *Transport) Receive(ctx context.Context) (env endpoint.InboundEnvelope, 
 
 		env, err = unmarshalMessage(del)
 		if err == nil {
-			ack = &Acknowledger{del}
+			ack = &Acknowledger{
+				t.ep,
+				t.pub,
+				t.con,
+				del,
+			}
+
 			return
 		}
 
-		// TODO: log / sentry / etc
-		err = del.Reject(false) // false = don't requeue
+		err = t.pub.RepublishAsError(ctx, del)
+		if err != nil {
+			return
+		}
+
+		err = del.Ack(false) // false = single message
 		if err != nil {
 			return
 		}
@@ -132,7 +143,7 @@ func (t *Transport) startConsumer() error {
 		preFetch = DefaultReceiveConcurrency
 	}
 
-	con, err := newConsumer(t.Conn, t.ep, t.Exclusive, preFetch)
+	con, err := newConsumer(t.Conn, t.ep, t.Exclusive, preFetch, preFetch*10)
 	if err != nil {
 		return err
 	}

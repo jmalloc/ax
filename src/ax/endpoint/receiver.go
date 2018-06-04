@@ -59,8 +59,8 @@ func (r *receiver) process(
 		return ack.Ack(ctx)
 	}
 
-	if r.RetryPolicy(env, err) {
-		return ack.Retry(ctx, err)
+	if d, ok := r.RetryPolicy(env, err); ok {
+		return ack.Retry(ctx, err, d)
 	}
 
 	return ack.Reject(ctx, err)

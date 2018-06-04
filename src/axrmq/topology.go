@@ -58,7 +58,7 @@ func declareQueues(ch *amqp.Channel, ep string) error {
 		false, // noWait
 		amqp.Table{
 			"x-dead-letter-exchange":    "",
-			"x-dead-letter-routing-key": errors,
+			"x-dead-letter-routing-key": pending, // route dead-lettered messages back to the pending queue
 		},
 	); err != nil {
 		return err
