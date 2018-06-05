@@ -6,41 +6,42 @@ import (
 	"github.com/jmalloc/ax/src/ax"
 )
 
-// Validator wraps methods required to
-// perform message validation
+// Validator is an interface for validating messages.
+//
+// Application-defined validators can be implemented to provide superficial and
+// domain validation. Each endpoint has a set of validators that are used to
+// validate outgoing messages. Additionally, the validation.InboundStage and
+// validation.OutboundStage can be used to perform message validation at any
+// point in a pipeline.
 type Validator interface {
-	Validate(ctx context.Context, msg ax.Message) error
+	// Validate checks if m is valid.
+
+	// It returns a non-nil error if the message is invalid. The meaning of
+	// 'valid' in is implementation-defined.
+	Validate(ctx context.Context, m ax.Message) error
 }
 
-// DefaultValidators is the array of validators used by default
-// when sending a message in case none of user-defined validators
-// have been defined.
+// DefaultValidators is the set of validators used to validate outgoing messages
+// if no other set of validators is configured on the endpoint.
 var DefaultValidators = []Validator{
-	&BasicValidator{},
+	&SelfValidator{},
 }
 
-// BasicValidator is one of the default message validators
-// that performs basic checks on the message such as
-// if a message is nil, etc.
-type BasicValidator struct{}
+// SelfValidator is one of the default message validators
+// that validates the message if it implements SelfValidatingMessage interface.
+type SelfValidator struct{}
 
 // Validate validates the message by checking if the message
 // is nil and if the message implements SelfValidatingMessage
 // interface to call its Validate method.
-func (v *BasicValidator) Validate(
+func (SelfValidator) Validate(
 	ctx context.Context,
 	msg ax.Message,
 ) error {
 
-	// check if message is nil, if it is return a non-recoverable error
-	if msg == nil {
-		return NewValidationError("message cannot be nil", nil)
-	}
-
 	// check if message can perform self-validation
-	svmsg, ok := msg.(SelfValidatingMessage)
-	if ok {
-		return svmsg.Validate()
+	if s, ok := msg.(SelfValidatingMessage); ok {
+		return s.Validate()
 	}
 
 	return nil

@@ -1,12 +1,11 @@
-package validation_test
+package endpoint_test
 
 import (
 	"context"
 	"errors"
 
 	"github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/ax/endpoint"
-	. "github.com/jmalloc/ax/src/ax/validation"
+	. "github.com/jmalloc/ax/src/ax/endpoint"
 
 	"github.com/jmalloc/ax/src/internal/messagetest"
 
@@ -15,23 +14,24 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("OutboundStage", func() {
+var _ = Describe("InboundRejecter", func() {
 	var (
-		next                               *endpointtest.OutboundPipelineMock
+		next                               *endpointtest.InboundPipelineMock
 		validator1, validator2, validator3 *endpointtest.ValidatorMock
 	)
 
 	BeforeEach(func() {
-		next = &endpointtest.OutboundPipelineMock{
+		next = &endpointtest.InboundPipelineMock{
 			InitializeFunc: func(
 				context.Context,
-				*endpoint.Endpoint,
+				*Endpoint,
 			) error {
 				return nil
 			},
 			AcceptFunc: func(
-				ctx context.Context,
-				env endpoint.OutboundEnvelope,
+				context.Context,
+				MessageSink,
+				InboundEnvelope,
 			) error {
 				return nil
 			},
@@ -54,12 +54,12 @@ var _ = Describe("OutboundStage", func() {
 	})
 
 	Describe("Initialize", func() {
-		ep := &endpoint.Endpoint{}
+		ep := &Endpoint{}
 
 		It("initializes the following stage", func() {
-			os := &OutboundStage{
+			os := &InboundRejecter{
 				Next: next,
-				Validators: []endpoint.Validator{
+				Validators: []Validator{
 					validator1, validator2, validator3,
 				},
 			}
@@ -76,34 +76,35 @@ var _ = Describe("OutboundStage", func() {
 
 		It("returns an error if the initialization of the next stage fails", func() {
 			expected := errors.New("<error>")
-			next.InitializeFunc = func(context.Context, *endpoint.Endpoint) error { return expected }
+			next.InitializeFunc = func(context.Context, *Endpoint) error { return expected }
 
-			os := &OutboundStage{
+			os := &InboundRejecter{
 				Next:       next,
-				Validators: []endpoint.Validator{},
+				Validators: []Validator{},
 			}
 
-			err := os.Initialize(context.Background(), &endpoint.Endpoint{})
+			err := os.Initialize(context.Background(), &Endpoint{})
 			Expect(err).To(Equal(expected))
 		})
 	})
 
 	Describe("Accept", func() {
-		env := endpoint.OutboundEnvelope{
+		sink := &BufferedSink{}
+		env := InboundEnvelope{
 			Envelope: ax.NewEnvelope(
 				&messagetest.Message{},
 			),
 		}
 
 		It("passes message to next stage's Accept method if none of validators fails", func() {
-			os := &OutboundStage{
+			os := &InboundRejecter{
 				Next: next,
-				Validators: []endpoint.Validator{
+				Validators: []Validator{
 					validator1, validator2, validator3,
 				},
 			}
 
-			err := os.Accept(context.Background(), env)
+			err := os.Accept(context.Background(), sink, env)
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(len(next.AcceptCalls())).Should(BeNumerically("==", 1))
 		})
@@ -111,9 +112,9 @@ var _ = Describe("OutboundStage", func() {
 		It("returns an error if any of validator fails", func() {
 			expected := errors.New("<error>")
 
-			os := &OutboundStage{
+			os := &InboundRejecter{
 				Next: next,
-				Validators: []endpoint.Validator{
+				Validators: []Validator{
 					validator1, validator2, validator3,
 				},
 			}
@@ -122,7 +123,7 @@ var _ = Describe("OutboundStage", func() {
 				return expected
 			}
 
-			err := os.Accept(context.Background(), env)
+			err := os.Accept(context.Background(), sink, env)
 			Expect(err).Should(HaveOccurred())
 			Expect(err).Should(Equal(expected))
 			Expect(len(next.AcceptCalls())).Should(BeNumerically("==", 0))

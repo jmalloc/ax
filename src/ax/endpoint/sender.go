@@ -41,7 +41,6 @@ func (s SinkSender) send(ctx context.Context, op Operation, m ax.Message) (ax.En
 	}
 
 	if len(s.Validators) == 0 {
-		// insert default validation
 		s.Validators = DefaultValidators
 	}
 

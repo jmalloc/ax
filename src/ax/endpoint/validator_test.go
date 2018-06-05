@@ -2,6 +2,7 @@ package endpoint_test
 
 import (
 	"context"
+	"errors"
 
 	. "github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/internal/endpointtest"
@@ -10,43 +11,35 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Default Validators", func() {
+var _ = Describe("SelfValidator", func() {
 
-	Describe("Basic Validator", func() {
+	Describe("Validate", func() {
 		It("does not return an error if the message is valid", func() {
-			v := BasicValidator{}
+			v := SelfValidator{}
 			err := v.Validate(context.Background(), &messagetest.Message{})
 			Expect(err).ShouldNot(HaveOccurred())
 		})
 
-		It("returns an instance of ValidatonError if the message is nil", func() {
-			v := BasicValidator{}
-			err := v.Validate(context.Background(), nil)
-			Expect(err).Should(HaveOccurred())
-			_, ok := err.(*ValidationError)
-			Expect(ok).Should(BeTrue())
-		})
-
 		It("invokes Validate method on the message if it implements SelfValidatingMessage interface", func() {
-			v := BasicValidator{}
-			svm := &endpointtest.SelfValidatingMessageMock{
+			v := SelfValidator{}
+			s := &endpointtest.SelfValidatingMessageMock{
 				ValidateFunc: func() error {
 					return nil
 				},
 			}
-			err := v.Validate(context.Background(), svm)
+			err := v.Validate(context.Background(), s)
 			Expect(err).ShouldNot(HaveOccurred())
-			Expect(svm.ValidateCalls()).Should(HaveLen(1))
+			Expect(s.ValidateCalls()).Should(HaveLen(1))
 		})
 
 		It("returns an error if SelfValidatingMessage.Validate method fails", func() {
-			v := BasicValidator{}
-			svm := &endpointtest.SelfValidatingMessageMock{}
-			expected := NewValidationError("self-validating message test error", svm)
-			svm.ValidateFunc = func() error {
+			v := SelfValidator{}
+			s := &endpointtest.SelfValidatingMessageMock{}
+			expected := errors.New("self-validating message test error")
+			s.ValidateFunc = func() error {
 				return expected
 			}
-			err := v.Validate(context.Background(), svm)
+			err := v.Validate(context.Background(), s)
 			Expect(err).Should(HaveOccurred())
 			Expect(err).Should(MatchError(expected))
 		})
