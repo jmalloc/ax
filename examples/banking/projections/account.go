@@ -9,21 +9,21 @@ import (
 	"github.com/jmalloc/ax/src/axmysql"
 )
 
-type accountProjector struct{}
+type account struct{}
 
-func (accountProjector) ReadModelName() string {
+func (account) ReadModelName() string {
 	return "Account"
 }
 
-func (accountProjector) WhenAccountOpened(ctx context.Context, tx *sql.Tx, ev *messages.AccountOpened) error {
+func (account) WhenAccountOpened(ctx context.Context, tx *sql.Tx, ev *messages.AccountOpened) error {
 	return insertAccount(ctx, tx, ev.AccountId, ev.Name)
 }
 
-func (accountProjector) WhenAccountDebited(ctx context.Context, tx *sql.Tx, ev *messages.AccountDebited) error {
+func (account) WhenAccountDebited(ctx context.Context, tx *sql.Tx, ev *messages.AccountDebited) error {
 	return updateBalance(ctx, tx, ev.AccountId, -ev.AmountInCents)
 }
 
-func (accountProjector) WhenAccountCredited(ctx context.Context, tx *sql.Tx, ev *messages.AccountCredited) error {
+func (account) WhenAccountCredited(ctx context.Context, tx *sql.Tx, ev *messages.AccountCredited) error {
 	return updateBalance(ctx, tx, ev.AccountId, +ev.AmountInCents)
 }
 
@@ -69,5 +69,5 @@ func updateBalance(
 
 // AccountProjector is a message handler that builds the "account" read-model.
 var AccountProjector projection.Projector = axmysql.NewReadModelProjector(
-	accountProjector{},
+	account{},
 )
