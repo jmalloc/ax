@@ -10,8 +10,8 @@ import (
 //
 // Application-defined validators can be implemented to provide superficial and
 // domain validation. Each endpoint has a set of validators that are used to
-// validate outgoing messages. Additionally, the validation.InboundStage and
-// validation.OutboundStage can be used to perform message validation at any
+// validate outgoing messages. Additionally, the validation.InboundRejecter and
+// validation.OutboundRejecter can be used to perform message validation at any
 // point in a pipeline.
 type Validator interface {
 	// Validate checks if m is valid.
