@@ -1,8 +1,4 @@
 --
--- This file defines the SQL schema used by OutboxRepository
---
-
---
 -- outbox stores the timestamp at which an outbox was created.
 --
 -- The presence of a row in this table indicates that the message has already

@@ -1,8 +1,4 @@
 --
--- This file defines the SQL schema used by MessageStore and MessageStream.
---
-
---
 -- messagestore_offset stores the next global message offset across all streams.
 --
 -- It uses an ENUM field with a single value as the primary key to

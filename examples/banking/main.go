@@ -104,7 +104,7 @@ func main() {
 			Next: &persistence.Injector{
 				DataStore: axmysql.NewDataStore(db),
 				Next: &outbox.Deduplicator{
-					Repository: &axmysql.OutboxRepository{},
+					Repository: axmysql.OutboxRepository,
 					Next: &routing.Dispatcher{
 						Routes: htable,
 					},
