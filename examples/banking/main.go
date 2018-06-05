@@ -55,7 +55,7 @@ func main() {
 	directMapper := &direct.Mapper{}
 
 	ksMapper := &keyset.Mapper{
-		Repository: axmysql.KeySetRepository{},
+		Repository: axmysql.KeySetRepository,
 	}
 
 	htable, err := routing.NewHandlerTable(
