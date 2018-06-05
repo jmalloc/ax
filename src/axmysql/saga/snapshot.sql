@@ -1,8 +1,4 @@
 --
--- This file defines the SQL schema used by SnapshotRepository.
---
-
---
 -- saga_snapshot stores snapshots saga.Data instances for eventsourced sagas.
 --
 CREATE TABLE IF NOT EXISTS saga_snapshot (

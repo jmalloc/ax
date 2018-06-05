@@ -48,7 +48,7 @@ func main() {
 
 	esPersister := &eventsourcing.Persister{
 		MessageStore:      axmysql.MessageStore,
-		Snapshots:         axmysql.SnapshotRepository{},
+		Snapshots:         axmysql.SnapshotRepository,
 		SnapshotFrequency: 3,
 	}
 
