@@ -7,8 +7,8 @@ import (
 	"github.com/jmalloc/ax/src/ax/persistence"
 )
 
-// DataStore is an implementation of persistence.DataStore that persists data in
-// an SQL database.
+// DataStore is a MySQL-backed implementation of Ax's persistence.DataStore
+// interface.
 type DataStore struct {
 	DB *sql.DB
 }
@@ -23,6 +23,13 @@ func (ds *DataStore) BeginTx(ctx context.Context) (persistence.Tx, persistence.C
 	return &Tx{ds, tx}, tx, nil
 }
 
+// txOptions is the set of options used when starting a new SQL transaction.
 var txOptions = &sql.TxOptions{
 	Isolation: sql.LevelReadCommitted,
+}
+
+// ExtractDB returns the SQL database within ds.
+// It panics if ds is not a *DataStore.
+func ExtractDB(ds persistence.DataStore) *sql.DB {
+	return ds.(*DataStore).DB
 }

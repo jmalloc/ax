@@ -1,8 +1,4 @@
 --
--- This file defines the SQL schema used by SagaRepository.
---
-
---
 -- saga_instance stores saga.Data instances for each instance of a CRUD saga.
 --
 CREATE TABLE IF NOT EXISTS saga_instance (

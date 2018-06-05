@@ -9,8 +9,8 @@ import (
 	mysqlpersistence "github.com/jmalloc/ax/src/axmysql/persistence"
 )
 
-// KeySetRepository is an implementation of keyset.Repository that uses
-// SQL persistence.
+// KeySetRepository is a MySQL-backed implementation of Ax's keyset.Repository
+// interface.
 type KeySetRepository struct{}
 
 // FindByKey returns the ID of the saga instance that contains k in its

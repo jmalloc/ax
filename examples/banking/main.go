@@ -43,19 +43,19 @@ func main() {
 	defer rmq.Close()
 
 	crudPersister := &crud.Persister{
-		Repository: axmysql.SagaRepository{},
+		Repository: axmysql.SagaCRUDRepository,
 	}
 
 	esPersister := &eventsourcing.Persister{
 		MessageStore:      axmysql.MessageStore,
-		Snapshots:         axmysql.SnapshotRepository,
+		Snapshots:         axmysql.SagaSnapshotRepository,
 		SnapshotFrequency: 3,
 	}
 
 	directMapper := &direct.Mapper{}
 
 	ksMapper := &keyset.Mapper{
-		Repository: axmysql.KeySetRepository,
+		Repository: axmysql.SagaKeySetRepository,
 	}
 
 	htable, err := routing.NewHandlerTable(

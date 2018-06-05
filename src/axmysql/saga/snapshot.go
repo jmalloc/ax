@@ -9,8 +9,8 @@ import (
 	mysqlpersistence "github.com/jmalloc/ax/src/axmysql/persistence"
 )
 
-// SnapshotRepository is an interface for loading and saving snapshots of
-// eventsourced saga data.
+// SnapshotRepository is a MySQL-backed implementation of Ax's
+// eventsourcing.SnapshotRepository interface.
 type SnapshotRepository struct{}
 
 // LoadSagaSnapshot loads the latest available snapshot from the store.
