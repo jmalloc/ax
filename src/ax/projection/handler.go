@@ -30,5 +30,5 @@ func (a *MessageHandler) HandleMessage(
 	_ ax.Sender,
 	env ax.Envelope,
 ) error {
-	return a.Projector.HandleMessage(ctx, env)
+	return a.Projector.ApplyMessage(ctx, env)
 }

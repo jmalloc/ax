@@ -6,8 +6,8 @@ import (
 	"github.com/jmalloc/ax/src/ax/persistence"
 )
 
-// OffsetStore is an interface for loading and saving the offset that a
-// consumer should resume from.
+// OffsetStore is an interface used by StreamConsumer to load and save it's
+// current position within a message stream.
 type OffsetStore interface {
 	// LoadOffset returns the offset at which a consumer should resume
 	// reading from the stream.

@@ -8,12 +8,13 @@ import (
 	"github.com/jmalloc/ax/src/ax/persistence"
 )
 
-// Consumer reads from a stream of messages and forwards them to a projector.
-type Consumer struct {
+// GlobalStoreConsumer reads messages from all streams in a message store and
+// forwards them to an application-defined projector to produce a projection.
+type GlobalStoreConsumer struct {
+	Projector    Projector
 	DataStore    persistence.DataStore
 	MessageStore messagestore.GloballyOrderedStore
 	Offsets      OffsetStore
-	Projector    Projector
 
 	name   string
 	types  ax.MessageTypeSet
@@ -22,7 +23,7 @@ type Consumer struct {
 
 // Run reads pipes messages from the message stream to the projector until an
 // error occurs or ctx is canceled.
-func (c *Consumer) Run(ctx context.Context) error {
+func (c *GlobalStoreConsumer) Run(ctx context.Context) error {
 	c.name = c.Projector.ProjectorName()
 	c.types = c.Projector.MessageTypes()
 
@@ -40,14 +41,14 @@ func (c *Consumer) Run(ctx context.Context) error {
 	ctx = persistence.WithDataStore(ctx, c.DataStore)
 
 	for {
-		err = c.process(ctx)
+		err = c.processNextMessage(ctx)
 		if err != nil {
 			return err
 		}
 	}
 }
 
-func (c *Consumer) process(ctx context.Context) error {
+func (c *GlobalStoreConsumer) processNextMessage(ctx context.Context) error {
 	err := c.stream.Next(ctx)
 	if err != nil {
 		return err
@@ -65,7 +66,7 @@ func (c *Consumer) process(ctx context.Context) error {
 	defer com.Rollback()
 
 	if c.types.Has(env.Type()) {
-		err = c.Projector.HandleMessage(
+		err = c.Projector.ApplyMessage(
 			persistence.WithTx(ctx, tx),
 			env,
 		)
