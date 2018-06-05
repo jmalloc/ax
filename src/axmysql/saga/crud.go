@@ -1,4 +1,4 @@
-package axmysql
+package saga
 
 import (
 	"context"
@@ -7,11 +7,12 @@ import (
 
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/ax/saga"
+	mysqlpersistence "github.com/jmalloc/ax/src/axmysql/persistence"
 )
 
-// SagaRepository is an implementation of crud.Repository that stores saga
-// instances using SQL persistence.
-type SagaRepository struct{}
+// CRUDRepository is a MySQL-backed implementation of Ax's crud.Repository
+// interface.
+type CRUDRepository struct{}
 
 // LoadSagaInstance fetches a saga instance by its ID.
 //
@@ -20,7 +21,7 @@ type SagaRepository struct{}
 //
 // It panics if the repository is not able to enlist in tx because it uses a
 // different underlying storage system.
-func (r SagaRepository) LoadSagaInstance(
+func (r CRUDRepository) LoadSagaInstance(
 	ctx context.Context,
 	ptx persistence.Tx,
 	id saga.InstanceID,
@@ -31,7 +32,7 @@ func (r SagaRepository) LoadSagaInstance(
 		data        []byte
 	)
 
-	if err := sqlTx(ptx).QueryRowContext(
+	if err := mysqlpersistence.ExtractTx(ptx).QueryRowContext(
 		ctx,
 		`SELECT
 			instance_id,
@@ -68,12 +69,12 @@ func (r SagaRepository) LoadSagaInstance(
 //
 // It panics if the repository is not able to enlist in tx because it uses a
 // different underlying storage system.
-func (r SagaRepository) SaveSagaInstance(
+func (r CRUDRepository) SaveSagaInstance(
 	ctx context.Context,
 	ptx persistence.Tx,
 	i saga.Instance,
 ) error {
-	tx := sqlTx(ptx)
+	tx := mysqlpersistence.ExtractTx(ptx)
 
 	contentType, data, err := saga.MarshalData(i.Data)
 	if err != nil {
@@ -88,7 +89,7 @@ func (r SagaRepository) SaveSagaInstance(
 }
 
 // insertInstance inserts a new saga instance.
-func (SagaRepository) insertInstance(
+func (CRUDRepository) insertInstance(
 	ctx context.Context,
 	tx *sql.Tx,
 	i saga.Instance,
@@ -116,7 +117,7 @@ func (SagaRepository) insertInstance(
 
 // updateInstance updates an existing saga instance.
 // It returns an error if i.Revision is not the current revision.
-func (SagaRepository) updateInstance(
+func (CRUDRepository) updateInstance(
 	ctx context.Context,
 	tx *sql.Tx,
 	i saga.Instance,

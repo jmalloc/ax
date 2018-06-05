@@ -1,8 +1,4 @@
 --
--- This file defines the SQL schema used by KeySetRepository.
---
-
---
 -- saga_keyset contains the "key sets" that are associated with saga instances
 -- that use keyset.Mapper.
 --

@@ -1,4 +1,4 @@
-package axmysql
+package persistence
 
 import (
 	"database/sql"
@@ -6,7 +6,7 @@ import (
 	"github.com/jmalloc/ax/src/ax/persistence"
 )
 
-// Tx is an implementation of persistence.Tx that wraps an SQL transaction.
+// Tx is a MySQL-backed implementation of Ax's persistence.Tx interface.
 type Tx struct {
 	ds    *DataStore
 	sqlTx *sql.Tx
@@ -17,8 +17,8 @@ func (tx *Tx) DataStore() persistence.DataStore {
 	return tx.ds
 }
 
-// sqlTx returns the standard SQL transaction wrapped by tx.
-// It panics if tx is not *axmysql.Tx
-func sqlTx(tx persistence.Tx) *sql.Tx {
+// ExtractTx returns the SQL transaction within tx.
+// It panics if tx is not a *Tx.
+func ExtractTx(tx persistence.Tx) *sql.Tx {
 	return tx.(*Tx).sqlTx
 }

@@ -1,4 +1,4 @@
-package axmysql
+package saga
 
 import (
 	"context"
@@ -6,10 +6,11 @@ import (
 
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/ax/saga"
+	mysqlpersistence "github.com/jmalloc/ax/src/axmysql/persistence"
 )
 
-// SnapshotRepository is an interface for loading and saving snapshots of
-// eventsourced saga data.
+// SnapshotRepository is a MySQL-backed implementation of Ax's
+// eventsourcing.SnapshotRepository interface.
 type SnapshotRepository struct{}
 
 // LoadSagaSnapshot loads the latest available snapshot from the store.
@@ -24,7 +25,7 @@ func (SnapshotRepository) LoadSagaSnapshot(
 		data        []byte
 	)
 
-	err := sqlTx(ptx).QueryRowContext(
+	err := mysqlpersistence.ExtractTx(ptx).QueryRowContext(
 		ctx,
 		`SELECT
 			instance_id,
@@ -67,7 +68,7 @@ func (SnapshotRepository) SaveSagaSnapshot(
 		return err
 	}
 
-	_, err = sqlTx(tx).ExecContext(
+	_, err = mysqlpersistence.ExtractTx(tx).ExecContext(
 		ctx,
 		`INSERT INTO saga_snapshot SET
 			instance_id = ?,

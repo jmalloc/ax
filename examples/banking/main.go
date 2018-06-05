@@ -10,6 +10,7 @@ import (
 
 	"github.com/jmalloc/ax/examples/banking/domain"
 	"github.com/jmalloc/ax/examples/banking/messages"
+	"github.com/jmalloc/ax/examples/banking/projections"
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/observability"
@@ -42,19 +43,19 @@ func main() {
 	defer rmq.Close()
 
 	crudPersister := &crud.Persister{
-		Repository: axmysql.SagaRepository{},
+		Repository: axmysql.SagaCRUDRepository,
 	}
 
 	esPersister := &eventsourcing.Persister{
-		MessageStore:      axmysql.MessageStore{},
-		Snapshots:         axmysql.SnapshotRepository{},
+		MessageStore:      axmysql.MessageStore,
+		Snapshots:         axmysql.SagaSnapshotRepository,
 		SnapshotFrequency: 3,
 	}
 
 	directMapper := &direct.Mapper{}
 
 	ksMapper := &keyset.Mapper{
-		Repository: axmysql.KeySetRepository{},
+		Repository: axmysql.SagaKeySetRepository,
 	}
 
 	htable, err := routing.NewHandlerTable(
@@ -76,6 +77,9 @@ func main() {
 			Mapper:    ksMapper,
 			Persister: crudPersister,
 		},
+
+		// projections ...
+		projections.AccountProjector,
 	)
 	if err != nil {
 		panic(err)
@@ -98,9 +102,9 @@ func main() {
 		In: &observability.InboundHook{
 			Observers: observers,
 			Next: &persistence.Injector{
-				DataStore: &axmysql.DataStore{DB: db},
+				DataStore: axmysql.NewDataStore(db),
 				Next: &outbox.Deduplicator{
-					Repository: &axmysql.OutboxRepository{},
+					Repository: axmysql.OutboxRepository,
 					Next: &routing.Dispatcher{
 						Routes: htable,
 					},
