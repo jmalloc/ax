@@ -6,4 +6,4 @@ import (
 )
 
 // MessageStore is a message store backed by an MySQL database.
-var MessageStore messagestore.Store = mysqlmessagestore.Store{}
+var MessageStore messagestore.GloballyOrderedStore = mysqlmessagestore.Store{}

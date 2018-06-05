@@ -7,6 +7,7 @@ import (
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/jmalloc/ax/examples/banking/domain"
 	"github.com/jmalloc/ax/examples/banking/messages"
@@ -78,11 +79,6 @@ func main() {
 			Mapper:    ksMapper,
 			Persister: crudPersister,
 		},
-
-		// projections ...
-		&projection.MessageHandler{
-			Projector: projections.AccountProjector,
-		},
 	)
 	if err != nil {
 		panic(err)
@@ -97,6 +93,8 @@ func main() {
 		&observability.LoggingObserver{},
 	}
 
+	ds := axmysql.NewDataStore(db)
+
 	ep := &endpoint.Endpoint{
 		Name: "ax.examples.banking",
 		Transport: &axrmq.Transport{
@@ -105,7 +103,7 @@ func main() {
 		In: &observability.InboundHook{
 			Observers: observers,
 			Next: &persistence.Injector{
-				DataStore: axmysql.NewDataStore(db),
+				DataStore: ds,
 				Next: &outbox.Deduplicator{
 					Repository: axmysql.OutboxRepository,
 					Next: &routing.Dispatcher{
@@ -121,6 +119,13 @@ func main() {
 				Next:   &endpoint.TransportStage{},
 			},
 		},
+	}
+
+	con := &projection.Consumer{
+		DataStore:    ds,
+		MessageStore: axmysql.MessageStore,
+		Offsets:      axmysql.ProjectionOffsetStore,
+		Projector:    projections.AccountProjector,
 	}
 
 	// -------------------------------------------------------
@@ -156,7 +161,17 @@ func main() {
 		Use:   "serve",
 		Short: fmt.Sprintf("Run the '%s' endpoint", ep.Name),
 		RunE: func(*cobra.Command, []string) error {
-			return ep.StartReceiving(ctx)
+			g, ctx := errgroup.WithContext(ctx)
+
+			g.Go(func() error {
+				return ep.StartReceiving(ctx)
+			})
+
+			g.Go(func() error {
+				return con.Run(ctx)
+			})
+
+			return g.Wait()
 		},
 	})
 

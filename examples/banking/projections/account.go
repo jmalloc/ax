@@ -15,6 +15,10 @@ var AccountProjector projection.Projector = accountProjector{}
 
 type accountProjector struct{}
 
+func (accountProjector) ProjectorName() string {
+	return "Account"
+}
+
 func (accountProjector) MessageTypes() ax.MessageTypeSet {
 	return ax.TypesOf(
 		&messages.AccountOpened{},

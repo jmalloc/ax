@@ -11,6 +11,12 @@ import (
 //
 // Unlike a routing.MessageHandler, they do not accept an ax.Sender argument.
 type Projector interface {
+	// ProjectorName returns a unique name for the projector.
+	//
+	// The projector's name is used to correlate persisted data with this
+	// instance, so it should not be changed.
+	ProjectorName() string
+
 	// MessageTypes returns the set of messages that the projector intends
 	// to handle.
 	//
