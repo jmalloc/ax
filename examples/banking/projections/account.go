@@ -9,11 +9,6 @@ import (
 	"github.com/jmalloc/ax/src/axmysql"
 )
 
-// AccountProjector is a message handler that builds the "account" read-model.
-var AccountProjector projection.Projector = axmysql.NewReadModelProjector(
-	accountProjector{},
-)
-
 type accountProjector struct{}
 
 func (accountProjector) ReadModelName() string {
@@ -71,3 +66,8 @@ func updateBalance(
 
 	return err
 }
+
+// AccountProjector is a message handler that builds the "account" read-model.
+var AccountProjector projection.Projector = axmysql.NewReadModelProjector(
+	accountProjector{},
+)
