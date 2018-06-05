@@ -121,11 +121,11 @@ func main() {
 		},
 	}
 
-	con := &projection.Consumer{
+	con := &projection.GlobalStoreConsumer{
+		Projector:    projections.AccountProjector,
 		DataStore:    ds,
 		MessageStore: axmysql.MessageStore,
 		Offsets:      axmysql.ProjectionOffsetStore,
-		Projector:    projections.AccountProjector,
 	}
 
 	// -------------------------------------------------------

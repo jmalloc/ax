@@ -13,7 +13,7 @@ type Projector interface {
 	// ProjectorName returns a unique name for the projector.
 	//
 	// The projector's name is used to correlate persisted data with this
-	// instance, so it should not be changed.
+	// instance, so it should not be changed once data bas been written.
 	ProjectorName() string
 
 	// MessageTypes returns the set of messages that the projector intends
