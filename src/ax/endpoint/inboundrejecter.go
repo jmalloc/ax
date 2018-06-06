@@ -6,7 +6,7 @@ import (
 
 // InboundRejecter is an inbound pipeline stage that validates messages before
 // forwarding them to the next pipeline stage. It uses a set of validators
-// distinct from this configured in the endpoint.
+// distinct from thouse configured in the endpoint.
 type InboundRejecter struct {
 	Validators []Validator
 	Next       InboundPipeline

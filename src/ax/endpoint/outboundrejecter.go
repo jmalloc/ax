@@ -6,7 +6,7 @@ import (
 
 // OutboundRejecter is an outbound pipeline stage that validates messages before
 // forwarding them to the next pipeline stage. It uses a set of validators
-// distinct from this configured in the endpoint.
+// distinct from those configured in the endpoint.
 type OutboundRejecter struct {
 	Validators []Validator
 	Next       OutboundPipeline
