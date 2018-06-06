@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS saga_instance (
     revision     BIGINT UNSIGNED NOT NULL,
     description  VARBINARY(255) NOT NULL,
     content_type VARBINARY(255) NOT NULL,
+    time         VARBINARY(255) NOT NULL,
     data         BLOB NOT NULL,
 
     PRIMARY KEY (instance_id)

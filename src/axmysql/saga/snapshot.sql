@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS saga_snapshot (
     revision     BIGINT UNSIGNED NOT NULL,
     description  VARBINARY(255) NOT NULL,
     content_type VARBINARY(255) NOT NULL,
+    time         VARBINARY(255) NOT NULL,
     data         BLOB NOT NULL,
 
     PRIMARY KEY (instance_id, revision)

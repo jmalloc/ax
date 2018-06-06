@@ -3,6 +3,7 @@ package saga
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/ax/saga"
@@ -75,11 +76,13 @@ func (SnapshotRepository) SaveSagaSnapshot(
 			revision = ?,
 			description = ?,
 			content_type = ?,
+			time = ?,
 			data = ?`,
 		i.InstanceID,
 		i.Revision,
 		i.Data.InstanceDescription(),
 		contentType,
+		time.Now().Format(time.RFC3339Nano),
 		data,
 	)
 
