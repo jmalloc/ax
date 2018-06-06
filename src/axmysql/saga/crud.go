@@ -39,7 +39,7 @@ func (r CRUDRepository) LoadSagaInstance(
 			revision,
 			content_type,
 			data
-		FROM saga_instance
+		FROM ax_saga_instance
 		WHERE instance_id = ?`,
 		id,
 	).Scan(
@@ -98,7 +98,7 @@ func (CRUDRepository) insertInstance(
 ) error {
 	_, err := tx.ExecContext(
 		ctx,
-		`INSERT INTO saga_instance SET
+		`INSERT INTO ax_saga_instance SET
 			instance_id = ?,
 			revision = 1,
 			description = ?,
@@ -126,7 +126,7 @@ func (CRUDRepository) updateInstance(
 ) error {
 	res, err := tx.ExecContext(
 		ctx,
-		`UPDATE saga_instance SET
+		`UPDATE ax_saga_instance SET
 			revision = revision + 1,
 			description = ?,
 			content_type = ?,

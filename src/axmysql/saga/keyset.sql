@@ -1,8 +1,8 @@
 --
--- saga_keyset contains the "key sets" that are associated with saga instances
+-- ax_saga_keyset contains the "key sets" that are associated with saga instances
 -- that use keyset.Mapper.
 --
-CREATE TABLE IF NOT EXISTS saga_keyset (
+CREATE TABLE IF NOT EXISTS ax_saga_keyset (
     saga        VARBINARY(255) NOT NULL,
     mapping_key VARBINARY(255) NOT NULL,
     instance_id VARBINARY(255) NOT NULL,

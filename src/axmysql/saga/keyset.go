@@ -26,7 +26,7 @@ func (KeySetRepository) FindByKey(
 		ctx,
 		`SELECT
 			instance_id
-		FROM saga_keyset
+		FROM ax_saga_keyset
 		WHERE saga = ?
 		AND mapping_key = ?`,
 		sn,
@@ -60,7 +60,7 @@ func (KeySetRepository) SaveKeys(
 
 	if _, err := tx.ExecContext(
 		ctx,
-		`DELETE FROM saga_keyset
+		`DELETE FROM ax_saga_keyset
 		WHERE instance_id = ?`,
 		id,
 	); err != nil {
@@ -70,7 +70,7 @@ func (KeySetRepository) SaveKeys(
 	for _, k := range ks {
 		if _, err := tx.ExecContext(
 			ctx,
-			`INSERT INTO saga_keyset SET
+			`INSERT INTO ax_saga_keyset SET
 				saga = ?,
 				mapping_key = ?,
 				instance_id = ?`,
