@@ -5,7 +5,7 @@ import (
 	mysqlprojection "github.com/jmalloc/ax/src/axmysql/projection"
 )
 
-// ProjectionOffsetStore is an offset store backed by an MySQL database.
+// ProjectionOffsetStore is an offset store backed by a MySQL database.
 var ProjectionOffsetStore projection.OffsetStore = mysqlprojection.OffsetStore{}
 
 // NewReadModelProjector returns a new projector that builds a MySQL based

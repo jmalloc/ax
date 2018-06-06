@@ -5,5 +5,5 @@ import (
 	mysqloutbox "github.com/jmalloc/ax/src/axmysql/outbox"
 )
 
-// OutboxRepository is an outbox repository backed by an MySQL database.
+// OutboxRepository is an outbox repository backed by a MySQL database.
 var OutboxRepository outbox.Repository = mysqloutbox.Repository{}
