@@ -4,8 +4,9 @@ import (
 	"context"
 )
 
-// InboundRejecter is the validation stage in the message inbound pipeline.
-// It rejects invalid messages with the set of validators defined in Endpoint
+// InboundRejecter is an inbound pipeline stage that validates messages before
+// forwarding them to the next pipeline stage. It uses a set of validators
+// distinct from this configured in the endpoint.
 type InboundRejecter struct {
 	Validators []Validator
 	Next       InboundPipeline
@@ -21,8 +22,8 @@ func (i *InboundRejecter) Initialize(
 	return i.Next.Initialize(ctx, ep)
 }
 
-// Accept forwards an inbound message through the pipeline until
-// it is handled by some application-defined message handler(s).
+// Accept forwards an inbound message to the next pipeline stage only if it is
+// successfully validated.
 func (i *InboundRejecter) Accept(
 	ctx context.Context,
 	sink MessageSink,

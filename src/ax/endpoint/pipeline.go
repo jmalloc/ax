@@ -11,8 +11,8 @@ import (
 // InboundPipeline interface that forwards messages to another pipeline.
 type InboundPipeline interface {
 	// Initialize is called during initialization of the endpoint, after the
-	// transport is initialized. It can be used to inspect or further configure the
-	// endpoint as per the needs of the pipeline.
+	// transport is initialized. It can be used to inspect or further
+	// configure the endpoint as per the needs of the pipeline.
 	Initialize(ctx context.Context, ep *Endpoint) error
 
 	// Accept forwards an inbound message through the pipeline until
@@ -29,7 +29,7 @@ type OutboundPipeline interface {
 	MessageSink
 
 	// Initialize is called during initialization of the endpoint, after the
-	// transport is initialized. It can be used to inspect or further configure the
-	// endpoint as per the needs of the pipeline.
+	// transport is initialized. It can be used to inspect or further
+	// configure the endpoint as per the needs of the pipeline.
 	Initialize(ctx context.Context, ep *Endpoint) error
 }

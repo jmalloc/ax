@@ -10,12 +10,12 @@ import (
 
 // Endpoint is a named source and recipient of messages.
 type Endpoint struct {
-	Name        string
-	Transport   Transport
-	In          InboundPipeline
-	Out         OutboundPipeline
-	RetryPolicy RetryPolicy
-	Validators  []Validator
+	Name             string
+	Transport        Transport
+	In               InboundPipeline
+	Out              OutboundPipeline
+	RetryPolicy      RetryPolicy
+	SenderValidators []Validator
 
 	initOnce sync.Once
 }
@@ -28,7 +28,7 @@ func (ep *Endpoint) NewSender(ctx context.Context) (ax.Sender, error) {
 
 	return SinkSender{
 		Sink:       ep.Out,
-		Validators: ep.Validators,
+		Validators: ep.SenderValidators,
 	}, nil
 }
 

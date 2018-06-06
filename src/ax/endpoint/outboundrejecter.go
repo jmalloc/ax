@@ -4,7 +4,9 @@ import (
 	"context"
 )
 
-// OutboundRejecter is the validation stage in the message outbound pipeline
+// OutboundRejecter is an outbound pipeline stage that validates messages before
+// forwarding them to the next pipeline stage. It uses a set of validators
+// distinct from this configured in the endpoint.
 type OutboundRejecter struct {
 	Validators []Validator
 	Next       OutboundPipeline
@@ -20,7 +22,8 @@ func (o *OutboundRejecter) Initialize(
 	return o.Next.Initialize(ctx, ep)
 }
 
-// Accept processes the message encapsulated in env.
+// Accept forwards an outbound message to the next pipeline stage only if it is
+// successfully validated.
 func (o *OutboundRejecter) Accept(
 	ctx context.Context,
 	env OutboundEnvelope,

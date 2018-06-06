@@ -32,7 +32,7 @@ func (d *Dispatcher) Initialize(ctx context.Context, ep *endpoint.Endpoint) erro
 		}
 	}
 
-	d.validators = ep.Validators
+	d.validators = ep.SenderValidators
 
 	if err := ep.Transport.Subscribe(ctx, endpoint.OpSendUnicast, unicast); err != nil {
 		return err

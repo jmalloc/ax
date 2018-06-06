@@ -22,17 +22,17 @@ var _ = Describe("SinkSender", func() {
 	BeforeEach(func() {
 		sink = &BufferedSink{}
 		validator1 = &endpointtest.ValidatorMock{
-			ValidateFunc: func(ctx context.Context, msg ax.Message) error {
+			ValidateFunc: func(ctx context.Context, m ax.Message) error {
 				return nil
 			},
 		}
 		validator2 = &endpointtest.ValidatorMock{
-			ValidateFunc: func(ctx context.Context, msg ax.Message) error {
+			ValidateFunc: func(ctx context.Context, m ax.Message) error {
 				return nil
 			},
 		}
 		validator3 = &endpointtest.ValidatorMock{
-			ValidateFunc: func(ctx context.Context, msg ax.Message) error {
+			ValidateFunc: func(ctx context.Context, m ax.Message) error {
 				return nil
 			},
 		}
@@ -75,7 +75,7 @@ var _ = Describe("SinkSender", func() {
 
 		It("returns a validation error if one of the validators fails", func() {
 			expected := errors.New("test validation error")
-			validator2.ValidateFunc = func(ctx context.Context, msg ax.Message) error {
+			validator2.ValidateFunc = func(ctx context.Context, m ax.Message) error {
 				return expected
 			}
 
@@ -86,40 +86,40 @@ var _ = Describe("SinkSender", func() {
 			Expect(err).Should(MatchError(expected))
 		})
 
-		It("uses default message validators if the validators slice is empty", func() {
-			sink = &BufferedSink{}
-			sender = SinkSender{
-				Sink: sink,
-			}
+		// It("uses default message validators if the validators slice is empty", func() {
+		// 	sink = &BufferedSink{}
+		// 	sender = SinkSender{
+		// 		Sink: sink,
+		// 	}
 
-			cmd := &endpointtest.SelfValidatingCommandMock{
-				ValidateFunc: func() error {
-					return nil
-				},
-			}
-			env := ax.NewEnvelope(&messagetest.Message{})
-			ctx := WithEnvelope(context.Background(), env)
-			_, err := sender.ExecuteCommand(ctx, cmd)
-			Expect(err).ShouldNot(HaveOccurred())
-		})
+		// 	cmd := &endpointtest.SelfValidatingCommandMock{
+		// 		ValidateFunc: func() error {
+		// 			return nil
+		// 		},
+		// 	}
+		// 	env := ax.NewEnvelope(&messagetest.Message{})
+		// 	ctx := WithEnvelope(context.Background(), env)
+		// 	_, err := sender.ExecuteCommand(ctx, cmd)
+		// 	Expect(err).ShouldNot(HaveOccurred())
+		// })
 
-		It("returns an error if default command validation fails", func() {
-			sink = &BufferedSink{}
-			sender = SinkSender{
-				Sink: sink,
-			}
+		// It("returns an error if default command validation fails", func() {
+		// 	sink = &BufferedSink{}
+		// 	sender = SinkSender{
+		// 		Sink: sink,
+		// 	}
 
-			expected := errors.New("test validation error")
-			cmd := &endpointtest.SelfValidatingCommandMock{
-				ValidateFunc: func() error {
-					return expected
-				},
-			}
-			env := ax.NewEnvelope(&messagetest.Message{})
-			ctx := WithEnvelope(context.Background(), env)
-			_, err := sender.ExecuteCommand(ctx, cmd)
-			Expect(err).Should(HaveOccurred())
-		})
+		// 	expected := errors.New("test validation error")
+		// 	cmd := &endpointtest.SelfValidatingCommandMock{
+		// 		ValidateFunc: func() error {
+		// 			return expected
+		// 		},
+		// 	}
+		// 	env := ax.NewEnvelope(&messagetest.Message{})
+		// 	ctx := WithEnvelope(context.Background(), env)
+		// 	_, err := sender.ExecuteCommand(ctx, cmd)
+		// 	Expect(err).Should(HaveOccurred())
+		// })
 	})
 
 	Describe("PublishEvent", func() {
@@ -151,7 +151,7 @@ var _ = Describe("SinkSender", func() {
 
 		It("returns a validation error if one of the validators fails", func() {
 			expected := errors.New("test validation error")
-			validator2.ValidateFunc = func(ctx context.Context, msg ax.Message) error {
+			validator2.ValidateFunc = func(ctx context.Context, m ax.Message) error {
 				return expected
 			}
 
@@ -162,39 +162,39 @@ var _ = Describe("SinkSender", func() {
 			Expect(err).Should(MatchError(expected))
 		})
 
-		It("uses default message validators if the validators slice is empty", func() {
-			sink = &BufferedSink{}
-			sender = SinkSender{
-				Sink: sink,
-			}
+		// It("uses default message validators if the validators slice is empty", func() {
+		// 	sink = &BufferedSink{}
+		// 	sender = SinkSender{
+		// 		Sink: sink,
+		// 	}
 
-			ev := &endpointtest.SelfValidatingEventMock{
-				ValidateFunc: func() error {
-					return nil
-				},
-			}
-			env := ax.NewEnvelope(&messagetest.Message{})
-			ctx := WithEnvelope(context.Background(), env)
-			_, err := sender.PublishEvent(ctx, ev)
-			Expect(err).ShouldNot(HaveOccurred())
-		})
+		// 	ev := &endpointtest.SelfValidatingEventMock{
+		// 		ValidateFunc: func() error {
+		// 			return nil
+		// 		},
+		// 	}
+		// 	env := ax.NewEnvelope(&messagetest.Message{})
+		// 	ctx := WithEnvelope(context.Background(), env)
+		// 	_, err := sender.PublishEvent(ctx, ev)
+		// 	Expect(err).ShouldNot(HaveOccurred())
+		// })
 
-		It("returns an error if default event validation fails", func() {
-			sink = &BufferedSink{}
-			sender = SinkSender{
-				Sink: sink,
-			}
+		// It("returns an error if default event validation fails", func() {
+		// 	sink = &BufferedSink{}
+		// 	sender = SinkSender{
+		// 		Sink: sink,
+		// 	}
 
-			expected := errors.New("test validation error")
-			ev := &endpointtest.SelfValidatingEventMock{
-				ValidateFunc: func() error {
-					return expected
-				},
-			}
-			env := ax.NewEnvelope(&messagetest.Message{})
-			ctx := WithEnvelope(context.Background(), env)
-			_, err := sender.PublishEvent(ctx, ev)
-			Expect(err).Should(HaveOccurred())
-		})
+		// 	expected := errors.New("test validation error")
+		// 	ev := &endpointtest.SelfValidatingEventMock{
+		// 		ValidateFunc: func() error {
+		// 			return expected
+		// 		},
+		// 	}
+		// 	env := ax.NewEnvelope(&messagetest.Message{})
+		// 	ctx := WithEnvelope(context.Background(), env)
+		// 	_, err := sender.PublishEvent(ctx, ev)
+		// 	Expect(err).Should(HaveOccurred())
+		// })
 	})
 })

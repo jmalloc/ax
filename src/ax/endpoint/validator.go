@@ -15,7 +15,7 @@ import (
 // point in a pipeline.
 type Validator interface {
 	// Validate checks if m is valid.
-
+	//
 	// It returns a non-nil error if the message is invalid. The meaning of
 	// 'valid' in is implementation-defined.
 	Validate(ctx context.Context, m ax.Message) error
@@ -31,16 +31,16 @@ var DefaultValidators = []Validator{
 // that validates the message if it implements SelfValidatingMessage interface.
 type SelfValidator struct{}
 
-// Validate validates the message by checking if the message
-// is nil and if the message implements SelfValidatingMessage
-// interface to call its Validate method.
+// Validate validates m if it implements SelfValidatingMessage. It returns the
+// error returned by m.Validate(). If m does not implement SelfValidatingMessage
+// then no validation is performed and nil is returned.
 func (SelfValidator) Validate(
 	ctx context.Context,
-	msg ax.Message,
+	m ax.Message,
 ) error {
 
 	// check if message can perform self-validation
-	if s, ok := msg.(SelfValidatingMessage); ok {
+	if s, ok := m.(SelfValidatingMessage); ok {
 		return s.Validate()
 	}
 

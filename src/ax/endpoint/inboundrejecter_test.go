@@ -37,17 +37,17 @@ var _ = Describe("InboundRejecter", func() {
 			},
 		}
 		validator1 = &endpointtest.ValidatorMock{
-			ValidateFunc: func(ctx context.Context, msg ax.Message) error {
+			ValidateFunc: func(ctx context.Context, m ax.Message) error {
 				return nil
 			},
 		}
 		validator2 = &endpointtest.ValidatorMock{
-			ValidateFunc: func(ctx context.Context, msg ax.Message) error {
+			ValidateFunc: func(ctx context.Context, m ax.Message) error {
 				return nil
 			},
 		}
 		validator3 = &endpointtest.ValidatorMock{
-			ValidateFunc: func(ctx context.Context, msg ax.Message) error {
+			ValidateFunc: func(ctx context.Context, m ax.Message) error {
 				return nil
 			},
 		}
@@ -119,7 +119,7 @@ var _ = Describe("InboundRejecter", func() {
 				},
 			}
 
-			validator2.ValidateFunc = func(ctx context.Context, msg ax.Message) error {
+			validator2.ValidateFunc = func(ctx context.Context, m ax.Message) error {
 				return expected
 			}
 
