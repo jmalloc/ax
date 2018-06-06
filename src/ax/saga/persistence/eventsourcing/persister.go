@@ -74,7 +74,7 @@ func (p *Persister) BeginUnitOfWork(
 	}, nil
 }
 
-// unitOfWork is an implementation of saga.UnitOfWork that perists saga
+// unitOfWork is an implementation of saga.UnitOfWork that persists saga
 // instances as a stream of events, with optional snapshots.
 type unitOfWork struct {
 	messageStore messagestore.Store
