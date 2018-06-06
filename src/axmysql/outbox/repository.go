@@ -13,8 +13,7 @@ import (
 
 // Repository is a MySQL-backed implementation of Ax's outbox.Repository
 // interface.
-type Repository struct {
-}
+type Repository struct{}
 
 // LoadOutbox loads the unsent outbound messages that were produced when the
 // message identified by id was first delivered.

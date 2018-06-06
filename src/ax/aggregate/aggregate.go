@@ -38,8 +38,8 @@ type ID struct{ ident.ID }
 // aggregate from the message store.
 //
 // The names of handler and applier methods are not meaningful to the aggregate
-// system. The convention is to name command handlers after their commands, and
-// to prefix event appliers with the word "When", such as:
+// system. By convention, command handlers are named after their commands, and
+// event appliers are prefixed with the word "When", such as:
 //
 //     func (*BankAccount) CreditAccount(*messages.CreditAccount, Recorder)
 //     func (*BankAccount) WhenAccountCredited(*messages.AccountCredited)

@@ -33,8 +33,9 @@ type Store interface {
 	) (Stream, bool, error)
 }
 
-// GloballyOrderedStore is a Store that can exposed all of its messages as a
-// single stream.
+// GloballyOrderedStore is a store that preserves a global ordering for messages
+// across all streams, allowing the entire store to be consumed via a single
+// stream.
 type GloballyOrderedStore interface {
 	Store
 
