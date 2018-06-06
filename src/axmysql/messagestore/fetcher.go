@@ -30,7 +30,7 @@ func (f *StreamFetcher) FetchRows(ctx context.Context, offset, n uint64) (*sql.R
 	return f.DB.QueryContext(
 		ctx,
 		`SELECT `+fetchColumns+`
-		FROM messagestore_message
+		FROM ax_messagestore_message
 		WHERE stream_id = ?
 		AND stream_offset >= ?
 		ORDER BY stream_offset
@@ -51,7 +51,7 @@ func (f *GlobalFetcher) FetchRows(ctx context.Context, offset, n uint64) (*sql.R
 	return f.DB.QueryContext(
 		ctx,
 		`SELECT `+fetchColumns+`
-		FROM messagestore_message
+		FROM ax_messagestore_message
 		WHERE global_offset >= ?
 		ORDER BY global_offset
 		LIMIT ?`,

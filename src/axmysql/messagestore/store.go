@@ -118,7 +118,7 @@ func lookupStreamID(ctx context.Context, db *sql.DB, s string) (int64, bool, err
 		ctx,
 		`SELECT
 			stream_id
-		FROM messagestore_stream
+		FROM ax_messagestore_stream
 		WHERE name = ?`,
 		s,
 	).Scan(

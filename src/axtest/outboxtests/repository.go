@@ -1,14 +1,16 @@
-package outboxtest
+package outboxtests
 
 import (
 	"context"
 	"time"
 
+	"github.com/jmalloc/ax/src/axtest"
+	"github.com/jmalloc/ax/src/internal/messagetest"
+
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/outbox"
 	"github.com/jmalloc/ax/src/ax/persistence"
-	"github.com/jmalloc/ax/src/internal/messagetest"
 	g "github.com/onsi/ginkgo"
 	m "github.com/onsi/gomega"
 )
@@ -113,23 +115,9 @@ func RepositorySuite(
 				g.It("returns the messages in the outbox", func() {
 					envs, _, err := repo.LoadOutbox(ctx, store, causationID)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
-
-					for i, env := range envs {
-						if env.MessageID == m1.MessageID {
-							m.Expect(env.Time).To(m.BeTemporally("==", t1))
-						} else if env.MessageID == m2.MessageID {
-							m.Expect(env.Time).To(m.BeTemporally("==", t2))
-						}
-
-						// zero times for easy comparison
-						envs[i].Time = time.Time{}
-					}
-
-					// zero times for easy comparison
-					m1.Time = time.Time{}
-					m2.Time = time.Time{}
-
-					m.Expect(envs).To(m.ConsistOf(m1, m2))
+					m.Expect(
+						axtest.ConsistsOfOutboundEnvelopes(envs, m1, m2),
+					).To(m.BeTrue())
 				})
 
 				g.It("does not return messages that are marked as sent", func() {
@@ -149,9 +137,9 @@ func RepositorySuite(
 
 					envs, _, err := repo.LoadOutbox(ctx, store, causationID)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
-
-					m.Expect(envs).To(m.HaveLen(1))
-					m.Expect(envs[0].MessageID).To(m.Equal(m2.MessageID))
+					m.Expect(
+						axtest.ConsistsOfOutboundEnvelopes(envs, m2),
+					).To(m.BeTrue())
 				})
 			})
 

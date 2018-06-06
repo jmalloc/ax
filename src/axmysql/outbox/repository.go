@@ -27,7 +27,7 @@ func (Repository) LoadOutbox(
 	row := db.QueryRowContext(
 		ctx,
 		`SELECT EXISTS (
-			SELECT * FROM outbox WHERE causation_id = ?
+			SELECT * FROM ax_outbox WHERE causation_id = ?
 		)`,
 		id,
 	)
@@ -51,7 +51,7 @@ func (Repository) LoadOutbox(
 			body,
 			operation,
 			destination
-		FROM outbox_message
+		FROM ax_outbox_message
 		WHERE causation_id = ?`,
 		id,
 	)
@@ -86,7 +86,7 @@ func (Repository) SaveOutbox(
 
 	if _, err := tx.ExecContext(
 		ctx,
-		`INSERT INTO outbox SET causation_id = ?`,
+		`INSERT INTO ax_outbox SET causation_id = ?`,
 		id,
 	); err != nil {
 		return err
@@ -109,7 +109,7 @@ func (Repository) MarkAsSent(
 ) error {
 	_, err := mysqlpersistence.ExtractTx(ptx).ExecContext(
 		ctx,
-		`DELETE FROM outbox_message WHERE message_id = ?`,
+		`DELETE FROM ax_outbox_message WHERE message_id = ?`,
 		env.MessageID,
 	)
 	return err
@@ -163,7 +163,7 @@ func insertOutboxMessage(
 
 	_, err = tx.ExecContext(
 		ctx,
-		`INSERT INTO outbox_message SET
+		`INSERT INTO ax_outbox_message SET
 			message_id = ?,
 			causation_id = ?,
 			correlation_id = ?,
