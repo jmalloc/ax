@@ -1,10 +1,10 @@
 --
--- outbox stores the timestamp at which an outbox was created.
+-- ax_outbox stores the timestamp at which an outbox was created.
 --
 -- The presence of a row in this table indicates that the message has already
 -- been handled, even if the outbox is now empty.
 --
-CREATE TABLE IF NOT EXISTS outbox (
+CREATE TABLE IF NOT EXISTS ax_outbox (
     causation_id VARBINARY(255) NOT NULL,
     insert_time  TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
 
@@ -13,11 +13,11 @@ CREATE TABLE IF NOT EXISTS outbox (
 );
 
 --
--- outbox_message stores the messages within a single outbox.
+-- ax_outbox_message stores the messages within a single outbox.
 --
-CREATE TABLE IF NOT EXISTS outbox_message (
+CREATE TABLE IF NOT EXISTS ax_outbox_message (
     message_id     VARBINARY(255) NOT NULL,
-    causation_id   VARBINARY(255) NOT NULL, -- outbox.causation_id
+    causation_id   VARBINARY(255) NOT NULL, -- ax_outbox.causation_id
     correlation_id VARBINARY(255) NOT NULL,
     time           VARBINARY(255) NOT NULL,
     content_type   VARBINARY(255) NOT NULL,
