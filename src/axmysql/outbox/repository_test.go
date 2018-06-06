@@ -1,4 +1,4 @@
-package axmysql_test
+package outbox_test
 
 import (
 	"database/sql"
@@ -7,7 +7,9 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmalloc/ax/src/ax/outbox"
 	"github.com/jmalloc/ax/src/ax/persistence"
-	. "github.com/jmalloc/ax/src/axmysql"
+	"github.com/jmalloc/ax/src/axmysql"
+	"github.com/jmalloc/ax/src/axmysql/internal/schema"
+	. "github.com/jmalloc/ax/src/axmysql/outbox"
 	"github.com/jmalloc/ax/src/internal/outboxtest"
 	. "github.com/onsi/ginkgo"
 )
@@ -23,7 +25,7 @@ var _ = Describe("OutboxRepository", func() {
 			panic(err)
 		}
 
-		if err := createSchema(db, "outbox.sql"); err != nil {
+		if err := schema.Create(db, "schema.sql"); err != nil {
 			panic(err)
 		}
 	})
@@ -40,13 +42,13 @@ var _ = Describe("OutboxRepository", func() {
 	}
 
 	fn(
-		"OutboxRepository",
+		"epository",
 		outboxtest.RepositorySuite(
 			func() persistence.DataStore {
-				return &DataStore{DB: db}
+				return axmysql.NewDataStore(db)
 			},
 			func() outbox.Repository {
-				return &OutboxRepository{}
+				return Repository{}
 			},
 		),
 	)

@@ -7,14 +7,17 @@ import (
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/jmalloc/ax/examples/banking/domain"
 	"github.com/jmalloc/ax/examples/banking/messages"
+	"github.com/jmalloc/ax/examples/banking/projections"
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/observability"
 	"github.com/jmalloc/ax/src/ax/outbox"
 	"github.com/jmalloc/ax/src/ax/persistence"
+	"github.com/jmalloc/ax/src/ax/projection"
 	"github.com/jmalloc/ax/src/ax/routing"
 	"github.com/jmalloc/ax/src/ax/saga"
 	"github.com/jmalloc/ax/src/ax/saga/mapping/direct"
@@ -42,19 +45,19 @@ func main() {
 	defer rmq.Close()
 
 	crudPersister := &crud.Persister{
-		Repository: axmysql.SagaRepository{},
+		Repository: axmysql.SagaCRUDRepository,
 	}
 
 	esPersister := &eventsourcing.Persister{
-		MessageStore:      axmysql.MessageStore{},
-		Snapshots:         axmysql.SnapshotRepository{},
+		MessageStore:      axmysql.MessageStore,
+		Snapshots:         axmysql.SagaSnapshotRepository,
 		SnapshotFrequency: 3,
 	}
 
 	directMapper := &direct.Mapper{}
 
 	ksMapper := &keyset.Mapper{
-		Repository: axmysql.KeySetRepository{},
+		Repository: axmysql.SagaKeySetRepository,
 	}
 
 	htable, err := routing.NewHandlerTable(
@@ -90,6 +93,8 @@ func main() {
 		&observability.LoggingObserver{},
 	}
 
+	ds := axmysql.NewDataStore(db)
+
 	ep := &endpoint.Endpoint{
 		Name: "ax.examples.banking",
 		Transport: &axrmq.Transport{
@@ -98,9 +103,9 @@ func main() {
 		In: &observability.InboundHook{
 			Observers: observers,
 			Next: &persistence.Injector{
-				DataStore: &axmysql.DataStore{DB: db},
+				DataStore: ds,
 				Next: &outbox.Deduplicator{
-					Repository: &axmysql.OutboxRepository{},
+					Repository: axmysql.OutboxRepository,
 					Next: &routing.Dispatcher{
 						Routes: htable,
 					},
@@ -114,6 +119,13 @@ func main() {
 				Next:   &endpoint.TransportStage{},
 			},
 		},
+	}
+
+	con := &projection.GlobalStoreConsumer{
+		Projector:    projections.AccountProjector,
+		DataStore:    ds,
+		MessageStore: axmysql.MessageStore,
+		Offsets:      axmysql.ProjectionOffsetStore,
 	}
 
 	// -------------------------------------------------------
@@ -149,7 +161,17 @@ func main() {
 		Use:   "serve",
 		Short: fmt.Sprintf("Run the '%s' endpoint", ep.Name),
 		RunE: func(*cobra.Command, []string) error {
-			return ep.StartReceiving(ctx)
+			g, ctx := errgroup.WithContext(ctx)
+
+			g.Go(func() error {
+				return ep.StartReceiving(ctx)
+			})
+
+			g.Go(func() error {
+				return con.Consume(ctx)
+			})
+
+			return g.Wait()
 		},
 	})
 

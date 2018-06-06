@@ -13,20 +13,20 @@ import (
 // It maintains a capped-size pool of AMQP channels which are placed into
 // "confirm mode" when they are first created.
 type publisher struct {
-	conn *amqp.Connection
-	// ep       string
+	conn     *amqp.Connection
+	ep       string
 	channels chan *channel
 }
 
 // newPublisher returns a new publisher with a channel pool
 func newPublisher(
 	conn *amqp.Connection,
-	// ep string,
+	ep string,
 	poolSize int,
 ) *publisher {
 	return &publisher{
 		conn,
-		// ep,
+		ep,
 		make(chan *channel, poolSize),
 	}
 }
@@ -60,6 +60,27 @@ func (p *publisher) PublishMulticast(ctx context.Context, pub amqp.Publishing) e
 		multicastRoutingKey(pub.Type),
 		false, // mandatory
 		pub,
+	)
+}
+
+func (p *publisher) RepublishAsError(ctx context.Context, del amqp.Delivery) error {
+	_, queue := queueNames(p.ep)
+
+	return p.publish(
+		ctx,
+		"",
+		queue,
+		true, // mandatory
+		amqp.Publishing{
+			AppId:         del.AppId,
+			MessageId:     del.MessageId,
+			ReplyTo:       del.ReplyTo,
+			CorrelationId: del.CorrelationId,
+			Timestamp:     del.Timestamp,
+			Type:          del.Type,
+			ContentType:   del.ContentType,
+			Body:          del.Body,
+		},
 	)
 }
 

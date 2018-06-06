@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"context"
+	"time"
 
 	"github.com/jmalloc/ax/src/ax"
 )
@@ -50,7 +51,10 @@ type Acknowledger interface {
 
 	// Retry requeues the message so that it is redelivered at some point in the
 	// future.
-	Retry(ctx context.Context, err error) error
+	//
+	// d is a hint as to how long the transport should wait before redelivering
+	// this message.
+	Retry(ctx context.Context, err error, d time.Duration) error
 
 	// Reject indicates that the message could not be handled and should not be
 	// retried. Depending on the transport, this may move the message to some form

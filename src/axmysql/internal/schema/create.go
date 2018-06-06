@@ -1,4 +1,4 @@
-package axmysql_test
+package schema
 
 import (
 	"database/sql"
@@ -7,14 +7,14 @@ import (
 	"strings"
 )
 
-// createSchema executes DDL queries from the given SQL file.
+// Create executes DDL queries from the given SQL file.
 //
 // It uses a very naive regexp pattern to identify 'CREATE TABLE' queries in
 // order to first drop the table if it already exists.
 //
 // If you find yourself expanding the behavior of this function its probably
 // time to stop and look for a proper schema management solution.
-func createSchema(db *sql.DB, filename string) error {
+func Create(db *sql.DB, filename string) error {
 	buf, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return err

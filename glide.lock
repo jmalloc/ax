@@ -1,5 +1,5 @@
-hash: 1116151b93d91399ccea2c2cf5637fe0f6f8ff19c6b81223cb196fdba42b40fd
-updated: 2018-05-17T10:28:35.304980055+10:00
+hash: cc3c4b335b497cd0f26d2dd4b8ecb80e1b1ecbc8a8d02073eeaeef2eafa8b062
+updated: 2018-06-05T14:39:30.174751343+10:00
 imports:
 - name: github.com/go-sql-driver/mysql
   version: 3287d94d4c6a48a63e16fffaabf27ab20203af2a
@@ -65,17 +65,21 @@ imports:
 - name: go.uber.org/multierr
   version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
 - name: golang.org/x/net
-  version: f73e4c9ed3b7ebdd5f699a16a880c2b1994e50dd
+  version: b60f3a92103dfd93dfcb900ec77c6d0643510868
   subpackages:
   - html
   - html/atom
   - html/charset
+- name: golang.org/x/sync
+  version: 1d60e4601c6fd243af51cc01ddf169918a5407ca
+  subpackages:
+  - errgroup
 - name: golang.org/x/sys
-  version: 7db1c3b1a98089d0071c84f646ff5c96aad43682
+  version: 2320a9c15898af1b1b24f99700d5c1e957f9d8cf
   subpackages:
   - unix
 - name: golang.org/x/text
-  version: 7922cc490dd5a7dbaa7fd5d6196b49db59ac042f
+  version: 1cbadb444a806fd9430d14ad08967ed91da4fa0a
   subpackages:
   - encoding
   - encoding/charmap
@@ -87,8 +91,6 @@ imports:
   - encoding/simplifiedchinese
   - encoding/traditionalchinese
   - encoding/unicode
-  - internal/language
-  - internal/language/compact
   - internal/tag
   - internal/utf8internal
   - language
@@ -99,5 +101,5 @@ imports:
   subpackages:
   - cloudsql
 - name: gopkg.in/yaml.v2
-  version: 5420a8b6744d3b0345ab293f6fcba19c978f1183
+  version: eb3733d160e74a9c7e442f435eb3bea458e1d19f
 testImports: []

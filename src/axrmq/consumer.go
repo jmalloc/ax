@@ -2,6 +2,7 @@ package axrmq
 
 import (
 	"context"
+	"sync"
 
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/streadway/amqp"
@@ -9,8 +10,14 @@ import (
 
 // consumer receives messages from the broker
 type consumer struct {
-	ep    string
-	ch    *amqp.Channel
+	ep          string
+	minPreFetch int
+	maxPreFetch int
+
+	m        sync.Mutex
+	ch       *amqp.Channel
+	preFetch int
+
 	msgs  <-chan amqp.Delivery
 	close chan *amqp.Error
 }
@@ -19,7 +26,7 @@ func newConsumer(
 	conn *amqp.Connection,
 	ep string,
 	excl bool,
-	preFetch int,
+	minPreFetch, maxPreFetch int,
 ) (*consumer, error) {
 	ch, err := conn.Channel()
 	if err != nil {
@@ -38,7 +45,7 @@ func newConsumer(
 		return nil, err
 	}
 
-	err = ch.Qos(preFetch, 0, false)
+	err = ch.Qos(minPreFetch, 0, false)
 	if err != nil {
 		return nil, err
 	}
@@ -59,10 +66,13 @@ func newConsumer(
 	}
 
 	con := &consumer{
-		ep,
-		ch,
-		msgs,
-		make(chan *amqp.Error),
+		ep:          ep,
+		preFetch:    minPreFetch,
+		minPreFetch: minPreFetch,
+		maxPreFetch: maxPreFetch,
+		ch:          ch,
+		msgs:        msgs,
+		close:       make(chan *amqp.Error),
 	}
 
 	ch.NotifyClose(con.close)
@@ -77,6 +87,39 @@ func (c *consumer) BindUnicast(mt ax.MessageTypeSet) error {
 
 func (c *consumer) BindMulticast(mt ax.MessageTypeSet) error {
 	return declareMulticastBindings(c.ch, c.ep, mt)
+}
+
+func (c *consumer) IncreasePreFetch() error {
+	return c.updatePreFetch(+1)
+}
+
+func (c *consumer) DecreasePreFetch() error {
+	return c.updatePreFetch(-1)
+}
+
+func (c *consumer) updatePreFetch(delta int) error {
+	c.m.Lock()
+	defer c.m.Unlock()
+
+	pf := c.preFetch + delta
+
+	if pf < c.minPreFetch {
+		pf = c.minPreFetch
+	} else if pf > c.maxPreFetch {
+		pf = c.maxPreFetch
+	}
+
+	if pf == c.preFetch {
+		return nil
+	}
+
+	if err := c.ch.Qos(pf, 0, false); err != nil {
+		return err
+	}
+
+	c.preFetch = pf
+
+	return nil
 }
 
 func (c *consumer) Receive(ctx context.Context) (amqp.Delivery, error) {
