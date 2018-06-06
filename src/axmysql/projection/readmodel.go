@@ -25,7 +25,9 @@ import (
 // Where T is a struct type that implements ax.Event.
 //
 // Applier methods are responsible for mutating the read-model state. The
-// applier every time an event is received.
+// appropriate applier is called for each message encountered in the stream. Any
+// messages in the stream that do not have an associated applier method are
+// ignored.
 //
 // The names of applier methods are not meaningful to the projection system. By
 // convention, event appliers are prefixed with the word "When", such as:
