@@ -168,7 +168,7 @@ func main() {
 			})
 
 			g.Go(func() error {
-				return con.Run(ctx)
+				return con.Consume(ctx)
 			})
 
 			return g.Wait()

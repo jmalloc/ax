@@ -21,9 +21,9 @@ type GlobalStoreConsumer struct {
 	stream messagestore.Stream
 }
 
-// Run reads pipes messages from the message stream to the projector until an
-// error occurs or ctx is canceled.
-func (c *GlobalStoreConsumer) Run(ctx context.Context) error {
+// Consume reads message from the store and forwards them to the projector until
+// an error occurs or ctx is canceled.
+func (c *GlobalStoreConsumer) Consume(ctx context.Context) error {
 	c.name = c.Projector.ProjectorName()
 	c.types = c.Projector.MessageTypes()
 
