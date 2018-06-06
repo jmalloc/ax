@@ -16,7 +16,7 @@ type OffsetStore struct{}
 // LoadOffset returns the offset at which a consumer should resume
 // reading from the stream.
 //
-// pn is the projection name.
+// pn is the projector name.
 func (OffsetStore) LoadOffset(
 	ctx context.Context,
 	ds persistence.DataStore,
@@ -49,7 +49,7 @@ func (OffsetStore) LoadOffset(
 // SaveOffset stores the next offset at which a consumer should resume
 // reading from the stream.
 //
-// pn is the projection name. c is the offset that is currently stored, as
+// pn is the projector name. c is the offset that is currently stored, as
 // returned by LoadOffset(). If c is not the offset that is currently stored,
 // a non-nil error is returned. o is the new offset to store.
 func (OffsetStore) SaveOffset(
