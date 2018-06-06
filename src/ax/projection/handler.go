@@ -6,7 +6,8 @@ import (
 	"github.com/jmalloc/ax/src/ax"
 )
 
-// MessageHandler exposes as Projector as a routing.MessageHandler.
+// MessageHandler is an adaptor that presents a Projector as a
+// routing.MessageHandler.
 type MessageHandler struct {
 	Projector Projector
 }
