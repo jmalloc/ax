@@ -14,7 +14,7 @@ import (
 	. "github.com/onsi/ginkgo"
 )
 
-var _ = Describe("OutboxRepository", func() {
+var _ = Describe("Repository", func() {
 	dsn := os.Getenv("AX_MYSQL_DSN")
 	var db *sql.DB
 
@@ -42,7 +42,7 @@ var _ = Describe("OutboxRepository", func() {
 	}
 
 	fn(
-		"epository",
+		"Repository",
 		outboxtest.RepositorySuite(
 			func() persistence.DataStore {
 				return axmysql.NewDataStore(db)
