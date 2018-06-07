@@ -37,12 +37,12 @@ func (r CRUDRepository) LoadSagaInstance(
 		data        []byte
 	)
 
-	if err := mysqlpersistence.ExtractTx(ptx).QueryRowContext(
+	err := mysqlpersistence.ExtractTx(ptx).QueryRowContext(
 		ctx,
 		`SELECT
 			instance_id,
-			persistence_key,
 			revision,
+			persistence_key,
 			content_type,
 			data
 		FROM ax_saga_instance
@@ -50,28 +50,29 @@ func (r CRUDRepository) LoadSagaInstance(
 		id,
 	).Scan(
 		&i.InstanceID,
-		&ipk,
 		&i.Revision,
+		&ipk,
 		&contentType,
 		&data,
-	); err != nil {
-		if err == sql.ErrNoRows {
-			err = nil
-		}
+	)
 
+	if err == sql.ErrNoRows {
+		return saga.Instance{}, false, nil
+	}
+
+	if err != nil {
 		return saga.Instance{}, false, err
 	}
 
 	if ipk != pk {
 		return i, false, fmt.Errorf(
 			"can not load saga instance %s for saga %s, it belongs to %s",
-			id,
+			i.InstanceID,
 			pk,
 			ipk,
 		)
 	}
 
-	var err error
 	i.Data, err = saga.UnmarshalData(contentType, data)
 
 	return i, true, err
@@ -121,14 +122,14 @@ func (CRUDRepository) insertInstance(
 		ctx,
 		`INSERT INTO ax_saga_instance SET
 			instance_id = ?,
-			persistence_key = ?,
 			revision = 1,
+			persistence_key = ?,
 			description = ?,
 			content_type = ?,
 			data = ?`,
 		i.InstanceID,
-		pk,
 		i.Data.InstanceDescription(),
+		pk,
 		contentType,
 		data,
 	)
@@ -155,15 +156,15 @@ func (CRUDRepository) updateInstance(
 	err := tx.QueryRowContext(
 		ctx,
 		`SELECT
-			persistence_key,
-			revision
+			revision,
+			persistence_key
 		FROM ax_saga_instance
 		WHERE instance_id = ?
 		FOR UPDATE`,
 		i.InstanceID,
 	).Scan(
-		&ipk,
 		&rev,
+		&ipk,
 	)
 
 	if err != nil && err != sql.ErrNoRows {
