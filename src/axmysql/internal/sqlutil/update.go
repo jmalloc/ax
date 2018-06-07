@@ -6,18 +6,18 @@ import (
 	"fmt"
 )
 
-// UpdateSingleRow performs an update and verifies that only a single row was
-// updated.
+// UpdateSingleRow executes a query without returning any rows and verifies that
+// only a single row was affected.
 //
-// q is the SQL update statement to execute. v is the variable arguments to pass
-// along to the execute statement.
+// The args are for any placeholder parameters in the query. It returns an error
+// if more than one row was affected.
 func UpdateSingleRow(
 	ctx context.Context,
 	tx *sql.Tx,
-	q string,
-	v ...interface{},
+	query string,
+	args ...interface{},
 ) error {
-	res, err := tx.ExecContext(ctx, q, v...)
+	res, err := tx.ExecContext(ctx, query, args...)
 	if err != nil {
 		return err
 	}
