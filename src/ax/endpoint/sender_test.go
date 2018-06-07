@@ -2,9 +2,11 @@ package endpoint_test
 
 import (
 	"context"
+	"errors"
 
 	"github.com/jmalloc/ax/src/ax"
 	. "github.com/jmalloc/ax/src/ax/endpoint"
+	"github.com/jmalloc/ax/src/internal/endpointtest"
 	"github.com/jmalloc/ax/src/internal/messagetest"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -12,13 +14,36 @@ import (
 
 var _ = Describe("SinkSender", func() {
 	var (
-		sink   *BufferedSink
-		sender SinkSender
+		sink                               *BufferedSink
+		validator1, validator2, validator3 *endpointtest.ValidatorMock
+		sender                             SinkSender
 	)
 
 	BeforeEach(func() {
 		sink = &BufferedSink{}
-		sender = SinkSender{Sink: sink}
+		validator1 = &endpointtest.ValidatorMock{
+			ValidateFunc: func(ctx context.Context, m ax.Message) error {
+				return nil
+			},
+		}
+		validator2 = &endpointtest.ValidatorMock{
+			ValidateFunc: func(ctx context.Context, m ax.Message) error {
+				return nil
+			},
+		}
+		validator3 = &endpointtest.ValidatorMock{
+			ValidateFunc: func(ctx context.Context, m ax.Message) error {
+				return nil
+			},
+		}
+		sender = SinkSender{
+			Sink: sink,
+			Validators: []Validator{
+				validator1,
+				validator2,
+				validator3,
+			},
+		}
 	})
 
 	Describe("ExecuteCommand", func() {
@@ -47,6 +72,48 @@ var _ = Describe("SinkSender", func() {
 
 			Expect(env).To(Equal(sink.Envelopes()[0].Envelope))
 		})
+
+		It("returns a validation error if one of the validators fails", func() {
+			expected := errors.New("test validation error")
+			validator2.ValidateFunc = func(ctx context.Context, m ax.Message) error {
+				return expected
+			}
+
+			env := ax.NewEnvelope(&messagetest.Message{})
+			ctx := WithEnvelope(context.Background(), env)
+
+			_, err := sender.ExecuteCommand(ctx, &messagetest.Command{})
+			Expect(err).Should(MatchError(expected))
+		})
+
+		It("uses default message validators if the validators slice is empty", func() {
+			sink = &BufferedSink{}
+			sender = SinkSender{
+				Sink: sink,
+			}
+
+			env := ax.NewEnvelope(&messagetest.Message{})
+			ctx := WithEnvelope(context.Background(), env)
+			_, err := sender.ExecuteCommand(
+				ctx,
+				&messagetest.SelfValidatingCommand{},
+			)
+			Expect(err).ShouldNot(HaveOccurred())
+		})
+
+		It("returns an error if default command validation fails", func() {
+			sink = &BufferedSink{}
+			sender = SinkSender{
+				Sink: sink,
+			}
+			env := ax.NewEnvelope(&messagetest.Message{})
+			ctx := WithEnvelope(context.Background(), env)
+			_, err := sender.ExecuteCommand(
+				ctx,
+				&messagetest.FailedSelfValidatingCommand{},
+			)
+			Expect(err).Should(HaveOccurred())
+		})
 	})
 
 	Describe("PublishEvent", func() {
@@ -74,6 +141,48 @@ var _ = Describe("SinkSender", func() {
 			env, _ := sender.PublishEvent(context.Background(), &messagetest.Event{})
 
 			Expect(env).To(Equal(sink.Envelopes()[0].Envelope))
+		})
+
+		It("returns a validation error if one of the validators fails", func() {
+			expected := errors.New("test validation error")
+			validator2.ValidateFunc = func(ctx context.Context, m ax.Message) error {
+				return expected
+			}
+
+			env := ax.NewEnvelope(&messagetest.Message{})
+			ctx := WithEnvelope(context.Background(), env)
+
+			_, err := sender.PublishEvent(ctx, &messagetest.Event{})
+			Expect(err).Should(MatchError(expected))
+		})
+
+		It("uses default message validators if the validators slice is empty", func() {
+			sink = &BufferedSink{}
+			sender = SinkSender{
+				Sink: sink,
+			}
+
+			env := ax.NewEnvelope(&messagetest.Message{})
+			ctx := WithEnvelope(context.Background(), env)
+			_, err := sender.PublishEvent(
+				ctx,
+				&messagetest.SelfValidatingEvent{},
+			)
+			Expect(err).ShouldNot(HaveOccurred())
+		})
+
+		It("returns an error if default event validation fails", func() {
+			sink = &BufferedSink{}
+			sender = SinkSender{
+				Sink: sink,
+			}
+			env := ax.NewEnvelope(&messagetest.Message{})
+			ctx := WithEnvelope(context.Background(), env)
+			_, err := sender.PublishEvent(
+				ctx,
+				&messagetest.FailedSelfValidatingEvent{},
+			)
+			Expect(err).Should(HaveOccurred())
 		})
 	})
 })
