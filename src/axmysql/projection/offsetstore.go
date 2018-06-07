@@ -3,9 +3,9 @@ package projection
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	"github.com/jmalloc/ax/src/ax/persistence"
+	"github.com/jmalloc/ax/src/axmysql/internal/sqlutil"
 	mysqlpersistence "github.com/jmalloc/ax/src/axmysql/persistence"
 )
 
@@ -73,8 +73,9 @@ func (OffsetStore) SaveOffset(
 		return err
 	}
 
-	res, err := tx.ExecContext(
+	return sqlutil.UpdateSingleRow(
 		ctx,
+		tx,
 		`UPDATE ax_projection_offset SET
 			next_offset = ?
 		WHERE persistence_key = ?
@@ -83,22 +84,4 @@ func (OffsetStore) SaveOffset(
 		pn,
 		c,
 	)
-	if err != nil {
-		return err
-	}
-
-	n, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if n == 0 {
-		return fmt.Errorf(
-			"can not store offset for %s projection, offset %d is not the currently stored offset",
-			pn,
-			c,
-		)
-	}
-
-	return err
 }
