@@ -31,7 +31,7 @@ func (OffsetStore) LoadOffset(
 		`SELECT
 			next_offset
 		FROM ax_projection_offset
-		WHERE projection = ?`,
+		WHERE persistence_key = ?`,
 		pn,
 	).Scan(
 		&offset,
@@ -64,7 +64,7 @@ func (OffsetStore) SaveOffset(
 		_, err := tx.ExecContext(
 			ctx,
 			`INSERT INTO ax_projection_offset SET
-				projection = ?,
+				persistence_key = ?,
 				next_offset = ?`,
 			pn,
 			o,
@@ -77,7 +77,7 @@ func (OffsetStore) SaveOffset(
 		ctx,
 		`UPDATE ax_projection_offset SET
 			next_offset = ?
-		WHERE projection = ?
+		WHERE persistence_key = ?
 		AND next_offset = ?`,
 		o,
 		pn,

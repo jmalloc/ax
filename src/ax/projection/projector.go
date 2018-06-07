@@ -10,11 +10,12 @@ import (
 // message handler which produces a "projection" of state from the messages it
 // receives.
 type Projector interface {
-	// ProjectorName returns a unique name for the projector.
+	// PersistenceKey returns a unique name for the projector.
 	//
-	// The projector's name is used to correlate persisted data with this
-	// instance, so it should not be changed once data bas been written.
-	ProjectorName() string
+	// The persistence key is used to relate persisted data with the projector
+	// implementation that owns it. Persistence keys should not be changed once
+	// a projection has been started.
+	PersistenceKey() string
 
 	// MessageTypes returns the set of messages that the projector intends
 	// to handle.

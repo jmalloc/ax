@@ -73,11 +73,12 @@ func NewReadModelProjector(rm ReadModel) *ReadModelProjector {
 	return p
 }
 
-// ProjectorName returns a unique name for the projector.
+// PersistenceKey returns a unique name for the projector.
 //
-// The projector's name is used to correlate persisted data with this
-// instance, so it should not be changed.
-func (p ReadModelProjector) ProjectorName() string {
+// The persistence key is used to relate persisted data with the projector
+// implementation that owns it. Persistence keys should not be changed once
+// a projection has been started.
+func (p ReadModelProjector) PersistenceKey() string {
 	return p.ReadModel.ReadModelName()
 }
 
