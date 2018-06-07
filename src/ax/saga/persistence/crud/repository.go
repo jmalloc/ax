@@ -14,11 +14,15 @@ type Repository interface {
 	// It returns an false if the instance does not exist. It returns an error
 	// if a problem occurs with the underlying data store.
 	//
+	// It returns an error if the instance is found, but belongs to a different
+	// saga, as identified by pk, the saga's persistence key.
+	//
 	// It panics if the repository is not able to enlist in tx because it uses a
 	// different underlying storage system.
 	LoadSagaInstance(
 		ctx context.Context,
 		tx persistence.Tx,
+		pk string,
 		id saga.InstanceID,
 	) (saga.Instance, bool, error)
 
@@ -28,7 +32,15 @@ type Repository interface {
 	// instance as it exists within the store, or a problem occurs with the
 	// underlying data store.
 	//
+	// It returns an error if the instance already exists, but belongs to a
+	// different saga, as identified by pk, the saga's persistence key.
+	//
 	// It panics if the repository is not able to enlist in tx because it uses a
 	// different underlying storage system.
-	SaveSagaInstance(ctx context.Context, tx persistence.Tx, i saga.Instance) error
+	SaveSagaInstance(
+		ctx context.Context,
+		tx persistence.Tx,
+		pk string,
+		i saga.Instance,
+	) error
 }
