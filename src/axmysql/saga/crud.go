@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/ax/saga"
@@ -104,12 +103,10 @@ func (CRUDRepository) insertInstance(
 			revision = 1,
 			description = ?,
 			content_type = ?,
-			time = ?,
 			data = ?`,
 		i.InstanceID,
 		i.Data.InstanceDescription(),
 		contentType,
-		time.Now().Format(time.RFC3339Nano),
 		data,
 	)
 
@@ -133,13 +130,11 @@ func (CRUDRepository) updateInstance(
 			revision = revision + 1,
 			description = ?,
 			content_type = ?,
-			time = ?,
 			data = ?
 		WHERE instance_id = ?
 		AND revision = ?`,
 		i.Data.InstanceDescription(),
 		contentType,
-		time.Now().Format(time.RFC3339Nano),
 		data,
 		i.InstanceID,
 		i.Revision,

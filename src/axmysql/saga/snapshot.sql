@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS ax_saga_snapshot (
     revision     BIGINT UNSIGNED NOT NULL,
     description  VARBINARY(255) NOT NULL,
     content_type VARBINARY(255) NOT NULL,
-    time         VARBINARY(255) NOT NULL,
+    create_time  TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP(6),
     data         BLOB NOT NULL,
 
     PRIMARY KEY (instance_id, revision)
