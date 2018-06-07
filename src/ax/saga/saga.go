@@ -21,12 +21,12 @@ import (
 // interface, which is typically provided by a specific persistence
 // implementation.
 type Saga interface {
-	// SagaName returns a unique name for the saga.
+	// PersistenceKey returns a unique identifier for the saga.
 	//
-	// The saga name is used to relate saga instances to the saga implementation
-	// that manages them. For that reason, saga names should not be changed when
-	// there are active saga instances.
-	SagaName() string
+	// The persistence key is used to relate persistence data with the saga
+	// implementation that owns it. Persistence keys should not be changed once
+	// a saga has active instances.
+	PersistenceKey() string
 
 	// MessageTypes returns the set of messages that are routed to this saga.
 	//
