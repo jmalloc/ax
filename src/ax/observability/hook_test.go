@@ -4,41 +4,41 @@ import (
 	"context"
 	"errors"
 
+	"github.com/jmalloc/ax/src/axtest/mocks"
+
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	. "github.com/jmalloc/ax/src/ax/observability"
-	"github.com/jmalloc/ax/src/internal/endpointtest"
-	"github.com/jmalloc/ax/src/internal/messagetest"
-	"github.com/jmalloc/ax/src/internal/observabilitytest"
+	"github.com/jmalloc/ax/src/axtest/testmessages"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("InboundHook", func() {
 	var (
-		before *observabilitytest.BeforeInboundObserverMock
-		after  *observabilitytest.AfterInboundObserverMock
+		before *mocks.BeforeInboundObserverMock
+		after  *mocks.AfterInboundObserverMock
 		ep     *endpoint.Endpoint
-		next   *endpointtest.InboundPipelineMock
+		next   *mocks.InboundPipelineMock
 		env    endpoint.InboundEnvelope
 		hook   *InboundHook
 	)
 
 	BeforeEach(func() {
 		ep = &endpoint.Endpoint{}
-		before = &observabilitytest.BeforeInboundObserverMock{
+		before = &mocks.BeforeInboundObserverMock{
 			BeforeInboundFunc: func(context.Context, endpoint.InboundEnvelope) {},
 		}
-		after = &observabilitytest.AfterInboundObserverMock{
+		after = &mocks.AfterInboundObserverMock{
 			AfterInboundFunc: func(context.Context, endpoint.InboundEnvelope, error) {},
 		}
-		next = &endpointtest.InboundPipelineMock{
+		next = &mocks.InboundPipelineMock{
 			InitializeFunc: func(context.Context, *endpoint.Endpoint) error { return nil },
 			AcceptFunc:     func(context.Context, endpoint.MessageSink, endpoint.InboundEnvelope) error { return nil },
 		}
 		env = endpoint.InboundEnvelope{
 			Envelope: ax.NewEnvelope(
-				&messagetest.Message{},
+				&testmessages.Message{},
 			),
 		}
 		hook = &InboundHook{
@@ -57,7 +57,7 @@ var _ = Describe("InboundHook", func() {
 
 		It("panics if an observer does not implement either of the inbound observer interfaces", func() {
 			// outbound observer instead of inbound
-			hook.Observers = append(hook.Observers, &observabilitytest.BeforeOutboundObserverMock{})
+			hook.Observers = append(hook.Observers, &mocks.BeforeOutboundObserverMock{})
 
 			Expect(func() {
 				hook.Initialize(context.Background(), ep)
@@ -114,29 +114,29 @@ var _ = Describe("InboundHook", func() {
 
 var _ = Describe("OutboundHook", func() {
 	var (
-		before *observabilitytest.BeforeOutboundObserverMock
-		after  *observabilitytest.AfterOutboundObserverMock
+		before *mocks.BeforeOutboundObserverMock
+		after  *mocks.AfterOutboundObserverMock
 		ep     *endpoint.Endpoint
-		next   *endpointtest.OutboundPipelineMock
+		next   *mocks.OutboundPipelineMock
 		env    endpoint.OutboundEnvelope
 		hook   *OutboundHook
 	)
 
 	BeforeEach(func() {
 		ep = &endpoint.Endpoint{}
-		before = &observabilitytest.BeforeOutboundObserverMock{
+		before = &mocks.BeforeOutboundObserverMock{
 			BeforeOutboundFunc: func(context.Context, endpoint.OutboundEnvelope) {},
 		}
-		after = &observabilitytest.AfterOutboundObserverMock{
+		after = &mocks.AfterOutboundObserverMock{
 			AfterOutboundFunc: func(context.Context, endpoint.OutboundEnvelope, error) {},
 		}
-		next = &endpointtest.OutboundPipelineMock{
+		next = &mocks.OutboundPipelineMock{
 			InitializeFunc: func(context.Context, *endpoint.Endpoint) error { return nil },
 			AcceptFunc:     func(context.Context, endpoint.OutboundEnvelope) error { return nil },
 		}
 		env = endpoint.OutboundEnvelope{
 			Envelope: ax.NewEnvelope(
-				&messagetest.Message{},
+				&testmessages.Message{},
 			),
 		}
 		hook = &OutboundHook{
@@ -155,7 +155,7 @@ var _ = Describe("OutboundHook", func() {
 
 		It("panics if an observer does not implement either of the outbound observer interfaces", func() {
 			// inbound observer instead of outbound
-			hook.Observers = append(hook.Observers, &observabilitytest.BeforeInboundObserverMock{})
+			hook.Observers = append(hook.Observers, &mocks.BeforeInboundObserverMock{})
 
 			Expect(func() {
 				hook.Initialize(context.Background(), ep)

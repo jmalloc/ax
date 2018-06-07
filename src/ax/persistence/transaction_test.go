@@ -4,14 +4,14 @@ import (
 	"context"
 
 	. "github.com/jmalloc/ax/src/ax/persistence"
-	"github.com/jmalloc/ax/src/internal/persistencetest"
+	"github.com/jmalloc/ax/src/axtest/mocks"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("WithTransaction / GetTransaction", func() {
 	It("transports a transaction via the context", func() {
-		expected := &persistencetest.TxMock{}
+		expected := &mocks.TxMock{}
 		ctx := WithTx(context.Background(), expected)
 
 		tx, ok := GetTx(ctx)
@@ -23,7 +23,7 @@ var _ = Describe("WithTransaction / GetTransaction", func() {
 
 var _ = Describe("GetOrBeginTx", func() {
 	Context("when the context already contains a transaction", func() {
-		tx := &persistencetest.TxMock{}
+		tx := &mocks.TxMock{}
 		ctx := WithTx(context.Background(), tx)
 
 		It("returns the transaction", func() {
@@ -43,9 +43,9 @@ var _ = Describe("GetOrBeginTx", func() {
 	})
 
 	Context("when the context does not already contain a transaction", func() {
-		tx := &persistencetest.TxMock{}
-		com := &persistencetest.CommitterMock{}
-		ds := &persistencetest.DataStoreMock{
+		tx := &mocks.TxMock{}
+		com := &mocks.CommitterMock{}
+		ds := &mocks.DataStoreMock{
 			BeginTxFunc: func(context.Context) (Tx, Committer, error) {
 				return tx, com, nil
 			},

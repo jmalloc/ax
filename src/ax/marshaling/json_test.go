@@ -5,23 +5,21 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	. "github.com/jmalloc/ax/src/ax/marshaling"
-	"github.com/jmalloc/ax/src/internal/messagetest"
+	"github.com/jmalloc/ax/src/axtest/testmessages"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("MarshalJSON", func() {
-
-	message := &messagetest.NonAxMessage{
+	message := &testmessages.NonAxMessage{
 		Value: "<value>",
 	}
 
 	It("marshals the message using JSON", func() {
-
 		_, data, err := MarshalJSON(message)
 		Expect(err).ShouldNot(HaveOccurred())
 
-		var m messagetest.NonAxMessage
+		var m testmessages.NonAxMessage
 		err = json.Unmarshal(data, &m)
 		Expect(err).ShouldNot(HaveOccurred())
 		Expect(m).Should(Equal(*message))
@@ -31,7 +29,7 @@ var _ = Describe("MarshalJSON", func() {
 		ct, _, err := MarshalJSON(message)
 		Expect(err).ShouldNot(HaveOccurred())
 		Expect(ct).To(Equal(
-			"application/json; proto=ax.internal.messagetest.NonAxMessage",
+			"application/json; proto=axtest.testmessages.NonAxMessage",
 		))
 	})
 
@@ -45,7 +43,7 @@ var _ = Describe("MarshalJSON", func() {
 
 var _ = Describe("UnmarshalJSON", func() {
 
-	message := &messagetest.NonAxMessage{
+	message := &testmessages.NonAxMessage{
 		Value: "<value>",
 	}
 	_, data, err := MarshalJSON(message)
@@ -56,7 +54,7 @@ var _ = Describe("UnmarshalJSON", func() {
 	It("unmarshals the message using the protocol specified in the content-type", func() {
 
 		m, err := UnmarshalJSON(
-			"application/json; proto=ax.internal.messagetest.NonAxMessage",
+			"application/json; proto=axtest.testmessages.NonAxMessage",
 			data,
 		)
 		Expect(err).ShouldNot(HaveOccurred())
@@ -80,7 +78,7 @@ var _ = Describe("UnmarshalJSON", func() {
 
 	It("returns an error if message type is unregistered", func() {
 		_, err := UnmarshalJSON(
-			"application/json; ax.internal.messagetest.NonExistingType",
+			"application/json; axtest.testmessages.NonExistingType",
 			data,
 		)
 		Expect(err).Should(HaveOccurred())

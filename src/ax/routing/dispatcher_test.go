@@ -7,9 +7,8 @@ import (
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	. "github.com/jmalloc/ax/src/ax/routing"
-	"github.com/jmalloc/ax/src/internal/endpointtest"
-	"github.com/jmalloc/ax/src/internal/messagetest"
-	"github.com/jmalloc/ax/src/internal/routingtest"
+	"github.com/jmalloc/ax/src/axtest/mocks"
+	"github.com/jmalloc/ax/src/axtest/testmessages"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -18,7 +17,7 @@ var ensureDispatcherIsInboundPipeline endpoint.InboundPipeline = &Dispatcher{}
 
 var _ = Describe("Dispatcher", func() {
 	var (
-		h1, h2, h3 *routingtest.MessageHandlerMock
+		h1, h2, h3 *mocks.MessageHandlerMock
 		sink       *endpoint.BufferedSink
 		dispatcher *Dispatcher
 	)
@@ -26,28 +25,28 @@ var _ = Describe("Dispatcher", func() {
 	BeforeEach(func() {
 		noOp := func(context.Context, ax.Sender, ax.Envelope) error { return nil }
 
-		h1 = &routingtest.MessageHandlerMock{
+		h1 = &mocks.MessageHandlerMock{
 			MessageTypesFunc: func() ax.MessageTypeSet {
 				return ax.TypesOf(
-					&messagetest.Command{},
-					&messagetest.Message{},
+					&testmessages.Command{},
+					&testmessages.Message{},
 				)
 			},
 			HandleMessageFunc: noOp,
 		}
-		h2 = &routingtest.MessageHandlerMock{
+		h2 = &mocks.MessageHandlerMock{
 			MessageTypesFunc: func() ax.MessageTypeSet {
 				return ax.TypesOf(
-					&messagetest.Message{},
-					&messagetest.Event{},
+					&testmessages.Message{},
+					&testmessages.Event{},
 				)
 			},
 			HandleMessageFunc: noOp,
 		}
-		h3 = &routingtest.MessageHandlerMock{
+		h3 = &mocks.MessageHandlerMock{
 			MessageTypesFunc: func() ax.MessageTypeSet {
 				return ax.TypesOf(
-					&messagetest.Event{},
+					&testmessages.Event{},
 				)
 			},
 			HandleMessageFunc: noOp,
@@ -62,7 +61,7 @@ var _ = Describe("Dispatcher", func() {
 
 	Describe("Initialize", func() {
 		It("subscribes the transport to all handled message types", func() {
-			t := &endpointtest.TransportMock{
+			t := &mocks.TransportMock{
 				SubscribeFunc: func(context.Context, endpoint.Operation, ax.MessageTypeSet) error {
 					return nil
 				},
@@ -81,8 +80,8 @@ var _ = Describe("Dispatcher", func() {
 					ctx,
 					endpoint.OpSendUnicast,
 					ax.TypesOf(
-						&messagetest.Command{},
-						&messagetest.Message{},
+						&testmessages.Command{},
+						&testmessages.Message{},
 					),
 				},
 				struct {
@@ -93,8 +92,8 @@ var _ = Describe("Dispatcher", func() {
 					ctx,
 					endpoint.OpSendMulticast,
 					ax.TypesOf(
-						&messagetest.Event{},
-						&messagetest.Message{},
+						&testmessages.Event{},
+						&testmessages.Message{},
 					),
 				},
 			))
@@ -105,7 +104,7 @@ var _ = Describe("Dispatcher", func() {
 		ctx := context.Background()
 		env := endpoint.InboundEnvelope{
 			Envelope: ax.NewEnvelope(
-				&messagetest.Message{},
+				&testmessages.Message{},
 			),
 		}
 
@@ -136,7 +135,7 @@ var _ = Describe("Dispatcher", func() {
 
 		It("passes a sender that sends messages via the message sink", func() {
 			h1.HandleMessageFunc = func(ctx context.Context, s ax.Sender, _ ax.Envelope) error {
-				_, err := s.ExecuteCommand(ctx, &messagetest.Command{})
+				_, err := s.ExecuteCommand(ctx, &testmessages.Command{})
 				return err
 			}
 

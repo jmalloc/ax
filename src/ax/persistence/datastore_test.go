@@ -4,14 +4,14 @@ import (
 	"context"
 
 	. "github.com/jmalloc/ax/src/ax/persistence"
-	"github.com/jmalloc/ax/src/internal/persistencetest"
+	"github.com/jmalloc/ax/src/axtest/mocks"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("WithDataStore / GetDataStore", func() {
 	It("transports a datastore via the context", func() {
-		expected := &persistencetest.DataStoreMock{}
+		expected := &mocks.DataStoreMock{}
 		ctx := WithDataStore(context.Background(), expected)
 
 		ds, ok := GetDataStore(ctx)

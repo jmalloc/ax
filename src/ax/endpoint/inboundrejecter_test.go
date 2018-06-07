@@ -7,21 +7,21 @@ import (
 	"github.com/jmalloc/ax/src/ax"
 	. "github.com/jmalloc/ax/src/ax/endpoint"
 
-	"github.com/jmalloc/ax/src/internal/messagetest"
+	"github.com/jmalloc/ax/src/axtest/mocks"
+	"github.com/jmalloc/ax/src/axtest/testmessages"
 
-	"github.com/jmalloc/ax/src/internal/endpointtest"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("InboundRejecter", func() {
 	var (
-		next                               *endpointtest.InboundPipelineMock
-		validator1, validator2, validator3 *endpointtest.ValidatorMock
+		next                               *mocks.InboundPipelineMock
+		validator1, validator2, validator3 *mocks.ValidatorMock
 	)
 
 	BeforeEach(func() {
-		next = &endpointtest.InboundPipelineMock{
+		next = &mocks.InboundPipelineMock{
 			InitializeFunc: func(
 				context.Context,
 				*Endpoint,
@@ -36,17 +36,17 @@ var _ = Describe("InboundRejecter", func() {
 				return nil
 			},
 		}
-		validator1 = &endpointtest.ValidatorMock{
+		validator1 = &mocks.ValidatorMock{
 			ValidateFunc: func(ctx context.Context, m ax.Message) error {
 				return nil
 			},
 		}
-		validator2 = &endpointtest.ValidatorMock{
+		validator2 = &mocks.ValidatorMock{
 			ValidateFunc: func(ctx context.Context, m ax.Message) error {
 				return nil
 			},
 		}
-		validator3 = &endpointtest.ValidatorMock{
+		validator3 = &mocks.ValidatorMock{
 			ValidateFunc: func(ctx context.Context, m ax.Message) error {
 				return nil
 			},
@@ -92,7 +92,7 @@ var _ = Describe("InboundRejecter", func() {
 		sink := &BufferedSink{}
 		env := InboundEnvelope{
 			Envelope: ax.NewEnvelope(
-				&messagetest.Message{},
+				&testmessages.Message{},
 			),
 		}
 

@@ -2,7 +2,7 @@ package ax_test
 
 import (
 	. "github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/internal/messagetest"
+	"github.com/jmalloc/ax/src/axtest/testmessages"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	uuid "github.com/satori/go.uuid"
@@ -10,7 +10,7 @@ import (
 
 var _ = Describe("Envelope", func() {
 	Describe("NewEnvelope", func() {
-		message := &messagetest.Message{}
+		message := &testmessages.Message{}
 		env := NewEnvelope(message)
 
 		It("returns an envelope containing the message", func() {
@@ -33,11 +33,11 @@ var _ = Describe("Envelope", func() {
 	})
 
 	Describe("NewChild", func() {
-		rootMessage := &messagetest.Message{}
+		rootMessage := &testmessages.Message{}
 		root := NewEnvelope(rootMessage)
-		branchMessage := &messagetest.Message{}
+		branchMessage := &testmessages.Message{}
 		branch := root.NewChild(branchMessage)
-		leafMessage := &messagetest.Message{}
+		leafMessage := &testmessages.Message{}
 		leaf := branch.NewChild(leafMessage)
 
 		It("returns an envelope containing the message", func() {
@@ -60,7 +60,7 @@ var _ = Describe("Envelope", func() {
 	})
 
 	Describe("Type", func() {
-		message := &messagetest.Message{}
+		message := &testmessages.Message{}
 		env := NewEnvelope(message)
 
 		It("returns the type of the message in the envelope", func() {

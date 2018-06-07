@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	. "github.com/jmalloc/ax/src/ax/endpoint"
-	"github.com/jmalloc/ax/src/internal/endpointtest"
-	"github.com/jmalloc/ax/src/internal/messagetest"
+	"github.com/jmalloc/ax/src/axtest/mocks"
+	"github.com/jmalloc/ax/src/axtest/testmessages"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -16,13 +16,13 @@ var _ = Describe("SelfValidator", func() {
 	Describe("Validate", func() {
 		It("does not return an error if the message is valid", func() {
 			v := SelfValidator{}
-			err := v.Validate(context.Background(), &messagetest.Message{})
+			err := v.Validate(context.Background(), &testmessages.Message{})
 			Expect(err).ShouldNot(HaveOccurred())
 		})
 
 		It("invokes Validate method on the message if it implements SelfValidatingMessage interface", func() {
 			v := SelfValidator{}
-			s := &endpointtest.SelfValidatingMessageMock{
+			s := &mocks.SelfValidatingMessageMock{
 				ValidateFunc: func() error {
 					return nil
 				},
@@ -34,7 +34,7 @@ var _ = Describe("SelfValidator", func() {
 
 		It("returns an error if SelfValidatingMessage.Validate method fails", func() {
 			v := SelfValidator{}
-			s := &endpointtest.SelfValidatingMessageMock{}
+			s := &mocks.SelfValidatingMessageMock{}
 			expected := errors.New("self-validating message test error")
 			s.ValidateFunc = func() error {
 				return expected

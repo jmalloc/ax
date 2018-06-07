@@ -4,45 +4,45 @@ import (
 	"reflect"
 
 	. "github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/internal/messagetest"
+	"github.com/jmalloc/ax/src/axtest/testmessages"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("MessageType", func() {
-	message := TypeOf(&messagetest.Message{})
+	message := TypeOf(&testmessages.Message{})
 
 	Describe("TypeOf", func() {
 		It("returns a message type with the correct name", func() {
-			Expect(message.Name).To(Equal("ax.internal.messagetest.Message"))
+			Expect(message.Name).To(Equal("axtest.testmessages.Message"))
 		})
 
 		It("returns a message type with the correct struct type", func() {
-			Expect(message.StructType).To(Equal(reflect.TypeOf(messagetest.Message{})))
+			Expect(message.StructType).To(Equal(reflect.TypeOf(testmessages.Message{})))
 		})
 	})
 
 	Describe("TypeByName", func() {
 
 		It("returns a message type with the correct name", func() {
-			mt, ok := TypeByName("ax.internal.messagetest.Message")
+			mt, ok := TypeByName("axtest.testmessages.Message")
 			Expect(ok).To(BeTrue())
-			Expect(mt.Name).To(Equal("ax.internal.messagetest.Message"))
+			Expect(mt.Name).To(Equal("axtest.testmessages.Message"))
 		})
 
 		It("returns a message type with the correct struct type", func() {
-			mt, ok := TypeByName("ax.internal.messagetest.Message")
+			mt, ok := TypeByName("axtest.testmessages.Message")
 			Expect(ok).To(BeTrue())
-			Expect(mt.StructType).To(Equal(reflect.TypeOf(messagetest.Message{})))
+			Expect(mt.StructType).To(Equal(reflect.TypeOf(testmessages.Message{})))
 		})
 
 		It("returns false if the message name is not registered", func() {
-			_, ok := TypeByName("ax.internal.messagetest.Unknown")
+			_, ok := TypeByName("axtest.testmessages.Unknown")
 			Expect(ok).To(BeFalse())
 		})
 
 		It("returns false if the message name is registered, but the message type is not of ax.Message", func() {
-			_, ok := TypeByName("ax.internal.messagetest.NonAxMessage")
+			_, ok := TypeByName("axtest.testmessages.NonAxMessage")
 			Expect(ok).To(BeFalse())
 		})
 	})
@@ -62,7 +62,7 @@ var _ = Describe("MessageType", func() {
 	})
 
 	Context("when the message is a command", func() {
-		command := TypeOf(&messagetest.Command{})
+		command := TypeOf(&testmessages.Command{})
 
 		Describe("IsCommand", func() {
 			It("returns true", func() {
@@ -78,7 +78,7 @@ var _ = Describe("MessageType", func() {
 	})
 
 	Context("when the message is an event", func() {
-		event := TypeOf(&messagetest.Event{})
+		event := TypeOf(&testmessages.Event{})
 
 		Describe("IsCommand", func() {
 			It("returns false", func() {
@@ -95,13 +95,13 @@ var _ = Describe("MessageType", func() {
 
 	Describe("ToSet", func() {
 		It("returns a set containing only this message type", func() {
-			Expect(message.ToSet()).To(Equal(TypesOf(&messagetest.Message{})))
+			Expect(message.ToSet()).To(Equal(TypesOf(&testmessages.Message{})))
 		})
 	})
 
 	Describe("New", func() {
 		It("returns a pointer to a new instance of the message struct", func() {
-			Expect(message.New()).To(Equal(&messagetest.Message{}))
+			Expect(message.New()).To(Equal(&testmessages.Message{}))
 		})
 	})
 
@@ -111,44 +111,44 @@ var _ = Describe("MessageType", func() {
 		})
 
 		It("returns the message name if the message is not in a package", func() {
-			mt := TypeOf(&messagetest.NoPackage{})
+			mt := TypeOf(&testmessages.NoPackage{})
 			Expect(mt.MessageName()).To(Equal("NoPackage"))
 		})
 	})
 
 	Describe("PackageName", func() {
 		It("returns the protocol buffers package name", func() {
-			Expect(message.PackageName()).To(Equal("ax.internal.messagetest"))
+			Expect(message.PackageName()).To(Equal("axtest.testmessages"))
 		})
 
 		It("returns an empty string if the message is not in a package", func() {
-			mt := TypeOf(&messagetest.NoPackage{})
+			mt := TypeOf(&testmessages.NoPackage{})
 			Expect(mt.PackageName()).To(Equal(""))
 		})
 	})
 
 	Describe("String", func() {
 		It("suffixes a question mark on commands", func() {
-			mt := TypeOf(&messagetest.Command{})
-			Expect(mt.String()).To(Equal("ax.internal.messagetest.Command?"))
+			mt := TypeOf(&testmessages.Command{})
+			Expect(mt.String()).To(Equal("axtest.testmessages.Command?"))
 		})
 
 		It("suffixes an exclamation mark on events", func() {
-			mt := TypeOf(&messagetest.Event{})
-			Expect(mt.String()).To(Equal("ax.internal.messagetest.Event!"))
+			mt := TypeOf(&testmessages.Event{})
+			Expect(mt.String()).To(Equal("axtest.testmessages.Event!"))
 		})
 
 		It("does not add a suffix to generic messages", func() {
-			mt := TypeOf(&messagetest.Message{})
-			Expect(mt.String()).To(Equal("ax.internal.messagetest.Message"))
+			mt := TypeOf(&testmessages.Message{})
+			Expect(mt.String()).To(Equal("axtest.testmessages.Message"))
 		})
 	})
 })
 
 var _ = Describe("MessageTypeSet", func() {
-	message := TypeOf(&messagetest.Message{})
-	command := TypeOf(&messagetest.Command{})
-	event := TypeOf(&messagetest.Event{})
+	message := TypeOf(&testmessages.Message{})
+	command := TypeOf(&testmessages.Command{})
+	event := TypeOf(&testmessages.Event{})
 
 	Describe("NewMessageTypeSet", func() {
 		It("returns a set containing the the arguments", func() {
@@ -181,8 +181,8 @@ var _ = Describe("MessageTypeSet", func() {
 		It("returns a set containing the message types of the arguments", func() {
 			Expect(
 				TypesOf(
-					&messagetest.Message{},
-					&messagetest.Command{},
+					&testmessages.Message{},
+					&testmessages.Command{},
 				).Members(),
 			).To(ConsistOf(
 				message,
@@ -193,8 +193,8 @@ var _ = Describe("MessageTypeSet", func() {
 		It("deduplicates repeated types", func() {
 			Expect(
 				TypesOf(
-					&messagetest.Message{},
-					&messagetest.Message{},
+					&testmessages.Message{},
+					&testmessages.Message{},
 				).Len(),
 			).To(Equal(1))
 		})
@@ -205,7 +205,7 @@ var _ = Describe("MessageTypeSet", func() {
 	})
 
 	Describe("Has", func() {
-		set := TypesOf(&messagetest.Message{})
+		set := TypesOf(&testmessages.Message{})
 
 		It("returns true if the message type is a member of the set", func() {
 			Expect(set.Has(message)).To(BeTrue())
@@ -217,7 +217,7 @@ var _ = Describe("MessageTypeSet", func() {
 	})
 
 	Describe("Add", func() {
-		set := TypesOf(&messagetest.Message{})
+		set := TypesOf(&testmessages.Message{})
 
 		It("returns a set containing the message type", func() {
 			Expect(set.Add(command)).To(Equal(
@@ -241,13 +241,13 @@ var _ = Describe("MessageTypeSet", func() {
 
 	Describe("Add", func() {
 		setA := TypesOf(
-			&messagetest.Message{},
-			&messagetest.Command{},
+			&testmessages.Message{},
+			&testmessages.Command{},
 		)
 
 		setB := TypesOf(
-			&messagetest.Command{},
-			&messagetest.Event{},
+			&testmessages.Command{},
+			&testmessages.Event{},
 		)
 
 		It("returns the union of two sets", func() {
