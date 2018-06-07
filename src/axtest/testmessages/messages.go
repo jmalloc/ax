@@ -1,4 +1,4 @@
-package messagetest
+package testmessages
 
 import "errors"
 

@@ -6,8 +6,8 @@ import (
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	. "github.com/jmalloc/ax/src/ax/routing"
-	"github.com/jmalloc/ax/src/internal/endpointtest"
-	"github.com/jmalloc/ax/src/internal/messagetest"
+	"github.com/jmalloc/ax/src/axtest/mocks"
+	"github.com/jmalloc/ax/src/axtest/testmessages"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -16,12 +16,12 @@ var ensureRouterIsOutboundPipeline endpoint.OutboundPipeline = &Router{}
 
 var _ = Describe("Router", func() {
 	var (
-		next   *endpointtest.OutboundPipelineMock
+		next   *mocks.OutboundPipelineMock
 		router *Router
 	)
 
 	BeforeEach(func() {
-		next = &endpointtest.OutboundPipelineMock{
+		next = &mocks.OutboundPipelineMock{
 			InitializeFunc: func(context.Context, *endpoint.Endpoint) error { return nil },
 			AcceptFunc:     func(context.Context, endpoint.OutboundEnvelope) error { return nil },
 		}
@@ -45,7 +45,7 @@ var _ = Describe("Router", func() {
 		Context("when there is a routing table", func() {
 			BeforeEach(func() {
 				t, err := NewEndpointTable(
-					"ax.internal", "route-from-table",
+					"axtest", "route-from-table",
 				)
 				Expect(err).ShouldNot(HaveOccurred())
 
@@ -56,7 +56,7 @@ var _ = Describe("Router", func() {
 				env := endpoint.OutboundEnvelope{
 					Operation: endpoint.OpSendUnicast,
 					Envelope: ax.Envelope{
-						Message: &messagetest.Message{},
+						Message: &testmessages.Message{},
 					},
 				}
 
@@ -70,7 +70,7 @@ var _ = Describe("Router", func() {
 				env := endpoint.OutboundEnvelope{
 					Operation: endpoint.OpSendUnicast,
 					Envelope: ax.Envelope{
-						Message: &messagetest.Message{},
+						Message: &testmessages.Message{},
 					},
 				}
 
@@ -93,21 +93,21 @@ var _ = Describe("Router", func() {
 				env := endpoint.OutboundEnvelope{
 					Operation: endpoint.OpSendUnicast,
 					Envelope: ax.Envelope{
-						Message: &messagetest.Message{},
+						Message: &testmessages.Message{},
 					},
 				}
 
 				err := router.Accept(context.Background(), env)
 				Expect(err).ShouldNot(HaveOccurred())
 				Expect(next.AcceptCalls()).To(HaveLen(1))
-				Expect(next.AcceptCalls()[0].Env.DestinationEndpoint).To(Equal("ax.internal.messagetest"))
+				Expect(next.AcceptCalls()[0].Env.DestinationEndpoint).To(Equal("axtest.testmessages"))
 			})
 
 			It("returns an error if the message does not have a protocol buffers package name", func() {
 				env := endpoint.OutboundEnvelope{
 					Operation: endpoint.OpSendUnicast,
 					Envelope: ax.Envelope{
-						Message: &messagetest.NoPackage{},
+						Message: &testmessages.NoPackage{},
 					},
 				}
 

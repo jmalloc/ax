@@ -5,14 +5,14 @@ import (
 
 	"github.com/jmalloc/ax/src/ax"
 	. "github.com/jmalloc/ax/src/ax/endpoint"
-	"github.com/jmalloc/ax/src/internal/messagetest"
+	"github.com/jmalloc/ax/src/axtest/testmessages"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("WithEnvelope / GetEnvelope", func() {
 	It("transports a message envelope via the context", func() {
-		expected := ax.NewEnvelope(&messagetest.Message{})
+		expected := ax.NewEnvelope(&testmessages.Message{})
 		ctx := WithEnvelope(context.Background(), expected)
 
 		env, ok := GetEnvelope(ctx)

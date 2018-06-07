@@ -6,28 +6,28 @@ import (
 
 	"github.com/jmalloc/ax/src/ax"
 	. "github.com/jmalloc/ax/src/ax/endpoint"
-	"github.com/jmalloc/ax/src/internal/endpointtest"
-	"github.com/jmalloc/ax/src/internal/messagetest"
+	"github.com/jmalloc/ax/src/axtest/mocks"
+	"github.com/jmalloc/ax/src/axtest/testmessages"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Fanout", func() {
 	var (
-		next1, next2, next3 *endpointtest.InboundPipelineMock
+		next1, next2, next3 *mocks.InboundPipelineMock
 		fanout              Fanout
 	)
 
 	BeforeEach(func() {
-		next1 = &endpointtest.InboundPipelineMock{
+		next1 = &mocks.InboundPipelineMock{
 			InitializeFunc: func(context.Context, *Endpoint) error { return nil },
 			AcceptFunc:     func(context.Context, MessageSink, InboundEnvelope) error { return nil },
 		}
-		next2 = &endpointtest.InboundPipelineMock{
+		next2 = &mocks.InboundPipelineMock{
 			InitializeFunc: func(context.Context, *Endpoint) error { return nil },
 			AcceptFunc:     func(context.Context, MessageSink, InboundEnvelope) error { return nil },
 		}
-		next3 = &endpointtest.InboundPipelineMock{
+		next3 = &mocks.InboundPipelineMock{
 			InitializeFunc: func(context.Context, *Endpoint) error { return nil },
 			AcceptFunc:     func(context.Context, MessageSink, InboundEnvelope) error { return nil },
 		}
@@ -42,7 +42,7 @@ var _ = Describe("Fanout", func() {
 			err := fanout.Initialize(context.Background(), ep)
 			Expect(err).ShouldNot(HaveOccurred())
 
-			for _, p := range []*endpointtest.InboundPipelineMock{next1, next2, next3} {
+			for _, p := range []*mocks.InboundPipelineMock{next1, next2, next3} {
 				Expect(p.InitializeCalls()).To(HaveLen(1))
 
 				// don't compare ctx
@@ -64,7 +64,7 @@ var _ = Describe("Fanout", func() {
 		sink := &BufferedSink{}
 		env := InboundEnvelope{
 			Envelope: ax.NewEnvelope(
-				&messagetest.Message{},
+				&testmessages.Message{},
 			),
 		}
 
@@ -72,7 +72,7 @@ var _ = Describe("Fanout", func() {
 			err := fanout.Accept(context.Background(), sink, env)
 			Expect(err).ShouldNot(HaveOccurred())
 
-			for _, p := range []*endpointtest.InboundPipelineMock{next1, next2, next3} {
+			for _, p := range []*mocks.InboundPipelineMock{next1, next2, next3} {
 				Expect(p.AcceptCalls()).To(HaveLen(1))
 
 				// don't compare ctx

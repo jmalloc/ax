@@ -5,19 +5,19 @@ import (
 	"time"
 
 	. "github.com/jmalloc/ax/src/ax/endpoint"
-	"github.com/jmalloc/ax/src/internal/endpointtest"
+	"github.com/jmalloc/ax/src/axtest/mocks"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("TimeLimiter", func() {
 	var (
-		next *endpointtest.InboundPipelineMock
+		next *mocks.InboundPipelineMock
 		tl   *TimeLimiter
 	)
 
 	BeforeEach(func() {
-		next = &endpointtest.InboundPipelineMock{}
+		next = &mocks.InboundPipelineMock{}
 		tl = &TimeLimiter{
 			Timeout: 1 * time.Second,
 			Next:    next,
