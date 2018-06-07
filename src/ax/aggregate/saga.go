@@ -56,12 +56,12 @@ func New(agg Aggregate, opts ...Option) *Saga {
 	return sg
 }
 
-// SagaName returns a unique name for the saga.
+// PersistenceKey returns a unique identifier for the saga.
 //
-// The saga name is used to relate saga instances to the saga implementation
-// that manages them. For that reason, saga names should not be changed when
-// there are active saga instances.
-func (sg *Saga) SagaName() string {
+// The persistence key is used to relate persisted data with the saga
+// implementation that owns it. Persistence keys should not be changed once
+// a saga has active instances.
+func (sg *Saga) PersistenceKey() string {
 	return proto.MessageName(sg.Prototype)
 }
 

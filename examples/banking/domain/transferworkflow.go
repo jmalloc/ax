@@ -24,7 +24,7 @@ type transferWorkflowSaga struct {
 	saga.ErrorIfNotFound
 }
 
-func (transferWorkflowSaga) SagaName() string {
+func (transferWorkflowSaga) PersistenceKey() string {
 	return proto.MessageName(&TransferWorkflow{})
 }
 
