@@ -2,6 +2,7 @@ REQ += $(shell find src -name "*.proto")
 REQ += src/internal/endpointtest/sinkmock.go
 REQ += src/internal/endpointtest/transportmock.go
 REQ += src/internal/endpointtest/pipelinemock.go
+REQ += src/internal/endpointtest/validatormock.go
 REQ += src/internal/routingtest/handlermock.go
 REQ += src/internal/persistencetest/datastoremock.go
 REQ += src/internal/persistencetest/transactionmock.go
@@ -33,6 +34,9 @@ src/internal/endpointtest/transportmock.go: src/ax/endpoint/transport.go src/ax/
 src/internal/endpointtest/pipelinemock.go: src/ax/endpoint/pipeline.go | $(MOQ)
 	$(MOQ) -out "$@" -pkg "endpointtest" src/ax/endpoint InboundPipeline OutboundPipeline
 
+src/internal/endpointtest/validatormock.go: src/ax/endpoint/validator.go | $(MOQ)
+	$(MOQ) -out "$@" -pkg "endpointtest" src/ax/endpoint Validator SelfValidatingMessage
+
 src/internal/routingtest/handlermock.go: src/ax/routing/handler.go | $(MOQ)
 	$(MOQ) -out "$@" -pkg "routingtest" src/ax/routing MessageHandler
 
@@ -44,6 +48,7 @@ src/internal/persistencetest/transactionmock.go: src/ax/persistence/transaction.
 
 src/internal/observabilitytest/observermock.go: src/ax/observability/observer.go | $(MOQ)
 	$(MOQ) -out "$@" -pkg "observabilitytest" src/ax/observability BeforeInboundObserver AfterInboundObserver BeforeOutboundObserver AfterOutboundObserver
+
 
 artifacts/make/%/Makefile:
 	curl -sf https://jmalloc.github.io/makefiles/fetch | bash /dev/stdin $*

@@ -5,36 +5,26 @@ import (
 	"database/sql"
 
 	"github.com/jmalloc/ax/examples/banking/messages"
-	"github.com/jmalloc/ax/src/ax"
+	"github.com/jmalloc/ax/src/ax/projection"
 	"github.com/jmalloc/ax/src/axmysql"
 )
 
-// AccountProjector is a message handler that builds the "account" read-model.
-var AccountProjector accountProjector
+type account struct{}
 
-type accountProjector struct{}
-
-func (accountProjector) MessageTypes() ax.MessageTypeSet {
-	return ax.TypesOf(
-		&messages.AccountOpened{},
-		&messages.AccountDebited{},
-		&messages.AccountCredited{},
-	)
+func (account) ReadModelName() string {
+	return "Account"
 }
 
-func (accountProjector) HandleMessage(ctx context.Context, _ ax.Sender, env ax.Envelope) error {
-	tx := axmysql.GetTx(ctx)
+func (account) WhenAccountOpened(ctx context.Context, tx *sql.Tx, ev *messages.AccountOpened) error {
+	return insertAccount(ctx, tx, ev.AccountId, ev.Name)
+}
 
-	switch m := env.Message.(type) {
-	case *messages.AccountOpened:
-		return insertAccount(ctx, tx, m.AccountId, m.Name)
-	case *messages.AccountDebited:
-		return updateBalance(ctx, tx, m.AccountId, -m.AmountInCents)
-	case *messages.AccountCredited:
-		return updateBalance(ctx, tx, m.AccountId, +m.AmountInCents)
-	}
+func (account) WhenAccountDebited(ctx context.Context, tx *sql.Tx, ev *messages.AccountDebited) error {
+	return updateBalance(ctx, tx, ev.AccountId, -ev.AmountInCents)
+}
 
-	return nil
+func (account) WhenAccountCredited(ctx context.Context, tx *sql.Tx, ev *messages.AccountCredited) error {
+	return updateBalance(ctx, tx, ev.AccountId, +ev.AmountInCents)
 }
 
 func insertAccount(
@@ -76,3 +66,8 @@ func updateBalance(
 
 	return err
 }
+
+// AccountProjector is a message handler that builds the "account" read-model.
+var AccountProjector projection.Projector = axmysql.NewReadModelProjector(
+	account{},
+)

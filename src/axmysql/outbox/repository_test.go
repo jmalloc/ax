@@ -10,11 +10,11 @@ import (
 	"github.com/jmalloc/ax/src/axmysql"
 	"github.com/jmalloc/ax/src/axmysql/internal/schema"
 	. "github.com/jmalloc/ax/src/axmysql/outbox"
-	"github.com/jmalloc/ax/src/internal/outboxtest"
+	"github.com/jmalloc/ax/src/axtest/outboxtests"
 	. "github.com/onsi/ginkgo"
 )
 
-var _ = Describe("OutboxRepository", func() {
+var _ = Describe("Repository", func() {
 	dsn := os.Getenv("AX_MYSQL_DSN")
 	var db *sql.DB
 
@@ -42,8 +42,8 @@ var _ = Describe("OutboxRepository", func() {
 	}
 
 	fn(
-		"epository",
-		outboxtest.RepositorySuite(
+		"Repository",
+		outboxtests.RepositorySuite(
 			func() persistence.DataStore {
 				return axmysql.NewDataStore(db)
 			},

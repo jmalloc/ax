@@ -113,7 +113,11 @@ func (s *Stream) Get(ctx context.Context) (ax.Envelope, error) {
 
 // Offset returns the offset of the message returned by Get().
 func (s *Stream) Offset() (uint64, error) {
-	return s.NextOffset, nil // TODO: is this correct?
+	if s.rows == nil {
+		panic("Next() must be called before Offset()")
+	}
+
+	return s.NextOffset - 1, nil
 }
 
 // Close closes the stream.
