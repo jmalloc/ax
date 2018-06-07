@@ -78,7 +78,7 @@ func (SnapshotRepository) LoadSagaSnapshot(
 // SaveSagaSnapshot saves a snapshot to the store.
 //
 // This implementation does not verify the saga's persistence key against
-// existing snapshots of the same instane.
+// existing snapshots of the same instance.
 func (SnapshotRepository) SaveSagaSnapshot(
 	ctx context.Context,
 	tx persistence.Tx,
