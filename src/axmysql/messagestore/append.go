@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jmalloc/ax/src/ax"
+	"github.com/jmalloc/ax/src/axmysql/internal/sqlutil"
 )
 
 // insertStream inserts a new stream and returns its ID.
@@ -76,14 +77,18 @@ func incrStreamOffset(
 		)
 	}
 
-	_, err = tx.ExecContext(
+	err = sqlutil.UpdateSingleRow(
 		ctx,
+		tx,
 		`UPDATE ax_messagestore_stream SET
 			next = next + ?
 		WHERE stream_id = ?`,
 		n,
 		id,
 	)
+	if err != nil {
+		return 0, err
+	}
 
 	return id, err
 }
