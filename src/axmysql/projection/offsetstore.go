@@ -3,6 +3,7 @@ package projection
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/axmysql/internal/sqlutil"
@@ -71,6 +72,30 @@ func (OffsetStore) SaveOffset(
 		)
 
 		return err
+	}
+
+	var no uint64
+	err := tx.QueryRowContext(
+		ctx,
+		`SELECT
+			next_offset
+		FROM ax_projection_offset
+		WHERE persistence_key = ?
+		FOR UPDATE`,
+		pn,
+	).Scan(
+		&no,
+	)
+	if err != nil {
+		return err
+	}
+
+	if o != no {
+		return fmt.Errorf(
+			"can not update projection offset for persistence key %s, offset %d is not the next offset",
+			pn,
+			o,
+		)
 	}
 
 	return sqlutil.UpdateSingleRow(
