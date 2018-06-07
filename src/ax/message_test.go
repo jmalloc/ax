@@ -6,14 +6,14 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	. "github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/internal/messagetest"
+	"github.com/jmalloc/ax/src/axtest/testmessages"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("MarshalMessage", func() {
-	message := &messagetest.Message{
+	message := &testmessages.Message{
 		Value: "<value>",
 	}
 
@@ -21,7 +21,7 @@ var _ = Describe("MarshalMessage", func() {
 		_, data, err := MarshalMessage(message)
 		Expect(err).ShouldNot(HaveOccurred())
 
-		var m messagetest.Message
+		var m testmessages.Message
 		err = proto.Unmarshal(data, &m)
 		Expect(err).ShouldNot(HaveOccurred())
 
@@ -31,12 +31,12 @@ var _ = Describe("MarshalMessage", func() {
 	It("includes the protocol information in the content-type", func() {
 		ct, _, err := MarshalMessage(message)
 		Expect(err).ShouldNot(HaveOccurred())
-		Expect(ct).To(Equal("application/vnd.google.protobuf; proto=ax.internal.messagetest.Message"))
+		Expect(ct).To(Equal("application/vnd.google.protobuf; proto=axtest.testmessages.Message"))
 	})
 })
 
 var _ = Describe("UnmarshalMessage", func() {
-	message := &messagetest.Message{
+	message := &testmessages.Message{
 		Value: "<value>",
 	}
 
@@ -61,30 +61,30 @@ var _ = Describe("UnmarshalMessage", func() {
 		},
 		Entry(
 			"protobuf",
-			"application/vnd.google.protobuf; proto=ax.internal.messagetest.Message",
+			"application/vnd.google.protobuf; proto=axtest.testmessages.Message",
 			messagePB,
 		),
 		Entry(
 			"JSON",
-			"application/json; proto=ax.internal.messagetest.Message",
+			"application/json; proto=axtest.testmessages.Message",
 			messageJSON.Bytes(),
 		),
 	)
 
 	It("returns an error if an error occurs in the underlying unmarshaler", func() {
 		_, err := UnmarshalMessage(
-			"application/vnd.google.protobuf; proto=ax.internal.messagetest.Unknown", // note unknown message type
+			"application/vnd.google.protobuf; proto=axtest.testmessages.Unknown", // note unknown message type
 			messagePB,
 		)
 		Expect(err).Should(HaveOccurred())
 	})
 
 	It("returns an error if the content is not an ax.Message", func() {
-		pb, err := proto.Marshal(&messagetest.NonAxMessage{})
+		pb, err := proto.Marshal(&testmessages.NonAxMessage{})
 		Expect(err).ShouldNot(HaveOccurred())
 
 		_, err = UnmarshalMessage(
-			"application/vnd.google.protobuf; proto=ax.internal.messagetest.NonAxMessage",
+			"application/vnd.google.protobuf; proto=axtest.testmessages.NonAxMessage",
 			pb,
 		)
 

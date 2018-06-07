@@ -3,13 +3,13 @@ package marshaling_test
 import (
 	"github.com/golang/protobuf/proto"
 	. "github.com/jmalloc/ax/src/ax/marshaling"
-	"github.com/jmalloc/ax/src/internal/messagetest"
+	"github.com/jmalloc/ax/src/axtest/testmessages"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("MarshalProtobuf", func() {
-	message := &messagetest.NonAxMessage{
+	message := &testmessages.NonAxMessage{
 		Value: "<value>",
 	}
 
@@ -17,7 +17,7 @@ var _ = Describe("MarshalProtobuf", func() {
 		_, data, err := MarshalProtobuf(message)
 		Expect(err).ShouldNot(HaveOccurred())
 
-		var m messagetest.NonAxMessage
+		var m testmessages.NonAxMessage
 		err = proto.Unmarshal(data, &m)
 		Expect(err).ShouldNot(HaveOccurred())
 
@@ -27,7 +27,7 @@ var _ = Describe("MarshalProtobuf", func() {
 	It("includes the protocol information in the content-type", func() {
 		ct, _, err := MarshalProtobuf(message)
 		Expect(err).ShouldNot(HaveOccurred())
-		Expect(ct).To(Equal("application/vnd.google.protobuf; proto=ax.internal.messagetest.NonAxMessage"))
+		Expect(ct).To(Equal("application/vnd.google.protobuf; proto=axtest.testmessages.NonAxMessage"))
 	})
 
 	It("returns an error if the protocol name is not available", func() {
@@ -39,7 +39,7 @@ var _ = Describe("MarshalProtobuf", func() {
 })
 
 var _ = Describe("UnmarshalProtobuf", func() {
-	message := &messagetest.NonAxMessage{
+	message := &testmessages.NonAxMessage{
 		Value: "<value>",
 	}
 	data, err := proto.Marshal(message)
@@ -49,7 +49,7 @@ var _ = Describe("UnmarshalProtobuf", func() {
 
 	It("unmarshals the message using the protocol specified in the content-type", func() {
 		m, err := UnmarshalProtobuf(
-			"application/vnd.google.protobuf; proto=ax.internal.messagetest.NonAxMessage",
+			"application/vnd.google.protobuf; proto=axtest.testmessages.NonAxMessage",
 			data,
 		)
 		Expect(err).ShouldNot(HaveOccurred())
@@ -63,7 +63,7 @@ var _ = Describe("UnmarshalProtobuf", func() {
 })
 
 var _ = Describe("UnmarshalProtobufParams", func() {
-	message := &messagetest.NonAxMessage{
+	message := &testmessages.NonAxMessage{
 		Value: "<value>",
 	}
 	data, err := proto.Marshal(message)
@@ -73,7 +73,7 @@ var _ = Describe("UnmarshalProtobufParams", func() {
 
 	It("unmarshals the message using the protocol specified in the content-type parameters", func() {
 		p := map[string]string{
-			"proto": "ax.internal.messagetest.NonAxMessage",
+			"proto": "axtest.testmessages.NonAxMessage",
 		}
 		m, err := UnmarshalProtobufParams("application/vnd.google.protobuf", p, data)
 		Expect(err).ShouldNot(HaveOccurred())
@@ -92,7 +92,7 @@ var _ = Describe("UnmarshalProtobufParams", func() {
 
 	It("returns an error if the protocol name is not registered", func() {
 		p := map[string]string{
-			"proto": "ax.internal.messagetest.Unknown",
+			"proto": "axtest.testmessages.Unknown",
 		}
 		_, err := UnmarshalProtobufParams("application/vnd.google.protobuf", p, data)
 		Expect(err).Should(HaveOccurred())

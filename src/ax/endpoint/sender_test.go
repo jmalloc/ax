@@ -6,8 +6,8 @@ import (
 
 	"github.com/jmalloc/ax/src/ax"
 	. "github.com/jmalloc/ax/src/ax/endpoint"
-	"github.com/jmalloc/ax/src/internal/endpointtest"
-	"github.com/jmalloc/ax/src/internal/messagetest"
+	"github.com/jmalloc/ax/src/axtest/mocks"
+	"github.com/jmalloc/ax/src/axtest/testmessages"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -15,23 +15,23 @@ import (
 var _ = Describe("SinkSender", func() {
 	var (
 		sink                               *BufferedSink
-		validator1, validator2, validator3 *endpointtest.ValidatorMock
+		validator1, validator2, validator3 *mocks.ValidatorMock
 		sender                             SinkSender
 	)
 
 	BeforeEach(func() {
 		sink = &BufferedSink{}
-		validator1 = &endpointtest.ValidatorMock{
+		validator1 = &mocks.ValidatorMock{
 			ValidateFunc: func(ctx context.Context, m ax.Message) error {
 				return nil
 			},
 		}
-		validator2 = &endpointtest.ValidatorMock{
+		validator2 = &mocks.ValidatorMock{
 			ValidateFunc: func(ctx context.Context, m ax.Message) error {
 				return nil
 			},
 		}
-		validator3 = &endpointtest.ValidatorMock{
+		validator3 = &mocks.ValidatorMock{
 			ValidateFunc: func(ctx context.Context, m ax.Message) error {
 				return nil
 			},
@@ -48,27 +48,27 @@ var _ = Describe("SinkSender", func() {
 
 	Describe("ExecuteCommand", func() {
 		It("sends a unicast message to the sink", func() {
-			_, err := sender.ExecuteCommand(context.Background(), &messagetest.Command{})
+			_, err := sender.ExecuteCommand(context.Background(), &testmessages.Command{})
 			Expect(err).ShouldNot(HaveOccurred())
 
 			Expect(sink.Envelopes()).To(HaveLen(1))
 			env := sink.Envelopes()[0]
 			Expect(env.Operation).To(Equal(OpSendUnicast))
-			Expect(env.Message).To(Equal(&messagetest.Command{}))
+			Expect(env.Message).To(Equal(&testmessages.Command{}))
 		})
 
 		It("configures the outbound message as a child of the envelope in ctx", func() {
-			env := ax.NewEnvelope(&messagetest.Message{})
+			env := ax.NewEnvelope(&testmessages.Message{})
 			ctx := WithEnvelope(context.Background(), env)
 
-			_, _ = sender.ExecuteCommand(ctx, &messagetest.Command{})
+			_, _ = sender.ExecuteCommand(ctx, &testmessages.Command{})
 
 			Expect(sink.Envelopes()).To(HaveLen(1))
 			Expect(sink.Envelopes()[0].CausationID).To(Equal(env.MessageID))
 		})
 
 		It("returns the sent envelope", func() {
-			env, _ := sender.ExecuteCommand(context.Background(), &messagetest.Command{})
+			env, _ := sender.ExecuteCommand(context.Background(), &testmessages.Command{})
 
 			Expect(env).To(Equal(sink.Envelopes()[0].Envelope))
 		})
@@ -79,10 +79,10 @@ var _ = Describe("SinkSender", func() {
 				return expected
 			}
 
-			env := ax.NewEnvelope(&messagetest.Message{})
+			env := ax.NewEnvelope(&testmessages.Message{})
 			ctx := WithEnvelope(context.Background(), env)
 
-			_, err := sender.ExecuteCommand(ctx, &messagetest.Command{})
+			_, err := sender.ExecuteCommand(ctx, &testmessages.Command{})
 			Expect(err).Should(MatchError(expected))
 		})
 
@@ -92,11 +92,11 @@ var _ = Describe("SinkSender", func() {
 				Sink: sink,
 			}
 
-			env := ax.NewEnvelope(&messagetest.Message{})
+			env := ax.NewEnvelope(&testmessages.Message{})
 			ctx := WithEnvelope(context.Background(), env)
 			_, err := sender.ExecuteCommand(
 				ctx,
-				&messagetest.SelfValidatingCommand{},
+				&testmessages.SelfValidatingCommand{},
 			)
 			Expect(err).ShouldNot(HaveOccurred())
 		})
@@ -106,11 +106,11 @@ var _ = Describe("SinkSender", func() {
 			sender = SinkSender{
 				Sink: sink,
 			}
-			env := ax.NewEnvelope(&messagetest.Message{})
+			env := ax.NewEnvelope(&testmessages.Message{})
 			ctx := WithEnvelope(context.Background(), env)
 			_, err := sender.ExecuteCommand(
 				ctx,
-				&messagetest.FailedSelfValidatingCommand{},
+				&testmessages.FailedSelfValidatingCommand{},
 			)
 			Expect(err).Should(HaveOccurred())
 		})
@@ -118,27 +118,27 @@ var _ = Describe("SinkSender", func() {
 
 	Describe("PublishEvent", func() {
 		It("sends a multicast message to the sink", func() {
-			_, err := sender.PublishEvent(context.Background(), &messagetest.Event{})
+			_, err := sender.PublishEvent(context.Background(), &testmessages.Event{})
 			Expect(err).ShouldNot(HaveOccurred())
 
 			Expect(sink.Envelopes()).To(HaveLen(1))
 			env := sink.Envelopes()[0]
 			Expect(env.Operation).To(Equal(OpSendMulticast))
-			Expect(env.Message).To(Equal(&messagetest.Event{}))
+			Expect(env.Message).To(Equal(&testmessages.Event{}))
 		})
 
 		It("configures the outbound message as a child of the envelope in ctx", func() {
-			env := ax.NewEnvelope(&messagetest.Message{})
+			env := ax.NewEnvelope(&testmessages.Message{})
 			ctx := WithEnvelope(context.Background(), env)
 
-			_, _ = sender.PublishEvent(ctx, &messagetest.Event{})
+			_, _ = sender.PublishEvent(ctx, &testmessages.Event{})
 
 			Expect(sink.Envelopes()).To(HaveLen(1))
 			Expect(sink.Envelopes()[0].CausationID).To(Equal(env.MessageID))
 		})
 
 		It("returns the sent envelope", func() {
-			env, _ := sender.PublishEvent(context.Background(), &messagetest.Event{})
+			env, _ := sender.PublishEvent(context.Background(), &testmessages.Event{})
 
 			Expect(env).To(Equal(sink.Envelopes()[0].Envelope))
 		})
@@ -149,10 +149,10 @@ var _ = Describe("SinkSender", func() {
 				return expected
 			}
 
-			env := ax.NewEnvelope(&messagetest.Message{})
+			env := ax.NewEnvelope(&testmessages.Message{})
 			ctx := WithEnvelope(context.Background(), env)
 
-			_, err := sender.PublishEvent(ctx, &messagetest.Event{})
+			_, err := sender.PublishEvent(ctx, &testmessages.Event{})
 			Expect(err).Should(MatchError(expected))
 		})
 
@@ -162,11 +162,11 @@ var _ = Describe("SinkSender", func() {
 				Sink: sink,
 			}
 
-			env := ax.NewEnvelope(&messagetest.Message{})
+			env := ax.NewEnvelope(&testmessages.Message{})
 			ctx := WithEnvelope(context.Background(), env)
 			_, err := sender.PublishEvent(
 				ctx,
-				&messagetest.SelfValidatingEvent{},
+				&testmessages.SelfValidatingEvent{},
 			)
 			Expect(err).ShouldNot(HaveOccurred())
 		})
@@ -176,11 +176,11 @@ var _ = Describe("SinkSender", func() {
 			sender = SinkSender{
 				Sink: sink,
 			}
-			env := ax.NewEnvelope(&messagetest.Message{})
+			env := ax.NewEnvelope(&testmessages.Message{})
 			ctx := WithEnvelope(context.Background(), env)
 			_, err := sender.PublishEvent(
 				ctx,
-				&messagetest.FailedSelfValidatingEvent{},
+				&testmessages.FailedSelfValidatingEvent{},
 			)
 			Expect(err).Should(HaveOccurred())
 		})

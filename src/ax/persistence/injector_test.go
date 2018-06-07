@@ -5,22 +5,21 @@ import (
 
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	. "github.com/jmalloc/ax/src/ax/persistence"
-	"github.com/jmalloc/ax/src/internal/endpointtest"
-	"github.com/jmalloc/ax/src/internal/persistencetest"
+	"github.com/jmalloc/ax/src/axtest/mocks"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Injector", func() {
 	var (
-		next *endpointtest.InboundPipelineMock
+		next *mocks.InboundPipelineMock
 		inj  *Injector
 	)
 
 	BeforeEach(func() {
-		next = &endpointtest.InboundPipelineMock{}
+		next = &mocks.InboundPipelineMock{}
 		inj = &Injector{
-			DataStore: &persistencetest.DataStoreMock{},
+			DataStore: &mocks.DataStoreMock{},
 			Next:      next,
 		}
 	})
