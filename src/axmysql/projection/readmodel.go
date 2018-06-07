@@ -34,11 +34,12 @@ import (
 //
 //     func (*BankAccount) WhenAccountCredited(*messages.AccountCredited)
 type ReadModel interface {
-	// ReadModelName returns a unique name for the read-model.
+	// PersistenceKey returns a unique name for the read-model.
 	//
-	// The read-models's name is used to correlate persisted data with this
-	// instance, so it should not be changed once data has been written.
-	ReadModelName() string
+	// The persistence key is used to relate persisted data with the read-model
+	// implementation that owns it. Persistence keys should not be changed once
+	// the read-model's projector has been started.
+	PersistenceKey() string
 }
 
 // ReadModelProjector is a projector that applies events to a ReadModel.
@@ -73,12 +74,13 @@ func NewReadModelProjector(rm ReadModel) *ReadModelProjector {
 	return p
 }
 
-// ProjectorName returns a unique name for the projector.
+// PersistenceKey returns a unique name for the projector.
 //
-// The projector's name is used to correlate persisted data with this
-// instance, so it should not be changed.
-func (p ReadModelProjector) ProjectorName() string {
-	return p.ReadModel.ReadModelName()
+// The persistence key is used to relate persisted data with the projector
+// implementation that owns it. Persistence keys should not be changed once
+// a projection has been started.
+func (p ReadModelProjector) PersistenceKey() string {
+	return p.ReadModel.PersistenceKey()
 }
 
 // MessageTypes returns the set of messages that the projector intends

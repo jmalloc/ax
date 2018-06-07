@@ -13,24 +13,25 @@ import (
 // interface.
 type KeySetRepository struct{}
 
-// FindByKey returns the ID of the saga instance that contains k in its
-// key set for the saga named sn.
+// FindByKey returns the ID of a saga instance that has a specific key in
+// its key set.
 //
-// ok is false if no saga instance has a key set containing k.
+// pk is the saga's persistence key, mk is the mapping key.
+// ok is false if no saga instance has a key set containing mk.
 func (KeySetRepository) FindByKey(
 	ctx context.Context,
 	ptx persistence.Tx,
-	sn, k string,
+	pk, mk string,
 ) (id saga.InstanceID, ok bool, err error) {
 	err = mysqlpersistence.ExtractTx(ptx).QueryRowContext(
 		ctx,
 		`SELECT
 			instance_id
 		FROM ax_saga_keyset
-		WHERE saga = ?
+		WHERE persistence_key = ?
 		AND mapping_key = ?`,
-		sn,
-		k,
+		pk,
+		mk,
 	).Scan(
 		&id,
 	)
@@ -44,17 +45,20 @@ func (KeySetRepository) FindByKey(
 	return
 }
 
-// SaveKeys associates a key set with the saga instance identified by id
-// for the saga named sn.
+// SaveKeys associates a set of mapping keys with a saga instance.
 //
 // Key sets must be disjoint. That is, no two instances of the same saga
 // may share any keys.
+//
+// pk is the saga's persistence key. ks is the set of mapping keys.
+//
+// SaveKeys() may panic if ks contains duplicate keys.
 func (KeySetRepository) SaveKeys(
 	ctx context.Context,
 	ptx persistence.Tx,
-	sn string,
-	id saga.InstanceID,
+	pk string,
 	ks []string,
+	id saga.InstanceID,
 ) error {
 	tx := mysqlpersistence.ExtractTx(ptx)
 
@@ -67,15 +71,15 @@ func (KeySetRepository) SaveKeys(
 		return err
 	}
 
-	for _, k := range ks {
+	for _, mk := range ks {
 		if _, err := tx.ExecContext(
 			ctx,
 			`INSERT INTO ax_saga_keyset SET
-				saga = ?,
+				persistence_key = ?,
 				mapping_key = ?,
 				instance_id = ?`,
-			sn,
-			k,
+			pk,
+			mk,
 			id,
 		); err != nil {
 			// TODO: return a more meaningful error if we get a duplicate key error

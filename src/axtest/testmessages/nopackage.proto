@@ -1,5 +1,5 @@
 syntax = "proto3";
 
-option go_package = "messagetest";
+option go_package = "testmessages";
 
 message NoPackage {}

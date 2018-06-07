@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package axtest.testmessages;
+option go_package = "testmessages";
+
+// Message is a protocol buffers message that implements ax.Message.
+message Message {
+    string value = 1;
+}
+
+// Command is a protocol buffers message that implements ax.Command.
+message Command {
+    string value = 1;
+}
+
+// SelfValidatingCommand is a protocol buffers message that
+// implements both ax.Command and endpoint.SelfValidatingMessage.
+message SelfValidatingCommand {
+    string value = 1;
+}
+
+// FailedSelfValidatingCommand is a protocol buffers message that
+// implements both ax.Command and endpoint.SelfValidatingMessage.
+// Its Validate method returns validation error to test failure
+// scenarios in unit tests
+message FailedSelfValidatingCommand {
+    string value = 1;
+}
+
+// Event is a protocol buffers message that implements ax.Event.
+message Event {
+    string value = 1;
+}
+
+// SelfValidatingEvent is a protocol buffers message that
+// implements both ax.Event and endpoint.SelfValidatingMessage.
+message SelfValidatingEvent {
+    string value = 1;
+}
+
+// FailedSelfValidatingEvent is a protocol buffers message that
+// implements both ax.Event and endpoint.SelfValidatingMessage.
+// Its Validate method returns validation error to test failure
+// scenarios in unit tests
+message FailedSelfValidatingEvent {
+    string value = 1;
+}
+
+// NonAxMessage is a protocol buffers message that does not implement ax.Message.
+message NonAxMessage{
+    string value = 1;
+}

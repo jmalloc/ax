@@ -16,7 +16,7 @@ type GlobalStoreConsumer struct {
 	MessageStore messagestore.GloballyOrderedStore
 	Offsets      OffsetStore
 
-	name   string
+	key    string
 	types  ax.MessageTypeSet
 	stream messagestore.Stream
 }
@@ -24,10 +24,10 @@ type GlobalStoreConsumer struct {
 // Consume reads messages from the store and forwards them to the projector until
 // an error occurs or ctx is canceled.
 func (c *GlobalStoreConsumer) Consume(ctx context.Context) error {
-	c.name = c.Projector.ProjectorName()
+	c.key = c.Projector.PersistenceKey()
 	c.types = c.Projector.MessageTypes()
 
-	o, err := c.Offsets.LoadOffset(ctx, c.DataStore, c.name)
+	o, err := c.Offsets.LoadOffset(ctx, c.DataStore, c.key)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func (c *GlobalStoreConsumer) processNextMessage(ctx context.Context) error {
 	err = c.Offsets.SaveOffset(
 		ctx,
 		tx,
-		c.name,
+		c.key,
 		o,
 		o+1,
 	)

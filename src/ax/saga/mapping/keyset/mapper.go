@@ -36,7 +36,7 @@ func (m *Mapper) MapMessageToInstance(
 		return saga.InstanceID{}, false, err
 	}
 
-	id, ok, err := m.Repository.FindByKey(ctx, tx, sg.SagaName(), k)
+	id, ok, err := m.Repository.FindByKey(ctx, tx, sg.PersistenceKey(), k)
 	if ok || err != nil {
 		return id, true, err
 	}
@@ -64,5 +64,5 @@ func (m *Mapper) UpdateMapping(
 		return err
 	}
 
-	return m.Repository.SaveKeys(ctx, tx, sg.SagaName(), i.InstanceID, ks)
+	return m.Repository.SaveKeys(ctx, tx, sg.PersistenceKey(), ks, i.InstanceID)
 }

@@ -3,8 +3,8 @@ package routing_test
 import (
 	"github.com/jmalloc/ax/src/ax"
 	. "github.com/jmalloc/ax/src/ax/routing"
-	"github.com/jmalloc/ax/src/internal/messagetest"
-	"github.com/jmalloc/ax/src/internal/routingtest"
+	"github.com/jmalloc/ax/src/axtest/mocks"
+	"github.com/jmalloc/ax/src/axtest/testmessages"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -14,15 +14,15 @@ var _ = Describe("HandlerTable", func() {
 
 	Describe("NewHandlerTable", func() {
 		It("returns an error when multiple handlers accept the same command", func() {
-			h1 := &routingtest.MessageHandlerMock{
+			h1 := &mocks.MessageHandlerMock{
 				MessageTypesFunc: func() ax.MessageTypeSet {
-					return ax.TypesOf(&messagetest.Command{})
+					return ax.TypesOf(&testmessages.Command{})
 				},
 			}
 
-			h2 := &routingtest.MessageHandlerMock{
+			h2 := &mocks.MessageHandlerMock{
 				MessageTypesFunc: func() ax.MessageTypeSet {
-					return ax.TypesOf(&messagetest.Command{})
+					return ax.TypesOf(&testmessages.Command{})
 				},
 			}
 
@@ -32,21 +32,21 @@ var _ = Describe("HandlerTable", func() {
 	})
 
 	Describe("Lookup", func() {
-		h1 := &routingtest.MessageHandlerMock{
+		h1 := &mocks.MessageHandlerMock{
 			MessageTypesFunc: func() ax.MessageTypeSet {
-				return ax.TypesOf(&messagetest.Command{})
+				return ax.TypesOf(&testmessages.Command{})
 			},
 		}
 
-		h2 := &routingtest.MessageHandlerMock{
+		h2 := &mocks.MessageHandlerMock{
 			MessageTypesFunc: func() ax.MessageTypeSet {
-				return ax.TypesOf(&messagetest.Event{})
+				return ax.TypesOf(&testmessages.Event{})
 			},
 		}
 
-		h3 := &routingtest.MessageHandlerMock{
+		h3 := &mocks.MessageHandlerMock{
 			MessageTypesFunc: func() ax.MessageTypeSet {
-				return ax.TypesOf(&messagetest.Event{})
+				return ax.TypesOf(&testmessages.Event{})
 			},
 		}
 
@@ -57,7 +57,7 @@ var _ = Describe("HandlerTable", func() {
 		})
 
 		It("returns all of the handlers that handle the given message type", func() {
-			mt := ax.TypeOf(&messagetest.Event{})
+			mt := ax.TypeOf(&testmessages.Event{})
 			h := table.Lookup(mt)
 
 			Expect(h).To(ConsistOf(h2, h3))

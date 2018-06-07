@@ -1,11 +1,8 @@
 REQ += $(shell find src -name "*.proto")
-REQ += src/internal/endpointtest/sinkmock.go
-REQ += src/internal/endpointtest/transportmock.go
-REQ += src/internal/endpointtest/pipelinemock.go
-REQ += src/internal/routingtest/handlermock.go
-REQ += src/internal/persistencetest/datastoremock.go
-REQ += src/internal/persistencetest/transactionmock.go
-REQ += src/internal/observabilitytest/observermock.go
+REQ += src/axtest/mocks/endpoint.go
+REQ += src/axtest/mocks/routing.go
+REQ += src/axtest/mocks/persistence.go
+REQ += src/axtest/mocks/observability.go
 
 -include artifacts/make/go/Makefile
 
@@ -24,26 +21,31 @@ MOQ := $(GOPATH)/bin/moq
 $(MOQ): | vendor # ensure dependencies are installed before trying to build mocks
 	go get -u github.com/matryer/moq
 
-src/internal/endpointtest/sinkmock.go: src/ax/endpoint/sink.go | $(MOQ)
-	$(MOQ) -out "$@" -pkg "endpointtest" src/ax/endpoint MessageSink
+src/axtest/mocks/endpoint.go: $(wildcard src/ax/endpoint/%.go) | $(MOQ)
+	$(MOQ) -out "$@" -pkg "mocks" src/ax/endpoint \
+		InboundPipeline \
+		MessageSink \
+		OutboundPipeline \
+		SelfValidatingMessage \
+		Transport \
+		Validator
 
-src/internal/endpointtest/transportmock.go: src/ax/endpoint/transport.go src/ax/endpoint/sink.go | $(MOQ)
-	$(MOQ) -out "$@" -pkg "endpointtest" src/ax/endpoint Transport
+src/axtest/mocks/routing.go: $(wildcard src/ax/routing/%.go)  | $(MOQ)
+	$(MOQ) -out "$@" -pkg "mocks" src/ax/routing \
+		MessageHandler
 
-src/internal/endpointtest/pipelinemock.go: src/ax/endpoint/pipeline.go | $(MOQ)
-	$(MOQ) -out "$@" -pkg "endpointtest" src/ax/endpoint InboundPipeline OutboundPipeline
+src/axtest/mocks/persistence.go: $(wildcard src/ax/persistence/%.go) | $(MOQ)
+	$(MOQ) -out "$@" -pkg "mocks" src/ax/persistence \
+		Committer \
+		DataStore \
+		Tx
 
-src/internal/routingtest/handlermock.go: src/ax/routing/handler.go | $(MOQ)
-	$(MOQ) -out "$@" -pkg "routingtest" src/ax/routing MessageHandler
-
-src/internal/persistencetest/datastoremock.go: src/ax/persistence/datastore.go | $(MOQ)
-	$(MOQ) -out "$@" -pkg "persistencetest" src/ax/persistence DataStore
-
-src/internal/persistencetest/transactionmock.go: src/ax/persistence/transaction.go | $(MOQ)
-	$(MOQ) -out "$@" -pkg "persistencetest" src/ax/persistence Tx Committer
-
-src/internal/observabilitytest/observermock.go: src/ax/observability/observer.go | $(MOQ)
-	$(MOQ) -out "$@" -pkg "observabilitytest" src/ax/observability BeforeInboundObserver AfterInboundObserver BeforeOutboundObserver AfterOutboundObserver
+src/axtest/mocks/observability.go: $(wildcard src/ax/observability/%.go) | $(MOQ)
+	$(MOQ) -out "$@" -pkg "mocks" src/ax/observability \
+		AfterInboundObserver \
+		AfterOutboundObserver \
+		BeforeInboundObserver \
+		BeforeOutboundObserver
 
 artifacts/make/%/Makefile:
 	curl -sf https://jmalloc.github.io/makefiles/fetch | bash /dev/stdin $*

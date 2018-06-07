@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/jmalloc/ax/src/axtest"
-	"github.com/jmalloc/ax/src/internal/messagetest"
+	"github.com/jmalloc/ax/src/axtest/testmessages"
 
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
@@ -62,7 +62,7 @@ func RepositorySuite(
 							CausationID:   causationID,
 							CorrelationID: correlationID,
 							Time:          t1,
-							Message: &messagetest.Command{
+							Message: &testmessages.Command{
 								Value: "<foo>",
 							},
 						},
@@ -76,7 +76,7 @@ func RepositorySuite(
 							CausationID:   causationID,
 							CorrelationID: correlationID,
 							Time:          t2,
-							Message: &messagetest.Event{
+							Message: &testmessages.Event{
 								Value: "<bar>",
 							},
 						},
@@ -224,7 +224,7 @@ func RepositorySuite(
 						CausationID:   causationID,
 						CorrelationID: correlationID,
 						Time:          time.Now(),
-						Message:       &messagetest.Message{},
+						Message:       &testmessages.Message{},
 					},
 					Operation:           endpoint.OpSendUnicast,
 					DestinationEndpoint: "<dest>",
@@ -260,7 +260,7 @@ func RepositorySuite(
 						CausationID:   causationID,
 						CorrelationID: correlationID,
 						Time:          time.Now(),
-						Message:       &messagetest.Message{},
+						Message:       &testmessages.Message{},
 					},
 					Operation:           endpoint.OpSendUnicast,
 					DestinationEndpoint: "<dest>",

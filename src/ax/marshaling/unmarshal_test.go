@@ -6,14 +6,14 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	. "github.com/jmalloc/ax/src/ax/marshaling"
-	"github.com/jmalloc/ax/src/internal/messagetest"
+	"github.com/jmalloc/ax/src/axtest/testmessages"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Unmarshal", func() {
-	message := &messagetest.NonAxMessage{
+	message := &testmessages.NonAxMessage{
 		Value: "<value>",
 	}
 
@@ -38,12 +38,12 @@ var _ = Describe("Unmarshal", func() {
 		},
 		Entry(
 			"protobuf",
-			"application/vnd.google.protobuf; proto=ax.internal.messagetest.NonAxMessage",
+			"application/vnd.google.protobuf; proto=axtest.testmessages.NonAxMessage",
 			messagePB,
 		),
 		Entry(
 			"JSON",
-			"application/json; proto=ax.internal.messagetest.NonAxMessage",
+			"application/json; proto=axtest.testmessages.NonAxMessage",
 			messageJSON.Bytes(),
 		),
 	)
@@ -66,12 +66,12 @@ var _ = Describe("Unmarshal", func() {
 		},
 		Entry(
 			"returns an error if an error occurs unmarshaling the protocol buffers message",
-			"application/vnd.google.protobuf; proto=ax.internal.messagetest.Unknown", // note unknown message type
+			"application/vnd.google.protobuf; proto=axtest.testmessages.Unknown", // note unknown message type
 			messagePB,
 		),
 		Entry(
 			"returns an error if an error occurs unmarshaling the JSON message",
-			"application/json; proto=ax.internal.messagetest.Unknown", // note unknown message type
+			"application/json; proto=axtest.testmessages.Unknown", // note unknown message type
 			messageJSON.Bytes(),
 		),
 	)
