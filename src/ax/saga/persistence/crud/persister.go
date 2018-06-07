@@ -26,7 +26,8 @@ func (p *Persister) BeginUnitOfWork(
 	s ax.Sender,
 	id saga.InstanceID,
 ) (saga.UnitOfWork, error) {
-	i, ok, err := p.Repository.LoadSagaInstance(ctx, tx, id)
+	pk := sg.PersistenceKey()
+	i, ok, err := p.Repository.LoadSagaInstance(ctx, tx, pk, id)
 	if err != nil {
 		return nil, err
 	}
@@ -41,6 +42,7 @@ func (p *Persister) BeginUnitOfWork(
 	return &unitOfWork{
 		p.Repository,
 		tx,
+		pk,
 		s,
 		proto.Clone(i.Data).(saga.Data),
 		i,
@@ -53,6 +55,7 @@ type unitOfWork struct {
 	repository Repository
 
 	tx       persistence.Tx
+	key      string
 	sender   ax.Sender
 	original saga.Data
 	instance saga.Instance
@@ -75,7 +78,7 @@ func (w *unitOfWork) Save(ctx context.Context) (bool, error) {
 		return false, nil
 	}
 
-	return true, w.repository.SaveSagaInstance(ctx, w.tx, w.instance)
+	return true, w.repository.SaveSagaInstance(ctx, w.tx, w.key, w.instance)
 }
 
 // Close is called when the unit-of-work has ended, regardless of whether
