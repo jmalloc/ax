@@ -58,7 +58,7 @@ func New(agg Aggregate, opts ...Option) *Saga {
 
 // PersistenceKey returns a unique identifier for the saga.
 //
-// The persistence key is used to relate persistence data with the saga
+// The persistence key is used to relate persisted data with the saga
 // implementation that owns it. Persistence keys should not be changed once
 // a saga has active instances.
 func (sg *Saga) PersistenceKey() string {
