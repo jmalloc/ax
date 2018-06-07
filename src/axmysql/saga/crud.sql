@@ -6,9 +6,9 @@ CREATE TABLE IF NOT EXISTS ax_saga_instance (
     revision     BIGINT UNSIGNED NOT NULL,
     description  VARBINARY(255) NOT NULL,
     content_type VARBINARY(255) NOT NULL,
+    data         BLOB NOT NULL,
     insert_time  TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP(6),
     update_time  TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
-    data         BLOB NOT NULL,
 
     PRIMARY KEY (instance_id)
 ) ROW_FORMAT=COMPRESSED;
