@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS ax_saga_snapshot (
     description  VARBINARY(255) NOT NULL,
     content_type VARBINARY(255) NOT NULL,
     data         BLOB NOT NULL,
+    insert_time  TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP(6),
 
     PRIMARY KEY (instance_id, revision)
 ) ROW_FORMAT=COMPRESSED;
