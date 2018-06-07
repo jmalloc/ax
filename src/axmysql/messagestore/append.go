@@ -20,7 +20,7 @@ func insertStream(
 ) (int64, error) {
 	res, err := tx.ExecContext(
 		ctx,
-		`INSERT INTO messagestore_stream SET
+		`INSERT INTO ax_messagestore_stream SET
 			name = ?,
 			next = ?`,
 		s,
@@ -54,7 +54,7 @@ func incrStreamOffset(
 		`SELECT
 			stream_id,
 			next
-		FROM messagestore_stream
+		FROM ax_messagestore_stream
 		WHERE name = ?
 		FOR UPDATE`, // ensure stream row is locked at this revision
 		s,
@@ -78,7 +78,7 @@ func incrStreamOffset(
 
 	_, err = tx.ExecContext(
 		ctx,
-		`UPDATE messagestore_stream SET
+		`UPDATE ax_messagestore_stream SET
 			next = next + ?
 		WHERE stream_id = ?`,
 		n,
@@ -99,7 +99,7 @@ func incrGlobalOffset(
 	// insert or update both cause the row to be locked in tx
 	res, err := tx.ExecContext(
 		ctx,
-		`INSERT INTO messagestore_offset SET
+		`INSERT INTO ax_messagestore_offset SET
 			 	next = ?
 		ON DUPLICATE KEY UPDATE
 			next = next + VALUE(next)`,
@@ -125,7 +125,7 @@ func incrGlobalOffset(
 		ctx,
 		`SELECT
 			next
-		FROM messagestore_offset`,
+		FROM ax_messagestore_offset`,
 	).Scan(
 		&next,
 	)
@@ -152,7 +152,7 @@ func insertMessage(
 
 	_, err = tx.ExecContext(
 		ctx,
-		`INSERT INTO messagestore_message SET
+		`INSERT INTO ax_messagestore_message SET
 			global_offset = ?,
 			stream_id = ?,
 			stream_offset = ?,

@@ -33,7 +33,7 @@ func (SnapshotRepository) LoadSagaSnapshot(
 			revision,
 			content_type,
 			data
-		FROM saga_snapshot
+		FROM ax_saga_snapshot
 		WHERE instance_id = ?
 		ORDER BY revision DESC
 		LIMIT 1`,
@@ -71,7 +71,7 @@ func (SnapshotRepository) SaveSagaSnapshot(
 
 	_, err = mysqlpersistence.ExtractTx(tx).ExecContext(
 		ctx,
-		`INSERT INTO saga_snapshot SET
+		`INSERT INTO ax_saga_snapshot SET
 			instance_id = ?,
 			revision = ?,
 			description = ?,
