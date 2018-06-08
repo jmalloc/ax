@@ -40,6 +40,8 @@ func (p *Persister) BeginUnitOfWork(
 		pk string
 	)
 
+	uow := &unitOfWork{}
+
 	if p.Snapshots != nil {
 		var err error
 		pk = sg.PersistenceKey()
@@ -56,6 +58,8 @@ func (p *Persister) BeginUnitOfWork(
 		}
 	}
 
+	uow.lastKnownSnapshot = i.Revision
+
 	if err := applyEvents(
 		ctx,
 		tx,
@@ -66,23 +70,25 @@ func (p *Persister) BeginUnitOfWork(
 		return nil, err
 	}
 
-	return &unitOfWork{
-		p.MessageStore,
-		p.Snapshots,
-		p.SnapshotFrequency,
-		tx,
-		pk,
-		&Recorder{Next: s},
-		i,
-	}, nil
+	uow.messageStore = p.MessageStore
+	uow.snapshots = p.Snapshots
+	uow.frequency = p.SnapshotFrequency
+	uow.tx = tx
+	uow.key = pk
+	uow.recorder = &Recorder{Next: s}
+	uow.instance = i
+
+	return uow, nil
+
 }
 
 // unitOfWork is an implementation of saga.UnitOfWork that perists saga
 // instances as a stream of events, with optional snapshots.
 type unitOfWork struct {
-	messageStore messagestore.Store
-	snapshots    SnapshotRepository
-	frequency    saga.Revision
+	messageStore      messagestore.Store
+	snapshots         SnapshotRepository
+	frequency         saga.Revision
+	lastKnownSnapshot saga.Revision
 
 	tx       persistence.Tx
 	key      string
@@ -119,7 +125,7 @@ func (w *unitOfWork) Save(ctx context.Context) (bool, error) {
 		return false, err
 	}
 
-	before := w.instance.Revision
+	before := w.lastKnownSnapshot
 	w.instance.Revision += saga.Revision(n)
 
 	if w.shouldSnapshot(before, w.instance.Revision) {
@@ -142,10 +148,14 @@ func (w *unitOfWork) shouldSnapshot(before, after saga.Revision) bool {
 		return false
 	}
 
+	if before == 0 {
+		return true
+	}
+
 	freq := w.frequency
 	if freq == 0 {
 		freq = DefaultSnapshotFrequency
 	}
 
-	return (before / freq) != (after / freq)
+	return (after-before)%freq == 0
 }
