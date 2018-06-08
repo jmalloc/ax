@@ -6,12 +6,12 @@ import (
 	"fmt"
 )
 
-// UpdateSingleRow executes a query without returning any rows and verifies that
+// ExecSingleRow executes a query without returning any rows and verifies that
 // only a single row was affected.
 //
 // The args are for any placeholder parameters in the query. It returns an error
 // if more than one row was affected.
-func UpdateSingleRow(
+func ExecSingleRow(
 	ctx context.Context,
 	tx *sql.Tx,
 	query string,
@@ -28,7 +28,7 @@ func UpdateSingleRow(
 	}
 
 	if n != 1 {
-		return fmt.Errorf("update to single row affected %d rows", n)
+		return fmt.Errorf("execution of query on single row actually affected %d rows", n)
 	}
 
 	return nil

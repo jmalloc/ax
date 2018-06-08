@@ -77,7 +77,7 @@ func incrStreamOffset(
 		)
 	}
 
-	err = sqlutil.UpdateSingleRow(
+	err = sqlutil.ExecSingleRow(
 		ctx,
 		tx,
 		`UPDATE ax_messagestore_stream SET
