@@ -79,7 +79,6 @@ func (p *Persister) BeginUnitOfWork(
 	uow.instance = i
 
 	return uow, nil
-
 }
 
 // unitOfWork is an implementation of saga.UnitOfWork that perists saga
