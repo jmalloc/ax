@@ -80,12 +80,11 @@ func (c *GlobalStoreConsumer) processNextMessage(ctx context.Context) error {
 		return err
 	}
 
-	err = c.Offsets.SaveOffset(
+	err = c.Offsets.IncrementOffset(
 		ctx,
 		tx,
 		c.key,
 		o,
-		o+1,
 	)
 	if err != nil {
 		return err
