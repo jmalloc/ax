@@ -98,7 +98,7 @@ func (OffsetStore) SaveOffset(
 		)
 	}
 
-	return sqlutil.UpdateSingleRow(
+	return sqlutil.ExecSingleRow(
 		ctx,
 		tx,
 		`UPDATE ax_projection_offset SET

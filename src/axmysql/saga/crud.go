@@ -189,7 +189,7 @@ func (CRUDRepository) updateInstance(
 		)
 	}
 
-	return sqlutil.UpdateSingleRow(
+	return sqlutil.ExecSingleRow(
 		ctx,
 		tx,
 		`UPDATE ax_saga_instance SET
