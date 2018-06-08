@@ -11,7 +11,7 @@ import (
 
 type account struct{}
 
-func (account) ReadModelName() string {
+func (account) PersistenceKey() string {
 	return "Account"
 }
 

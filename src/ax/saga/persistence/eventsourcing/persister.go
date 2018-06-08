@@ -37,11 +37,13 @@ func (p *Persister) BeginUnitOfWork(
 	var (
 		i  saga.Instance
 		ok bool
+		pk string
 	)
 
 	if p.Snapshots != nil {
 		var err error
-		i, ok, err = p.Snapshots.LoadSagaSnapshot(ctx, tx, id)
+		pk = sg.PersistenceKey()
+		i, ok, err = p.Snapshots.LoadSagaSnapshot(ctx, tx, pk, id)
 		if err != nil {
 			return nil, err
 		}
@@ -69,6 +71,7 @@ func (p *Persister) BeginUnitOfWork(
 		p.Snapshots,
 		p.SnapshotFrequency,
 		tx,
+		pk,
 		&Recorder{Next: s},
 		i,
 	}, nil
@@ -82,6 +85,7 @@ type unitOfWork struct {
 	frequency    saga.Revision
 
 	tx       persistence.Tx
+	key      string
 	recorder *Recorder
 	instance saga.Instance
 }
@@ -119,7 +123,7 @@ func (w *unitOfWork) Save(ctx context.Context) (bool, error) {
 	w.instance.Revision += saga.Revision(n)
 
 	if w.shouldSnapshot(before, w.instance.Revision) {
-		if err := w.snapshots.SaveSagaSnapshot(ctx, w.tx, w.instance); err != nil {
+		if err := w.snapshots.SaveSagaSnapshot(ctx, w.tx, w.key, w.instance); err != nil {
 			return false, err
 		}
 	}

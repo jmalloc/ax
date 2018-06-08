@@ -16,11 +16,11 @@ type OffsetStore struct{}
 // LoadOffset returns the offset at which a consumer should resume
 // reading from the stream.
 //
-// pn is the projector name.
+// pk is the projector's persistence key.
 func (OffsetStore) LoadOffset(
 	ctx context.Context,
 	ds persistence.DataStore,
-	pn string,
+	pk string,
 ) (uint64, error) {
 	db := mysqlpersistence.ExtractDB(ds)
 
@@ -31,8 +31,8 @@ func (OffsetStore) LoadOffset(
 		`SELECT
 			next_offset
 		FROM ax_projection_offset
-		WHERE projection = ?`,
-		pn,
+		WHERE persistence_key = ?`,
+		pk,
 	).Scan(
 		&offset,
 	)
@@ -49,13 +49,13 @@ func (OffsetStore) LoadOffset(
 // SaveOffset stores the next offset at which a consumer should resume
 // reading from the stream.
 //
-// pn is the projector name. c is the offset that is currently stored, as
-// returned by LoadOffset(). If c is not the offset that is currently stored,
-// a non-nil error is returned. o is the new offset to store.
+// pk is the projector's persitence key. c is the offset that is currently
+// stored, as returned by LoadOffset(). If c is not the offset that is
+// currently stored, a non-nil error is returned. o is the new offset to store.
 func (OffsetStore) SaveOffset(
 	ctx context.Context,
 	ptx persistence.Tx,
-	pn string,
+	pk string,
 	c, o uint64,
 ) error {
 	tx := mysqlpersistence.ExtractTx(ptx)
@@ -64,9 +64,9 @@ func (OffsetStore) SaveOffset(
 		_, err := tx.ExecContext(
 			ctx,
 			`INSERT INTO ax_projection_offset SET
-				projection = ?,
+				persistence_key = ?,
 				next_offset = ?`,
-			pn,
+			pk,
 			o,
 		)
 
@@ -77,10 +77,10 @@ func (OffsetStore) SaveOffset(
 		ctx,
 		`UPDATE ax_projection_offset SET
 			next_offset = ?
-		WHERE projection = ?
+		WHERE persistence_key = ?
 		AND next_offset = ?`,
 		o,
-		pn,
+		pk,
 		c,
 	)
 	if err != nil {
@@ -95,7 +95,7 @@ func (OffsetStore) SaveOffset(
 	if n == 0 {
 		return fmt.Errorf(
 			"can not store offset for %s projection, offset %d is not the currently stored offset",
-			pn,
+			pk,
 			c,
 		)
 	}
