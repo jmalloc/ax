@@ -7,6 +7,7 @@ import (
 
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/ax/saga"
+	"github.com/jmalloc/ax/src/axmysql/internal/sqlutil"
 	mysqlpersistence "github.com/jmalloc/ax/src/axmysql/persistence"
 )
 
@@ -188,8 +189,9 @@ func (CRUDRepository) updateInstance(
 		)
 	}
 
-	res, err := tx.ExecContext(
+	return sqlutil.ExecSingleRow(
 		ctx,
+		tx,
 		`UPDATE ax_saga_instance SET
 			revision = revision + 1,
 			description = ?,
@@ -201,22 +203,4 @@ func (CRUDRepository) updateInstance(
 		data,
 		i.InstanceID,
 	)
-	if err != nil {
-		return err
-	}
-
-	n, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if n == 0 {
-		return fmt.Errorf(
-			"no rows affected when updating saga instance %s at revision %d",
-			i.InstanceID,
-			i.Revision,
-		)
-	}
-
-	return nil
 }

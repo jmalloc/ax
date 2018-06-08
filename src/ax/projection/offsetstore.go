@@ -19,16 +19,16 @@ type OffsetStore interface {
 		pk string,
 	) (uint64, error)
 
-	// SaveOffset stores the next offset at which a consumer should resume
-	// reading from the stream.
+	// IncrementOffset increments the offset at which a consumer should resume
+	// reading from the stream by one.
 	//
 	// pk is the projector's persitence key. c is the offset that is currently
 	// stored, as returned by LoadOffset(). If c is not the offset that is
-	// currently stored, a non-nil error is returned. o is the new offset to store.
-	SaveOffset(
+	// currently stored, the increment fails and a non-nil error is returned.
+	IncrementOffset(
 		ctx context.Context,
 		tx persistence.Tx,
 		pk string,
-		c, o uint64,
+		c uint64,
 	) error
 }
