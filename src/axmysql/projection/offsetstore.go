@@ -128,11 +128,9 @@ func (OffsetStore) updateOffset(
 		&current,
 	)
 
-	if err != sql.ErrNoRows {
+	if err == sql.ErrNoRows {
 		return false, nil
-	}
-
-	if err != nil {
+	} else if err != nil {
 		return false, err
 	}
 
