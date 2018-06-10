@@ -34,49 +34,46 @@ func (p *Persister) BeginUnitOfWork(
 	s ax.Sender,
 	id saga.InstanceID,
 ) (saga.UnitOfWork, error) {
+
 	var (
-		i  saga.Instance
-		ok bool
-		pk string
+		ok  bool
+		err error
 	)
 
-	uow := &unitOfWork{}
+	uow := &unitOfWork{
+		messageStore: p.MessageStore,
+		snapshots:    p.Snapshots,
+		frequency:    p.SnapshotFrequency,
+		tx:           tx,
+		recorder:     &Recorder{Next: s},
+	}
 
 	if p.Snapshots != nil {
-		var err error
-		pk = sg.PersistenceKey()
-		i, ok, err = p.Snapshots.LoadSagaSnapshot(ctx, tx, pk, id)
+		uow.key = sg.PersistenceKey()
+		uow.instance, ok, err = p.Snapshots.LoadSagaSnapshot(ctx, uow.tx, uow.key, id)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if !ok {
-		i = saga.Instance{
+		uow.instance = saga.Instance{
 			InstanceID: id,
 			Data:       sg.NewData(),
 		}
 	}
 
-	uow.lastKnownSnapshot = i.Revision
+	uow.lastKnownSnapshot = uow.instance.Revision
 
-	if err := applyEvents(
+	if err = applyEvents(
 		ctx,
 		tx,
 		p.MessageStore,
 		sg.(saga.EventedSaga),
-		&i,
+		&uow.instance,
 	); err != nil {
 		return nil, err
 	}
-
-	uow.messageStore = p.MessageStore
-	uow.snapshots = p.Snapshots
-	uow.frequency = p.SnapshotFrequency
-	uow.tx = tx
-	uow.key = pk
-	uow.recorder = &Recorder{Next: s}
-	uow.instance = i
 
 	return uow, nil
 }
@@ -84,15 +81,15 @@ func (p *Persister) BeginUnitOfWork(
 // unitOfWork is an implementation of saga.UnitOfWork that perists saga
 // instances as a stream of events, with optional snapshots.
 type unitOfWork struct {
-	messageStore      messagestore.Store
-	snapshots         SnapshotRepository
-	frequency         saga.Revision
-	lastKnownSnapshot saga.Revision
+	messageStore messagestore.Store
+	snapshots    SnapshotRepository
+	frequency    saga.Revision
 
-	tx       persistence.Tx
-	key      string
-	recorder *Recorder
-	instance saga.Instance
+	lastKnownSnapshot saga.Revision
+	tx                persistence.Tx
+	key               string
+	recorder          *Recorder
+	instance          saga.Instance
 }
 
 // Sender returns the ax.Sender that the saga must use to send messages.
@@ -124,10 +121,9 @@ func (w *unitOfWork) Save(ctx context.Context) (bool, error) {
 		return false, err
 	}
 
-	before := w.lastKnownSnapshot
 	w.instance.Revision += saga.Revision(n)
 
-	if w.shouldSnapshot(before, w.instance.Revision) {
+	if w.shouldSnapshot(w.lastKnownSnapshot, w.instance.Revision) {
 		if err := w.snapshots.SaveSagaSnapshot(ctx, w.tx, w.key, w.instance); err != nil {
 			return false, err
 		}
@@ -147,14 +143,10 @@ func (w *unitOfWork) shouldSnapshot(before, after saga.Revision) bool {
 		return false
 	}
 
-	if before == 0 {
-		return true
-	}
-
 	freq := w.frequency
 	if freq == 0 {
 		freq = DefaultSnapshotFrequency
 	}
 
-	return (after-before)%freq == 0
+	return (after - before) >= freq
 }
