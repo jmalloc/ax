@@ -123,7 +123,7 @@ func (w *unitOfWork) Save(ctx context.Context) (bool, error) {
 
 	w.instance.Revision += saga.Revision(n)
 
-	if w.shouldSnapshot(w.lastKnownSnapshot, w.instance.Revision) {
+	if w.shouldSnapshot() {
 		if err := w.snapshots.SaveSagaSnapshot(ctx, w.tx, w.key, w.instance); err != nil {
 			return false, err
 		}
@@ -138,7 +138,7 @@ func (w *unitOfWork) Close() {
 }
 
 // shouldSnapshot returns true if a new snapshot should be stored.
-func (w *unitOfWork) shouldSnapshot(before, after saga.Revision) bool {
+func (w *unitOfWork) shouldSnapshot() bool {
 	if w.snapshots == nil {
 		return false
 	}
@@ -148,5 +148,5 @@ func (w *unitOfWork) shouldSnapshot(before, after saga.Revision) bool {
 		freq = DefaultSnapshotFrequency
 	}
 
-	return (after - before) >= freq
+	return (w.instance.Revision - w.lastKnownSnapshot) >= freq
 }
