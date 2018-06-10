@@ -31,14 +31,16 @@ func (r CRUDRepository) LoadSagaInstance(
 	pk string,
 	id saga.InstanceID,
 ) (saga.Instance, bool, error) {
+	tx := mysqlpersistence.ExtractTx(ptx)
+
 	var (
-		ipk         string
+		cpk         string
 		i           saga.Instance
 		contentType string
 		data        []byte
 	)
 
-	err := mysqlpersistence.ExtractTx(ptx).QueryRowContext(
+	err := tx.QueryRowContext(
 		ctx,
 		`SELECT
 			instance_id,
@@ -52,25 +54,23 @@ func (r CRUDRepository) LoadSagaInstance(
 	).Scan(
 		&i.InstanceID,
 		&i.Revision,
-		&ipk,
+		&cpk,
 		&contentType,
 		&data,
 	)
 
 	if err == sql.ErrNoRows {
 		return saga.Instance{}, false, nil
-	}
-
-	if err != nil {
+	} else if err != nil {
 		return saga.Instance{}, false, err
 	}
 
-	if ipk != pk {
+	if cpk != pk {
 		return i, false, fmt.Errorf(
 			"can not load saga instance %s for saga %s, it belongs to %s",
 			i.InstanceID,
 			pk,
-			ipk,
+			cpk,
 		)
 	}
 
@@ -103,11 +103,24 @@ func (r CRUDRepository) SaveSagaInstance(
 		return err
 	}
 
+	var ok bool
+
 	if i.Revision == 0 {
-		return r.insertInstance(ctx, tx, pk, i, contentType, data)
+		ok, err = r.insertInstance(ctx, tx, pk, i, contentType, data)
+	} else {
+		ok, err = r.updateInstance(ctx, tx, pk, i, contentType, data)
 	}
 
-	return r.updateInstance(ctx, tx, pk, i, contentType, data)
+	if ok || err != nil {
+		return err
+	}
+
+	// TODO: use OCC error https://github.com/jmalloc/ax/issues/93
+	return fmt.Errorf(
+		"can not update saga instance %s, revision %d is not the current revision",
+		i.InstanceID,
+		i.Revision,
+	)
 }
 
 // insertInstance inserts a new saga instance.
@@ -118,7 +131,7 @@ func (CRUDRepository) insertInstance(
 	i saga.Instance,
 	contentType string,
 	data []byte,
-) error {
+) (bool, error) {
 	_, err := tx.ExecContext(
 		ctx,
 		`INSERT INTO ax_saga_instance SET
@@ -135,9 +148,11 @@ func (CRUDRepository) insertInstance(
 		data,
 	)
 
-	// TODO: return a more meaningful error if we get a duplicate key error
+	if sqlutil.IsDuplicateEntry(err) {
+		return false, nil
+	}
 
-	return err
+	return true, err
 }
 
 // updateInstance updates an existing saga instance.
@@ -149,11 +164,12 @@ func (CRUDRepository) updateInstance(
 	i saga.Instance,
 	contentType string,
 	data []byte,
-) error {
+) (bool, error) {
 	var (
-		ipk string
+		cpk string
 		rev saga.Revision
 	)
+
 	err := tx.QueryRowContext(
 		ctx,
 		`SELECT
@@ -165,31 +181,29 @@ func (CRUDRepository) updateInstance(
 		i.InstanceID,
 	).Scan(
 		&rev,
-		&ipk,
+		&cpk,
 	)
 
-	if err != nil && err != sql.ErrNoRows {
-		return err
+	if err == sql.ErrNoRows {
+		return false, nil
+	} else if err != nil {
+		return false, err
 	}
 
 	if i.Revision != rev {
-		return fmt.Errorf(
-			"can not update saga instance %s, revision %d is not the current revision",
-			i.InstanceID,
-			i.Revision,
-		)
+		return false, nil
 	}
 
-	if pk != ipk {
-		return fmt.Errorf(
+	if pk != cpk {
+		return false, fmt.Errorf(
 			"can not save saga instance %s for saga %s, it belongs to %s",
 			i.InstanceID,
 			pk,
-			ipk,
+			cpk,
 		)
 	}
 
-	return sqlutil.ExecSingleRow(
+	return true, sqlutil.ExecSingleRow(
 		ctx,
 		tx,
 		`UPDATE ax_saga_instance SET
