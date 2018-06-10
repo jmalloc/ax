@@ -123,7 +123,7 @@ func (OffsetStore) updateOffset(
 		FROM ax_projection_offset
 		WHERE persistence_key = ?
 		FOR UPDATE`,
-		pn,
+		pk,
 	).Scan(
 		&current,
 	)
