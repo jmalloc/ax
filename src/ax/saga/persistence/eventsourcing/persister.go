@@ -34,47 +34,48 @@ func (p *Persister) BeginUnitOfWork(
 	s ax.Sender,
 	id saga.InstanceID,
 ) (saga.UnitOfWork, error) {
+
 	var (
-		i  saga.Instance
-		ok bool
-		pk string
+		ok  bool
+		err error
 	)
 
+	uow := &unitOfWork{
+		messageStore: p.MessageStore,
+		snapshots:    p.Snapshots,
+		frequency:    p.SnapshotFrequency,
+		tx:           tx,
+		recorder:     &Recorder{Next: s},
+	}
+
 	if p.Snapshots != nil {
-		var err error
-		pk = sg.PersistenceKey()
-		i, ok, err = p.Snapshots.LoadSagaSnapshot(ctx, tx, pk, id)
+		uow.key = sg.PersistenceKey()
+		uow.instance, ok, err = p.Snapshots.LoadSagaSnapshot(ctx, uow.tx, uow.key, id)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if !ok {
-		i = saga.Instance{
+		uow.instance = saga.Instance{
 			InstanceID: id,
 			Data:       sg.NewData(),
 		}
 	}
 
-	if err := applyEvents(
+	uow.lastKnownSnapshot = uow.instance.Revision
+
+	if err = applyEvents(
 		ctx,
 		tx,
 		p.MessageStore,
 		sg.(saga.EventedSaga),
-		&i,
+		&uow.instance,
 	); err != nil {
 		return nil, err
 	}
 
-	return &unitOfWork{
-		p.MessageStore,
-		p.Snapshots,
-		p.SnapshotFrequency,
-		tx,
-		pk,
-		&Recorder{Next: s},
-		i,
-	}, nil
+	return uow, nil
 }
 
 // unitOfWork is an implementation of saga.UnitOfWork that perists saga
@@ -84,10 +85,11 @@ type unitOfWork struct {
 	snapshots    SnapshotRepository
 	frequency    saga.Revision
 
-	tx       persistence.Tx
-	key      string
-	recorder *Recorder
-	instance saga.Instance
+	lastKnownSnapshot saga.Revision
+	tx                persistence.Tx
+	key               string
+	recorder          *Recorder
+	instance          saga.Instance
 }
 
 // Sender returns the ax.Sender that the saga must use to send messages.
@@ -119,10 +121,9 @@ func (w *unitOfWork) Save(ctx context.Context) (bool, error) {
 		return false, err
 	}
 
-	before := w.instance.Revision
 	w.instance.Revision += saga.Revision(n)
 
-	if w.shouldSnapshot(before, w.instance.Revision) {
+	if w.shouldSnapshot() {
 		if err := w.snapshots.SaveSagaSnapshot(ctx, w.tx, w.key, w.instance); err != nil {
 			return false, err
 		}
@@ -137,7 +138,7 @@ func (w *unitOfWork) Close() {
 }
 
 // shouldSnapshot returns true if a new snapshot should be stored.
-func (w *unitOfWork) shouldSnapshot(before, after saga.Revision) bool {
+func (w *unitOfWork) shouldSnapshot() bool {
 	if w.snapshots == nil {
 		return false
 	}
@@ -147,5 +148,5 @@ func (w *unitOfWork) shouldSnapshot(before, after saga.Revision) bool {
 		freq = DefaultSnapshotFrequency
 	}
 
-	return (before / freq) != (after / freq)
+	return (w.instance.Revision - w.lastKnownSnapshot) >= freq
 }
