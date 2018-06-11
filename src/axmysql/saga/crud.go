@@ -174,8 +174,8 @@ func (CRUDRepository) insertInstance(
 			content_type = ?,
 			data = ?`,
 		i.InstanceID,
-		i.Data.InstanceDescription(),
 		pk,
+		i.Data.InstanceDescription(),
 		contentType,
 		data,
 	)
@@ -283,7 +283,7 @@ func (r CRUDRepository) deleteInstance(
 	return true, sqlutil.ExecSingleRow(
 		ctx,
 		tx,
-		`DELETE ax_saga_instance SET WHERE instance_id = ?`,
+		`DELETE FROM ax_saga_instance WHERE instance_id = ?`,
 		i.InstanceID,
 	)
 }
