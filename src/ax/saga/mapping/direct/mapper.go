@@ -28,10 +28,20 @@ func (m *Mapper) MapMessageToInstance(
 	return sg.(Saga).InstanceIDForMessage(ctx, env)
 }
 
-// UpdateMapping notifies the mapper that a message has been handled by
-// an instance. Giving it the oppurtunity to update mapping data to reflect
-// the changes, if necessary.
+// UpdateMapping notifies the mapper that an instance has been modified,
+// allowing it to update it's mapping information, if necessary.
 func (m *Mapper) UpdateMapping(
+	ctx context.Context,
+	sg saga.Saga,
+	tx persistence.Tx,
+	i saga.Instance,
+) error {
+	return nil
+}
+
+// DeleteMapping notifies the mapper that an instance has been completed,
+// allowing it to remove it's mapping information, if necessary.
+func (m *Mapper) DeleteMapping(
 	ctx context.Context,
 	sg saga.Saga,
 	tx persistence.Tx,

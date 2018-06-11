@@ -111,3 +111,27 @@ func (SnapshotRepository) SaveSagaSnapshot(
 
 	return err
 }
+
+// DeleteSagaSnapshots deletes any snapshots associated with a saga instance.
+//
+// This implementation does not verify the saga's persistence key. It simply
+// ignores any snapshots that match the instance ID, but not the persistence key.
+func (SnapshotRepository) DeleteSagaSnapshots(
+	ctx context.Context,
+	ptx persistence.Tx,
+	pk string,
+	id saga.InstanceID,
+) error {
+	tx := mysqlpersistence.ExtractTx(ptx)
+
+	_, err := tx.ExecContext(
+		ctx,
+		`DELETE FROM ax_saga_snapshot
+		WHERE persistence_key = ?
+		AND instance_id = ?`,
+		pk,
+		id,
+	)
+
+	return err
+}

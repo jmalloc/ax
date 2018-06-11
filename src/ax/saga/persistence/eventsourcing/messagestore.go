@@ -16,31 +16,6 @@ func streamName(id saga.InstanceID) string {
 	return "saga:" + id.Get()
 }
 
-// appendEvents appends the events in envs to the message stream for the given
-// saga instance.
-//
-// It returns an error if i.Revision is not the next free offset in the stream.
-// It panics if envs contains messages that do not implement ax.Event.
-func appendEvents(
-	ctx context.Context,
-	tx persistence.Tx,
-	ms messagestore.Store,
-	i saga.Instance,
-	envs []ax.Envelope,
-) error {
-	for _, env := range envs {
-		_ = env.Message.(ax.Event) // panic if not an event
-	}
-
-	return ms.AppendMessages(
-		ctx,
-		tx,
-		streamName(i.InstanceID),
-		uint64(i.Revision),
-		envs,
-	)
-}
-
 // applyEvents calls Data.ApplyEvent for each event in a saga's message stream.
 func applyEvents(
 	ctx context.Context,

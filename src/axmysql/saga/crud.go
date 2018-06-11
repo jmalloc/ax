@@ -85,8 +85,8 @@ func (r CRUDRepository) LoadSagaInstance(
 // instance as it exists within the store, or a problem occurs with the
 // underlying data store.
 //
-// It returns an error if the instance already exists, but belongs to a
-// different saga, as identified by pk, the saga's persistence key.
+// It returns an error if the instance belongs to a different saga, as
+// identified by pk, the saga's persistence key.
 //
 // It panics if the repository is not able to enlist in tx because it uses a
 // different underlying storage system.
@@ -123,6 +123,38 @@ func (r CRUDRepository) SaveSagaInstance(
 	)
 }
 
+// DeleteSagaInstance deletes a saga instance.
+//
+// It returns an error if i.Revision is not the current revision of the
+// instance as it exists within the store, or a problem occurs with the
+// underlying data store.
+//
+// It returns an error if the instance belongs to a different saga, as
+// identified by pk, the saga's persistence key.
+//
+// It panics if the repository is not able to enlist in tx because it uses a
+// different underlying storage system.
+func (r CRUDRepository) DeleteSagaInstance(
+	ctx context.Context,
+	ptx persistence.Tx,
+	pk string,
+	i saga.Instance,
+) error {
+	tx := mysqlpersistence.ExtractTx(ptx)
+
+	ok, err := r.deleteInstance(ctx, tx, pk, i)
+	if ok || err != nil {
+		return err
+	}
+
+	// TODO: use OCC error https://github.com/jmalloc/ax/issues/93
+	return fmt.Errorf(
+		"can not delete saga instance %s, revision %d is not the current revision",
+		i.InstanceID,
+		i.Revision,
+	)
+}
+
 // insertInstance inserts a new saga instance.
 func (CRUDRepository) insertInstance(
 	ctx context.Context,
@@ -142,8 +174,8 @@ func (CRUDRepository) insertInstance(
 			content_type = ?,
 			data = ?`,
 		i.InstanceID,
-		i.Data.InstanceDescription(),
 		pk,
+		i.Data.InstanceDescription(),
 		contentType,
 		data,
 	)
@@ -155,15 +187,13 @@ func (CRUDRepository) insertInstance(
 	return true, err
 }
 
-// updateInstance updates an existing saga instance.
-// It returns an error if i.Revision is not the current revision.
-func (CRUDRepository) updateInstance(
+// lockInstance selects and locks an instance at the given revision.
+// It returns false if i.Revision is not the current revision.
+func (CRUDRepository) lockInstance(
 	ctx context.Context,
 	tx *sql.Tx,
 	pk string,
 	i saga.Instance,
-	contentType string,
-	data []byte,
 ) (bool, error) {
 	var (
 		cpk string
@@ -196,11 +226,29 @@ func (CRUDRepository) updateInstance(
 
 	if pk != cpk {
 		return false, fmt.Errorf(
-			"can not save saga instance %s for saga %s, it belongs to %s",
+			"can not lock saga instance %s for saga %s, it belongs to %s",
 			i.InstanceID,
 			pk,
 			cpk,
 		)
+	}
+
+	return true, nil
+}
+
+// updateInstance updates an existing saga instance.
+// It returns an error if i.Revision is not the current revision.
+func (r CRUDRepository) updateInstance(
+	ctx context.Context,
+	tx *sql.Tx,
+	pk string,
+	i saga.Instance,
+	contentType string,
+	data []byte,
+) (bool, error) {
+	ok, err := r.lockInstance(ctx, tx, pk, i)
+	if !ok || err != nil {
+		return false, err
 	}
 
 	return true, sqlutil.ExecSingleRow(
@@ -215,6 +263,27 @@ func (CRUDRepository) updateInstance(
 		i.Data.InstanceDescription(),
 		contentType,
 		data,
+		i.InstanceID,
+	)
+}
+
+// deleteInstance deletes an existing saga instance.
+// It returns an error if i.Revision is not the current revision.
+func (r CRUDRepository) deleteInstance(
+	ctx context.Context,
+	tx *sql.Tx,
+	pk string,
+	i saga.Instance,
+) (bool, error) {
+	ok, err := r.lockInstance(ctx, tx, pk, i)
+	if !ok || err != nil {
+		return false, err
+	}
+
+	return true, sqlutil.ExecSingleRow(
+		ctx,
+		tx,
+		`DELETE FROM ax_saga_instance WHERE instance_id = ?`,
 		i.InstanceID,
 	)
 }

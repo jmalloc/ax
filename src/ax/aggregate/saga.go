@@ -13,6 +13,7 @@ import (
 // Saga is an implementation of saga.Saga that wraps an Aggregate.
 type Saga struct {
 	saga.ErrorIfNotFound
+	saga.CompletableByData
 
 	Prototype  Aggregate
 	Identifier Identifier

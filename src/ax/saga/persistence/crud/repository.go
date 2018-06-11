@@ -32,12 +32,30 @@ type Repository interface {
 	// instance as it exists within the store, or a problem occurs with the
 	// underlying data store.
 	//
-	// It returns an error if the instance already exists, but belongs to a
-	// different saga, as identified by pk, the saga's persistence key.
+	// It returns an error if the instance belongs to a different saga, as
+	// identified by pk, the saga's persistence key.
 	//
 	// It panics if the repository is not able to enlist in tx because it uses a
 	// different underlying storage system.
 	SaveSagaInstance(
+		ctx context.Context,
+		tx persistence.Tx,
+		pk string,
+		i saga.Instance,
+	) error
+
+	// DeleteSagaInstance deletes a saga instance.
+	//
+	// It returns an error if i.Revision is not the current revision of the
+	// instance as it exists within the store, or a problem occurs with the
+	// underlying data store.
+	//
+	// It returns an error if the instance belongs to a different saga, as
+	// identified by pk, the saga's persistence key.
+	//
+	// It panics if the repository is not able to enlist in tx because it uses a
+	// different underlying storage system.
+	DeleteSagaInstance(
 		ctx context.Context,
 		tx persistence.Tx,
 		pk string,
