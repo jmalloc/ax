@@ -114,9 +114,8 @@ func (SnapshotRepository) SaveSagaSnapshot(
 
 // DeleteSagaSnapshots deletes any snapshots associated with a saga instance.
 //
-// The implementation may return an error if snapshots for this instance
-// already exists, but belong to a different saga, as identified by pk, the
-// saga's persistence key.
+// This implementation does not verify the saga's persistence key. It simply
+// ignores any snapshots that match the instance ID, but not the persistence key.
 func (SnapshotRepository) DeleteSagaSnapshots(
 	ctx context.Context,
 	ptx persistence.Tx,

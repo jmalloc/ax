@@ -138,7 +138,7 @@ func (h *MessageHandler) isTrigger(env ax.Envelope) bool {
 // isComplete returns true if h.Saga is a completable saga and i is complete.
 func (h *MessageHandler) isComplete(ctx context.Context, i Instance) (bool, error) {
 	if cs, ok := h.Saga.(CompletableSaga); ok {
-		return cs.IsComplete(ctx, i)
+		return cs.IsInstanceComplete(ctx, i)
 	}
 
 	return false, nil

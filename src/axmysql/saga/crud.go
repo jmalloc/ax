@@ -85,8 +85,8 @@ func (r CRUDRepository) LoadSagaInstance(
 // instance as it exists within the store, or a problem occurs with the
 // underlying data store.
 //
-// It returns an error if the instance already exists, but belongs to a
-// different saga, as identified by pk, the saga's persistence key.
+// It returns an error if the instance belongs to a different saga, as
+// identified by pk, the saga's persistence key.
 //
 // It panics if the repository is not able to enlist in tx because it uses a
 // different underlying storage system.
@@ -129,8 +129,8 @@ func (r CRUDRepository) SaveSagaInstance(
 // instance as it exists within the store, or a problem occurs with the
 // underlying data store.
 //
-// It returns an error if the instance already exists, but belongs to a
-// different saga, as identified by pk, the saga's persistence key.
+// It returns an error if the instance belongs to a different saga, as
+// identified by pk, the saga's persistence key.
 //
 // It panics if the repository is not able to enlist in tx because it uses a
 // different underlying storage system.

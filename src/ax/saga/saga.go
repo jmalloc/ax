@@ -73,6 +73,6 @@ type EventedSaga interface {
 type CompletableSaga interface {
 	Saga
 
-	// IsComplete returns true if the given instance is complete.
-	IsComplete(ctx context.Context, i Instance) (bool, error)
+	// IsInstanceComplete returns true if the given instance is complete.
+	IsInstanceComplete(ctx context.Context, i Instance) (bool, error)
 }
