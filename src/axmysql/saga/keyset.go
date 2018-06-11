@@ -3,9 +3,11 @@ package saga
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/ax/saga"
+	"github.com/jmalloc/ax/src/axmysql/internal/sqlutil"
 	mysqlpersistence "github.com/jmalloc/ax/src/axmysql/persistence"
 )
 
@@ -23,7 +25,9 @@ func (KeySetRepository) FindByKey(
 	ptx persistence.Tx,
 	pk, mk string,
 ) (id saga.InstanceID, ok bool, err error) {
-	err = mysqlpersistence.ExtractTx(ptx).QueryRowContext(
+	tx := mysqlpersistence.ExtractTx(ptx)
+
+	err = tx.QueryRowContext(
 		ctx,
 		`SELECT
 			instance_id
@@ -82,7 +86,14 @@ func (KeySetRepository) SaveKeys(
 			mk,
 			id,
 		); err != nil {
-			// TODO: return a more meaningful error if we get a duplicate key error
+			if sqlutil.IsDuplicateEntry(err) {
+				return fmt.Errorf(
+					"can not save mapping keys for instance %s, the '%s' key is mapped to another instance",
+					id,
+					mk,
+				)
+			}
+
 			return err
 		}
 	}
