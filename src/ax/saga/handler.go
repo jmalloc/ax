@@ -57,9 +57,21 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 		return err
 	}
 
-	// then persist the changes.
-	if err := h.save(ctx, tx, w); err != nil {
+	// check if the instance is complete.
+	isComplete, err := h.isComplete(ctx, w.Instance())
+	if err != nil {
 		return err
+	}
+
+	// then persist the changes.
+	if isComplete {
+		if err := h.complete(ctx, tx, w); err != nil {
+			return err
+		}
+	} else {
+		if err := h.save(ctx, tx, w); err != nil {
+			return err
+		}
 	}
 
 	return com.Commit()
@@ -106,9 +118,27 @@ func (h *MessageHandler) save(ctx context.Context, tx persistence.Tx, w UnitOfWo
 	return h.Mapper.UpdateMapping(ctx, h.Saga, tx, w.Instance())
 }
 
+// complete saves a completed saga instance.
+func (h *MessageHandler) complete(ctx context.Context, tx persistence.Tx, w UnitOfWork) error {
+	if err := w.SaveAndComplete(ctx); err != nil {
+		return err
+	}
+
+	return h.Mapper.DeleteMapping(ctx, h.Saga, tx, w.Instance())
+}
+
 // isTrigger returns true if env contains a message type that can trigger a new
 // saga instance.
 func (h *MessageHandler) isTrigger(env ax.Envelope) bool {
 	triggers, _ := h.Saga.MessageTypes()
 	return triggers.Has(env.Type())
+}
+
+// isComplete returns true if h.Saga is a completable saga and i is complete.
+func (h *MessageHandler) isComplete(ctx context.Context, i Instance) (bool, error) {
+	if cs, ok := h.Saga.(CompletableSaga); ok {
+		return cs.IsComplete(ctx, i)
+	}
+
+	return false, nil
 }
