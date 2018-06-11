@@ -70,18 +70,6 @@ func (sg *Saga) MessageTypes() (tr ax.MessageTypeSet, mt ax.MessageTypeSet) {
 	return sg.Triggers, ax.MessageTypeSet{}
 }
 
-// GenerateInstanceID returns the saga ID to use for a new instance.
-//
-// It is called when a "trigger" message is received and there is no
-// existing saga instance. env contains the "trigger" message.
-func (sg *Saga) GenerateInstanceID(ctx context.Context, env ax.Envelope) (saga.InstanceID, error) {
-	id, err := sg.Identifier.AggregateID(
-		env.Message.(ax.Command),
-	)
-
-	return saga.InstanceID{ID: id.ID}, err
-}
-
 // NewData returns a pointer to a new zero-value instance of the
 // saga's data type.
 func (sg *Saga) NewData() saga.Data {
