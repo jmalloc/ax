@@ -37,12 +37,14 @@ func New(agg Aggregate, opts ...Option) *Saga {
 		&sg.Handle,
 		reflect.TypeOf((*ax.Command)(nil)).Elem(),
 		reflect.TypeOf(agg),
+		"", // command handlers do not require any prefix
 	)
 
 	visitor.MakeAcceptor(
 		&sg.Apply,
 		reflect.TypeOf((*ax.Event)(nil)).Elem(),
 		reflect.TypeOf(agg),
+		"When",
 	)
 
 	sg.Triggers = ax.TypesByGoType(commandTypes...)

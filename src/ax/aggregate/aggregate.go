@@ -21,10 +21,15 @@ type ID struct{ ident.ID }
 //
 // Where T is a struct type that implements ax.Command.
 //
-// Handler methods are responsible for producing new events based on the cmd
+// Handler methods are responsible for producing new events based on the command
 // being handled. They may inspect the current state of the aggregate, and then
 // record zero or more events using rec. Handlers should never mutate the
 // aggregate state.
+//
+// The names of handler methods are not meaningful. By convention the methods
+// are named the same as the command they accept, such as:
+//
+//     func (*BankAccount) CreditAccount(*messages.CreditAccount, Recorder)
 //
 // For each of the event types passed to rec, the aggregate must implement an
 // "applier" method that adheres to the following signature:
@@ -37,11 +42,10 @@ type ID struct{ ident.ID }
 // is called every time an event is recorded, *and* when loading an event-sourced
 // aggregate from the message store.
 //
-// The names of handler and applier methods are not meaningful to the aggregate
-// system. By convention, command handlers are named after their commands, and
-// event appliers are prefixed with the word "When", such as:
+// The names of handler methods are meaningful. Each handler method's name must
+// begin with "When". By convention these prefixes are followed by the message
+// name, such as:
 //
-//     func (*BankAccount) CreditAccount(*messages.CreditAccount, Recorder)
 //     func (*BankAccount) WhenAccountCredited(*messages.AccountCredited)
 type Aggregate interface {
 	saga.Data

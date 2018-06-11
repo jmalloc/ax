@@ -29,8 +29,9 @@ import (
 // messages in the stream that do not have an associated applier method are
 // ignored.
 //
-// The names of applier methods are not meaningful to the projection system. By
-// convention, event appliers are prefixed with the word "When", such as:
+// The names of handler methods are meaningful. Each handler method's name must
+// begin with "When". By convention these prefixes are followed by the message
+// name, such as:
 //
 //     func (*BankAccount) WhenAccountCredited(*messages.AccountCredited)
 type ReadModel interface {
@@ -60,6 +61,7 @@ func NewReadModelProjector(rm ReadModel) *ReadModelProjector {
 		&p.Apply,
 		reflect.TypeOf((*ax.Event)(nil)).Elem(),
 		reflect.TypeOf(rm),
+		"When",
 	)
 
 	p.EventTypes = ax.TypesByGoType(eventTypes...)

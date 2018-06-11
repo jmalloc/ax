@@ -3,6 +3,7 @@ package visitor
 import (
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 // MakeAcceptor generates a function that accepts a value that implements the
@@ -12,7 +13,14 @@ import (
 // fn must be a pointer to a function. Its signature forms the template that
 // methods on v must match to be considered the destination for a concrete type.
 // It is assigned the value of the generated function.
-func MakeAcceptor(fn interface{}, i, v reflect.Type) []reflect.Type {
+//
+// pre is a prefix that the method name must have in order to be considered a
+// match. The prefix may be empty.
+func MakeAcceptor(
+	fn interface{},
+	i, v reflect.Type,
+	pre string,
+) []reflect.Type {
 	if i.Kind() != reflect.Interface {
 		panic("i must be an interface")
 	}
@@ -42,7 +50,7 @@ func MakeAcceptor(fn interface{}, i, v reflect.Type) []reflect.Type {
 		panic(fmt.Sprintf("*fn must have at least one parameter of type %s", i))
 	}
 
-	methods := findMatchingMethods(sig, i, v, pos)
+	methods := findMatchingMethods(sig, i, v, pos, pre)
 
 	fv.Set(
 		makeAcceptor(sig, v, pos, methods),
@@ -61,12 +69,21 @@ func MakeAcceptor(fn interface{}, i, v reflect.Type) []reflect.Type {
 //
 // A method matches if the input parameter at index ipos is a concrete
 // implementation of the interface i, and all other input and output parameters
-// are identical to their corresponding parameters in sig.
-func findMatchingMethods(sig, i, v reflect.Type, ipos int) map[reflect.Type]reflect.Method {
+// are identical to their corresponding parameters in sig, and the method name
+// begins with pre.
+func findMatchingMethods(
+	sig, i, v reflect.Type,
+	ipos int,
+	pre string,
+) map[reflect.Type]reflect.Method {
 	methods := map[reflect.Type]reflect.Method{}
 
 	for n := 0; n < v.NumMethod(); n++ {
 		m := v.Method(n)
+
+		if !strings.HasPrefix(m.Name, pre) {
+			continue
+		}
 
 		if !matchesSignature(sig, i, m.Type, ipos) {
 			continue
