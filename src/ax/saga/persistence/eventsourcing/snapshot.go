@@ -32,4 +32,16 @@ type SnapshotRepository interface {
 		pk string,
 		i saga.Instance,
 	) error
+
+	// DeleteSagaSnapshots deletes any snapshots associated with a saga instance.
+	//
+	// The implementation may return an error if snapshots for this instance
+	// already exists, but belong to a different saga, as identified by pk, the
+	// saga's persistence key.
+	DeleteSagaSnapshots(
+		ctx context.Context,
+		tx persistence.Tx,
+		pk string,
+		id saga.InstanceID,
+	) error
 }

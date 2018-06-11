@@ -81,6 +81,11 @@ func (w *unitOfWork) Save(ctx context.Context) (bool, error) {
 	return true, w.repository.SaveSagaInstance(ctx, w.tx, w.key, w.instance)
 }
 
+// SaveAndComplete deletes the saga instance.
+func (w *unitOfWork) SaveAndComplete(ctx context.Context) error {
+	return w.repository.DeleteSagaInstance(ctx, w.tx, w.key, w.instance)
+}
+
 // Close is called when the unit-of-work has ended, regardless of whether
 // Save() has been called.
 func (w *unitOfWork) Close() {

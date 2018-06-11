@@ -105,23 +105,10 @@ func (w *unitOfWork) Instance() saga.Instance {
 // Save persists changes to the instance.
 // It returns true if any changes have occurred.
 func (w *unitOfWork) Save(ctx context.Context) (bool, error) {
-	n := len(w.recorder.Events)
-
-	if n == 0 {
-		return false, nil
-	}
-
-	if err := appendEvents(
-		ctx,
-		w.tx,
-		w.messageStore,
-		w.instance,
-		w.recorder.Events,
-	); err != nil {
+	ok, err := w.appendEvents(ctx)
+	if !ok || err != nil {
 		return false, err
 	}
-
-	w.instance.Revision += saga.Revision(n)
 
 	if w.shouldSnapshot() {
 		if err := w.snapshots.SaveSagaSnapshot(ctx, w.tx, w.key, w.instance); err != nil {
@@ -132,9 +119,41 @@ func (w *unitOfWork) Save(ctx context.Context) (bool, error) {
 	return true, nil
 }
 
+// SaveAndComplete persists changes to a completed instance and deletes any
+// related snapshots.
+func (w *unitOfWork) SaveAndComplete(ctx context.Context) error {
+	if _, err := w.appendEvents(ctx); err != nil {
+		return err
+	}
+
+	if w.snapshots != nil {
+		return w.snapshots.DeleteSagaSnapshots(ctx, w.tx, w.key, w.instance.InstanceID)
+	}
+
+	return nil
+}
+
 // Close is called when the unit-of-work has ended, regardless of whether
 // Save() has been called.
 func (w *unitOfWork) Close() {
+}
+
+// appendEvents appends the recorded events to the instance's message stream.
+func (w *unitOfWork) appendEvents(ctx context.Context) (bool, error) {
+	n := len(w.recorder.Events)
+	if n == 0 {
+		return false, nil
+	}
+
+	w.instance.Revision += saga.Revision(n)
+
+	return true, w.messageStore.AppendMessages(
+		ctx,
+		w.tx,
+		streamName(w.instance.InstanceID),
+		uint64(w.instance.Revision),
+		w.recorder.Events,
+	)
 }
 
 // shouldSnapshot returns true if a new snapshot should be stored.
