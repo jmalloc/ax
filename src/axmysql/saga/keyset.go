@@ -57,7 +57,7 @@ func (KeySetRepository) FindByKey(
 // pk is the saga's persistence key. ks is the set of mapping keys.
 //
 // SaveKeys() may panic if ks contains duplicate keys.
-func (KeySetRepository) SaveKeys(
+func (r KeySetRepository) SaveKeys(
 	ctx context.Context,
 	ptx persistence.Tx,
 	pk string,
@@ -66,12 +66,7 @@ func (KeySetRepository) SaveKeys(
 ) error {
 	tx := mysqlpersistence.ExtractTx(ptx)
 
-	if _, err := tx.ExecContext(
-		ctx,
-		`DELETE FROM ax_saga_keyset
-		WHERE instance_id = ?`,
-		id,
-	); err != nil {
+	if err := r.deleteKeys(ctx, tx, pk, id); err != nil {
 		return err
 	}
 
@@ -99,4 +94,36 @@ func (KeySetRepository) SaveKeys(
 	}
 
 	return nil
+}
+
+// DeleteKeys removes any mapping keys associated with a saga instance.
+//
+// pk is the saga's persistence key.
+func (r KeySetRepository) DeleteKeys(
+	ctx context.Context,
+	ptx persistence.Tx,
+	pk string,
+	id saga.InstanceID,
+) error {
+	tx := mysqlpersistence.ExtractTx(ptx)
+
+	return r.deleteKeys(ctx, tx, pk, id)
+}
+
+func (KeySetRepository) deleteKeys(
+	ctx context.Context,
+	tx *sql.Tx,
+	pk string,
+	id saga.InstanceID,
+) error {
+	_, err := tx.ExecContext(
+		ctx,
+		`DELETE FROM ax_saga_keyset
+		WHERE persistence_key = ?
+		AND instance_id = ?`,
+		pk,
+		id,
+	)
+
+	return err
 }
