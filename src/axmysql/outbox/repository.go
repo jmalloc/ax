@@ -8,7 +8,6 @@ import (
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/persistence"
-	"github.com/jmalloc/ax/src/axmysql/internal/sqlutil"
 	mysqlpersistence "github.com/jmalloc/ax/src/axmysql/persistence"
 )
 
@@ -108,12 +107,15 @@ func (Repository) MarkAsSent(
 	ptx persistence.Tx,
 	env endpoint.OutboundEnvelope,
 ) error {
-	return sqlutil.ExecSingleRow(
+	tx := mysqlpersistence.ExtractTx(ptx)
+
+	_, err := tx.ExecContext(
 		ctx,
-		mysqlpersistence.ExtractTx(ptx),
 		`DELETE FROM ax_outbox_message WHERE message_id = ?`,
 		env.MessageID,
 	)
+
+	return err
 }
 
 func scanOutboxMessage(rows *sql.Rows, causationID ax.MessageID) (endpoint.OutboundEnvelope, error) {
