@@ -145,15 +145,19 @@ func (w *unitOfWork) appendEvents(ctx context.Context) (bool, error) {
 		return false, nil
 	}
 
-	w.instance.Revision += saga.Revision(n)
-
-	return true, w.messageStore.AppendMessages(
+	if err := w.messageStore.AppendMessages(
 		ctx,
 		w.tx,
 		streamName(w.instance.InstanceID),
 		uint64(w.instance.Revision),
 		w.recorder.Events,
-	)
+	); err != nil {
+		return false, err
+	}
+
+	w.instance.Revision += saga.Revision(n)
+
+	return true, nil
 }
 
 // shouldSnapshot returns true if a new snapshot should be stored.
