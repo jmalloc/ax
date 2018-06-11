@@ -19,3 +19,12 @@ type Data interface {
 	// https://github.com/golang/go/wiki/CodeReviewComments#error-strings
 	InstanceDescription() string
 }
+
+// CompletableData is an interface for application-defined saga data that
+// can be queried as to whether the saga instance is "complete".
+type CompletableData interface {
+	Data
+
+	// IsComplete returns true if the data describes a "completed" instance.
+	IsComplete() bool
+}
