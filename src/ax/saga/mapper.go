@@ -21,10 +21,18 @@ type Mapper interface {
 		env ax.Envelope,
 	) (InstanceID, bool, error)
 
-	// UpdateMapping notifies the mapper that a message has been handled by
-	// an instance. Giving it the opportunity to update mapping data to reflect
-	// the changes, if necessary.
+	// UpdateMapping notifies the mapper that an instance has been modified,
+	// allowing it to update it's mapping information, if necessary.
 	UpdateMapping(
+		ctx context.Context,
+		sg Saga,
+		tx persistence.Tx,
+		i Instance,
+	) error
+
+	// DeleteMapping notifies the mapper that an instance has been completed,
+	// allowing it to remove it's mapping information, if necessary.
+	DeleteMapping(
 		ctx context.Context,
 		sg Saga,
 		tx persistence.Tx,

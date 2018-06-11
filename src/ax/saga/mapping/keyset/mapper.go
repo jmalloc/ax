@@ -45,9 +45,8 @@ func (m *Mapper) MapMessageToInstance(
 	return id, true, err
 }
 
-// UpdateMapping notifies the mapper that a message has been handled by
-// an instance. Giving it the opportunity to update mapping data to reflect
-// the changes, if necessary.
+// UpdateMapping notifies the mapper that an instance has been modified,
+// allowing it to update it's mapping information, if necessary.
 func (m *Mapper) UpdateMapping(
 	ctx context.Context,
 	sg saga.Saga,
@@ -65,4 +64,15 @@ func (m *Mapper) UpdateMapping(
 	}
 
 	return m.Repository.SaveKeys(ctx, tx, sg.PersistenceKey(), ks, i.InstanceID)
+}
+
+// DeleteMapping notifies the mapper that an instance has been completed,
+// allowing it to remove it's mapping information, if necessary.
+func (m *Mapper) DeleteMapping(
+	ctx context.Context,
+	sg saga.Saga,
+	tx persistence.Tx,
+	i saga.Instance,
+) error {
+	return m.Repository.DeleteKeys(ctx, tx, sg.PersistenceKey(), i.InstanceID)
 }

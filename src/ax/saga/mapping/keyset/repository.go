@@ -36,4 +36,14 @@ type Repository interface {
 		ks []string,
 		id saga.InstanceID,
 	) error
+
+	// DeleteKeys removes any mapping keys associated with a saga instance.
+	//
+	// pk is the saga's persistence key.
+	DeleteKeys(
+		ctx context.Context,
+		tx persistence.Tx,
+		pk string,
+		id saga.InstanceID,
+	) error
 }
