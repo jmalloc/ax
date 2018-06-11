@@ -34,7 +34,7 @@ type CompletableByData struct{}
 // i.Data.IsComplete() returns true.
 func (CompletableByData) IsComplete(_ context.Context, i Instance) (bool, error) {
 	if cd, ok := i.Data.(CompletableData); ok {
-		return cd.IsComplete(), nil
+		return cd.IsInstanceComplete(), nil
 	}
 
 	return false, nil

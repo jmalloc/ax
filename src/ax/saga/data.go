@@ -25,6 +25,7 @@ type Data interface {
 type CompletableData interface {
 	Data
 
-	// IsComplete returns true if the data describes a "completed" instance.
-	IsComplete() bool
+	// IsInstanceComplete returns true if the data describes a "completed"
+	// instance.
+	IsInstanceComplete() bool
 }
