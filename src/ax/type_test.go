@@ -23,7 +23,6 @@ var _ = Describe("MessageType", func() {
 	})
 
 	Describe("TypeByName", func() {
-
 		It("returns a message type with the correct name", func() {
 			mt, ok := TypeByName("axtest.testmessages.Message")
 			Expect(ok).To(BeTrue())
@@ -44,6 +43,19 @@ var _ = Describe("MessageType", func() {
 		It("returns false if the message name is registered, but the message type is not of ax.Message", func() {
 			_, ok := TypeByName("axtest.testmessages.NonAxMessage")
 			Expect(ok).To(BeFalse())
+		})
+	})
+
+	Describe("TypeByGoType", func() {
+		It("returns the correct message type", func() {
+			mt := TypeByGoType(reflect.TypeOf(&testmessages.Message{}))
+			Expect(mt).To(Equal(TypeOf(&testmessages.Message{})))
+		})
+
+		It("panics if the type is not a message", func() {
+			Expect(func() {
+				TypeByGoType(reflect.TypeOf(&testmessages.NonAxMessage{}))
+			}).To(Panic())
 		})
 	})
 
@@ -201,6 +213,42 @@ var _ = Describe("MessageTypeSet", func() {
 
 		It("returns an empty set when called with no arguments", func() {
 			Expect(TypesOf().Len()).To(Equal(0))
+		})
+	})
+
+	Describe("TypesByGoType", func() {
+		It("returns a set containing the message types of the arguments", func() {
+			Expect(
+				TypesByGoType(
+					reflect.TypeOf(&testmessages.Message{}),
+					reflect.TypeOf(&testmessages.Command{}),
+				).Members(),
+			).To(ConsistOf(
+				message,
+				command,
+			))
+		})
+
+		It("deduplicates repeated types", func() {
+			Expect(
+				TypesByGoType(
+					reflect.TypeOf(&testmessages.Message{}),
+					reflect.TypeOf(&testmessages.Message{}),
+				).Len(),
+			).To(Equal(1))
+		})
+
+		It("returns an empty set when called with no arguments", func() {
+			Expect(TypesByGoType().Len()).To(Equal(0))
+		})
+
+		It("panics if any of the types if not a message", func() {
+			Expect(func() {
+				TypesByGoType(
+					reflect.TypeOf(&testmessages.Message{}),
+					reflect.TypeOf(&testmessages.NonAxMessage{}),
+				)
+			}).To(Panic())
 		})
 	})
 

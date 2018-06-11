@@ -62,14 +62,7 @@ func NewReadModelProjector(rm ReadModel) *ReadModelProjector {
 		reflect.TypeOf(rm),
 	)
 
-	// TODO: make use of https://github.com/jmalloc/ax/issues/74
-	for _, t := range eventTypes {
-		p.EventTypes = p.EventTypes.Add(
-			ax.TypeOf(
-				reflect.Zero(t).Interface().(ax.Message),
-			),
-		)
-	}
+	p.EventTypes = ax.TypesByGoType(eventTypes...)
 
 	return p
 }

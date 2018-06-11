@@ -52,6 +52,20 @@ func TypeByName(n string) (mt MessageType, ok bool) {
 	}, true
 }
 
+// TypeByGoType returns the message type for the given Go type.
+//
+// It panics if t does not implement Message.
+//
+// Note that messages are only added to the registry when their respective Go
+// package is imported.
+func TypeByGoType(t reflect.Type) (mt MessageType) {
+	v := reflect.Zero(t).Interface()
+
+	return TypeOf(
+		v.(Message),
+	)
+}
+
 // ToSet returns a MessageTypeSet containing mt as its only member.
 func (mt MessageType) ToSet() MessageTypeSet {
 	return MessageTypeSet{
@@ -126,6 +140,20 @@ func TypesOf(m ...Message) MessageTypeSet {
 
 	for _, v := range m {
 		members[TypeOf(v)] = struct{}{}
+	}
+
+	return MessageTypeSet{members}
+}
+
+// TypesByGoType returns a set containing the message types of the Go types in
+// t.
+//
+// It panics if any of the types do not implement Message.
+func TypesByGoType(t ...reflect.Type) MessageTypeSet {
+	members := make(map[MessageType]struct{}, len(t))
+
+	for _, v := range t {
+		members[TypeByGoType(v)] = struct{}{}
 	}
 
 	return MessageTypeSet{members}

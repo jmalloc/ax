@@ -44,14 +44,7 @@ func New(agg Aggregate, opts ...Option) *Saga {
 		reflect.TypeOf(agg),
 	)
 
-	// TODO: make use of https://github.com/jmalloc/ax/issues/74
-	for _, t := range commandTypes {
-		sg.Triggers = sg.Triggers.Add(
-			ax.TypeOf(
-				reflect.Zero(t).Interface().(ax.Message),
-			),
-		)
-	}
+	sg.Triggers = ax.TypesByGoType(commandTypes...)
 
 	return sg
 }
