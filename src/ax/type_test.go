@@ -287,7 +287,7 @@ var _ = Describe("MessageTypeSet", func() {
 		})
 	})
 
-	Describe("Add", func() {
+	Describe("Union", func() {
 		setA := TypesOf(
 			&testmessages.Message{},
 			&testmessages.Command{},
@@ -321,6 +321,43 @@ var _ = Describe("MessageTypeSet", func() {
 
 		It("returns the RHS if the LHS is empty", func() {
 			Expect(NewMessageTypeSet().Union(setA)).To(Equal(setA))
+		})
+	})
+
+	Describe("Intersection", func() {
+		setA := TypesOf(
+			&testmessages.Message{},
+			&testmessages.Command{},
+		)
+
+		setB := TypesOf(
+			&testmessages.Command{},
+			&testmessages.Event{},
+		)
+
+		It("returns the intersection of two sets", func() {
+			set := setA.Intersection(setB)
+
+			Expect(set.Members()).To(ConsistOf(
+				command,
+			))
+		})
+
+		It("does not modify the original sets", func() {
+			setA.Intersection(setB)
+
+			Expect(setA.Members()).To(ConsistOf(message, command))
+			Expect(setB.Members()).To(ConsistOf(command, event))
+		})
+
+		It("returns the LHS if it is empty", func() {
+			lhs := NewMessageTypeSet()
+			Expect(lhs.Intersection(setA)).To(Equal(lhs))
+		})
+
+		It("returns the RHS if it is empty", func() {
+			rhs := NewMessageTypeSet()
+			Expect(setA.Intersection(rhs)).To(Equal(rhs))
 		})
 	})
 })

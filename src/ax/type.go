@@ -200,13 +200,16 @@ func (s MessageTypeSet) Add(mt MessageType) MessageTypeSet {
 
 // Union returns the set union of s and o.
 func (s MessageTypeSet) Union(o MessageTypeSet) MessageTypeSet {
-	if o.Len() == 0 {
+	ol := o.Len()
+	sl := s.Len()
+
+	if ol == 0 {
 		return s
-	} else if s.Len() == 0 {
+	} else if sl == 0 {
 		return o
 	}
 
-	members := make(map[MessageType]struct{}, len(s.members)+len(o.members))
+	members := make(map[MessageType]struct{}, ol+sl)
 
 	for mt := range s.members {
 		members[mt] = struct{}{}
@@ -214,6 +217,37 @@ func (s MessageTypeSet) Union(o MessageTypeSet) MessageTypeSet {
 
 	for mt := range o.members {
 		members[mt] = struct{}{}
+	}
+
+	return MessageTypeSet{members}
+}
+
+// Intersection returns the set intersection of s and o.
+func (s MessageTypeSet) Intersection(o MessageTypeSet) MessageTypeSet {
+	ol := o.Len()
+	sl := s.Len()
+
+	if ol == 0 {
+		return o
+	} else if sl == 0 {
+		return s
+	}
+
+	// always iterate over the smaller of the two maps
+	if ol < sl {
+		return intersection(o, s)
+	}
+
+	return intersection(s, o)
+}
+
+func intersection(a, b MessageTypeSet) MessageTypeSet {
+	members := make(map[MessageType]struct{}, len(a.members))
+
+	for mt := range a.members {
+		if _, ok := b.members[mt]; ok {
+			members[mt] = struct{}{}
+		}
 	}
 
 	return MessageTypeSet{members}
