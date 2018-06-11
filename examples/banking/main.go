@@ -12,6 +12,7 @@ import (
 	"github.com/jmalloc/ax/examples/banking/domain"
 	"github.com/jmalloc/ax/examples/banking/messages"
 	"github.com/jmalloc/ax/examples/banking/projections"
+	"github.com/jmalloc/ax/examples/banking/workflows"
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/observability"
@@ -21,7 +22,6 @@ import (
 	"github.com/jmalloc/ax/src/ax/routing"
 	"github.com/jmalloc/ax/src/ax/saga"
 	"github.com/jmalloc/ax/src/ax/saga/mapping/direct"
-	"github.com/jmalloc/ax/src/ax/saga/mapping/keyset"
 	"github.com/jmalloc/ax/src/ax/saga/persistence/crud"
 	"github.com/jmalloc/ax/src/ax/saga/persistence/eventsourcing"
 	"github.com/jmalloc/ax/src/axcli"
@@ -69,7 +69,7 @@ func main() {
 
 		// crud sagas ...
 		&saga.MessageHandler{
-			Saga: domain.TransferWorkflowSaga,
+			Saga: workflows.TransferWorkflow,
 			Mapper: keyset.ByField(
 				axmysql.SagaKeySetRepository,
 				"TransferId",
