@@ -53,7 +53,8 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 	}
 
 	// otherwise, forward the message to the saga for handling.
-	if err := h.forward(ctx, w, env); err != nil {
+	err = h.forward(ctx, w, env)
+	if err != nil {
 		return err
 	}
 
@@ -65,13 +66,13 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 
 	// then persist the changes.
 	if isComplete {
-		if err := h.complete(ctx, tx, w); err != nil {
-			return err
-		}
+		err = h.complete(ctx, tx, w)
 	} else {
-		if err := h.save(ctx, tx, w); err != nil {
-			return err
-		}
+		err = h.save(ctx, tx, w)
+	}
+
+	if err != nil {
+		return err
 	}
 
 	return com.Commit()
