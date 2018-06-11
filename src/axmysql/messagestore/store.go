@@ -3,6 +3,7 @@ package messagestore
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/messagestore"
@@ -27,21 +28,31 @@ func (Store) AppendMessages(
 ) error {
 	tx := mysqlpersistence.ExtractTx(ptx)
 
+	n := uint64(len(envs))
+
 	var (
 		id  int64
+		ok  bool
 		err error
 	)
 
-	n := uint64(len(envs))
-
 	if offset == 0 {
-		id, err = insertStream(ctx, tx, stream, n)
+		id, ok, err = insertStream(ctx, tx, stream, n)
 	} else {
-		id, err = incrStreamOffset(ctx, tx, stream, offset, n)
+		id, ok, err = incrStreamOffset(ctx, tx, stream, offset, n)
 	}
 
 	if err != nil {
 		return err
+	}
+
+	if !ok {
+		// TODO: use OCC error https://github.com/jmalloc/ax/issues/93
+		return fmt.Errorf(
+			"can not append to stream %s, %d is not the next free offset",
+			stream,
+			offset,
+		)
 	}
 
 	g, err := incrGlobalOffset(ctx, tx, n)

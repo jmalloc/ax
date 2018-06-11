@@ -3,21 +3,22 @@ package messagestore
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/jmalloc/ax/src/ax"
+	"github.com/jmalloc/ax/src/axmysql/internal/sqlutil"
 )
 
 // insertStream inserts a new stream and returns its ID.
 //
 // s is the name of the stream, n is the initial value of the "next" offset.
+// It returns false if there is already a stream by this name.
 func insertStream(
 	ctx context.Context,
 	tx *sql.Tx,
 	s string,
 	n uint64,
-) (int64, error) {
+) (int64, bool, error) {
 	res, err := tx.ExecContext(
 		ctx,
 		`INSERT INTO ax_messagestore_stream SET
@@ -27,23 +28,28 @@ func insertStream(
 		n,
 	)
 	if err != nil {
-		return 0, err
+		if sqlutil.IsDuplicateEntry(err) {
+			return 0, false, nil
+		}
+
+		return 0, false, err
 	}
 
-	return res.LastInsertId()
+	id, err := res.LastInsertId()
+	return id, true, err
 }
 
 // incrStreamOffset increments the offset for the given stream by n.
 //
 // s is the name of the stream. It returns the stream's ID.
-// It returns an error if o is not the next free offset.
+// It returns false if o is not the next free offset.
 func incrStreamOffset(
 	ctx context.Context,
 	tx *sql.Tx,
 	s string,
 	o uint64,
 	n uint64,
-) (int64, error) {
+) (int64, bool, error) {
 	var (
 		id   int64
 		next uint64
@@ -63,29 +69,25 @@ func incrStreamOffset(
 		&next,
 	)
 
-	if err != nil && err != sql.ErrNoRows {
-		return 0, err
+	if err == sql.ErrNoRows {
+		return 0, false, nil
+	} else if err != nil {
+		return 0, false, err
 	}
 
 	if o != next {
-		return 0, fmt.Errorf(
-			"can not append to stream %s, %d is not the next free offset, expected %d",
-			s,
-			o,
-			next,
-		)
+		return 0, false, nil
 	}
 
-	_, err = tx.ExecContext(
+	return id, true, sqlutil.ExecSingleRow(
 		ctx,
+		tx,
 		`UPDATE ax_messagestore_stream SET
 			next = next + ?
 		WHERE stream_id = ?`,
 		n,
 		id,
 	)
-
-	return id, err
 }
 
 // incrGlobalOffset increments the global stream offset by n.
@@ -97,10 +99,11 @@ func incrGlobalOffset(
 	n uint64,
 ) (uint64, error) {
 	// insert or update both cause the row to be locked in tx
-	res, err := tx.ExecContext(
+	inserted, err := sqlutil.ExecInsertOrUpdate(
 		ctx,
+		tx,
 		`INSERT INTO ax_messagestore_offset SET
-			 	next = ?
+			next = ?
 		ON DUPLICATE KEY UPDATE
 			next = next + VALUE(next)`,
 		n,
@@ -109,14 +112,7 @@ func incrGlobalOffset(
 		return 0, nil
 	}
 
-	ar, err := res.RowsAffected()
-	if err != nil {
-		return 0, nil
-	}
-
-	if ar == 1 {
-		// if MySQL reports rows affected as 1, that means an insert occurred
-		// so we know that the offset was 0
+	if inserted {
 		return 0, nil
 	}
 

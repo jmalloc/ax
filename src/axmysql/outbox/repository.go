@@ -107,11 +107,14 @@ func (Repository) MarkAsSent(
 	ptx persistence.Tx,
 	env endpoint.OutboundEnvelope,
 ) error {
-	_, err := mysqlpersistence.ExtractTx(ptx).ExecContext(
+	tx := mysqlpersistence.ExtractTx(ptx)
+
+	_, err := tx.ExecContext(
 		ctx,
 		`DELETE FROM ax_outbox_message WHERE message_id = ?`,
 		env.MessageID,
 	)
+
 	return err
 }
 
