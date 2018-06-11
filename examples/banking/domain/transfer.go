@@ -25,7 +25,7 @@ func (t *Transfer) Start(m *messages.StartTransfer, rec aggregate.Recorder) {
 
 // MarkApproved marks the transfer as approved.
 func (t *Transfer) MarkApproved(m *messages.MarkTransferApproved, rec aggregate.Recorder) {
-	if t.IsComplete {
+	if t.IsApproved {
 		return
 	}
 
@@ -44,7 +44,7 @@ func (t *Transfer) WhenStarted(m *messages.TransferStarted) {
 
 // WhenApproved updates the transfer to reflect the occurance of m.
 func (t *Transfer) WhenApproved(m *messages.TransferApproved) {
-	t.IsComplete = true
+	t.IsApproved = true
 }
 
 // InstanceDescription returns a human-readable description of the aggregate

@@ -20,8 +20,14 @@ func (w *TransferWorkflow) InstanceDescription() string {
 	)
 }
 
+// IsInstanceComplete returns true if the transfer has completed processing.
+func (w *TransferWorkflow) IsInstanceComplete() bool {
+	return w.IsApproved
+}
+
 type transferWorkflowSaga struct {
 	saga.ErrorIfNotFound
+	saga.CompletableByData
 }
 
 func (transferWorkflowSaga) PersistenceKey() string {
@@ -86,11 +92,11 @@ func (transferWorkflowSaga) HandleMessage(ctx context.Context, s ax.Sender, env 
 		})
 
 	case *messages.AccountCredited:
+		wf.IsApproved = true
+
 		_, err = s.ExecuteCommand(ctx, &messages.MarkTransferApproved{
 			TransferId: wf.TransferId,
 		})
-
-		// TODO: mark done, depends on https://github.com/jmalloc/ax/issues/16
 	}
 
 	return err

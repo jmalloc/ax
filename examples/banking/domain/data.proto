@@ -17,7 +17,7 @@ message Transfer {
     string from_account_id = 2;
     string to_account_id = 3;
     int32 amount_in_cents = 4;
-    bool is_complete = 5;
+    bool is_approved = 5;
 }
 
 message TransferWorkflow {
@@ -25,4 +25,5 @@ message TransferWorkflow {
     string from_account_id = 2;
     string to_account_id = 3;
     int32 amount_in_cents = 4;
+    bool is_approved = 5;
 }
