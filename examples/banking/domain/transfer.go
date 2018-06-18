@@ -5,12 +5,12 @@ import (
 
 	"github.com/jmalloc/ax/examples/banking/format"
 	"github.com/jmalloc/ax/examples/banking/messages"
-	"github.com/jmalloc/ax/src/ax/aggregate"
+	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/ident"
 )
 
 // Start begins a new funds transfer between two accounts.
-func (t *Transfer) Start(m *messages.StartTransfer, rec aggregate.Recorder) {
+func (t *Transfer) Start(m *messages.StartTransfer, rec ax.EventRecorder) {
 	if t.TransferId != "" {
 		return
 	}
@@ -24,7 +24,7 @@ func (t *Transfer) Start(m *messages.StartTransfer, rec aggregate.Recorder) {
 }
 
 // MarkApproved marks the transfer as approved.
-func (t *Transfer) MarkApproved(m *messages.MarkTransferApproved, rec aggregate.Recorder) {
+func (t *Transfer) MarkApproved(m *messages.MarkTransferApproved, rec ax.EventRecorder) {
 	if t.IsApproved {
 		return
 	}
