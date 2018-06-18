@@ -26,8 +26,8 @@ func (ErrorIfNotFound) HandleNotFound(_ context.Context, _ ax.Sender, _ ax.Envel
 }
 
 // CompletableByData is an embeddable struct that implements a
-// CompletableSaga.IsInstanceComplete() method that forwards the completion
-// check on to a CompletableData value.
+// Saga.IsInstanceComplete() method that forwards the completion check on to a
+// CompletableData value.
 type CompletableByData struct{}
 
 // IsInstanceComplete returns true if i.Data implements CompletableData and
@@ -37,5 +37,14 @@ func (CompletableByData) IsInstanceComplete(_ context.Context, i Instance) (bool
 		return cd.IsInstanceComplete(), nil
 	}
 
+	return false, nil
+}
+
+// InstancesNeverComplete is an embeddable struct that implements a
+// Saga.IsInstanceComplete() method that always returns false.
+type InstancesNeverComplete struct{}
+
+// IsInstanceComplete always returns false.
+func (InstancesNeverComplete) IsInstanceComplete(_ context.Context, i Instance) (bool, error) {
 	return false, nil
 }
