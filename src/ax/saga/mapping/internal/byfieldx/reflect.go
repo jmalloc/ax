@@ -10,7 +10,7 @@ import (
 // given names. It returns an empty string if ANY of the fields are empty.
 //
 // The concatenated fields are separated by a pipe (|) character. Any pipes or
-// backlash (\) characters, they are escaped with a preceding backslash.
+// backlash (\) characters in the fields are escaped with a preceding backslash.
 func FieldsToKey(v interface{}, names []string) (string, error) {
 	rv := reflect.ValueOf(v)
 
