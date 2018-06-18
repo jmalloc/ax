@@ -64,9 +64,3 @@ func (a *Account) InstanceDescription() string {
 		format.Amount(a.BalanceInCents),
 	)
 }
-
-// AccountAggregate is a saga that implements the Account aggregate.
-var AccountAggregate = aggregate.New(
-	&Account{},
-	aggregate.IdentifyByField("AccountId"),
-)

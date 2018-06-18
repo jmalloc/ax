@@ -15,22 +15,16 @@ type Saga struct {
 	saga.ErrorIfNotFound
 	saga.CompletableByData
 
-	Prototype  Aggregate
-	Identifier Identifier
-
-	Triggers ax.MessageTypeSet
-	Handle   func(Aggregate, ax.Command, Recorder)
-	Apply    func(Aggregate, ax.Event)
+	Prototype Aggregate
+	Triggers  ax.MessageTypeSet
+	Handle    func(Aggregate, ax.Command, Recorder)
+	Apply     func(Aggregate, ax.Event)
 }
 
 // New returns a saga that forwards to the given aggregate.
-func New(agg Aggregate, opts ...Option) *Saga {
+func New(agg Aggregate) *Saga {
 	sg := &Saga{
 		Prototype: agg,
-	}
-
-	for _, opt := range opts {
-		opt(sg)
 	}
 
 	commandTypes := visitor.MakeAcceptor(
@@ -77,19 +71,6 @@ func (sg *Saga) MessageTypes() (tr ax.MessageTypeSet, mt ax.MessageTypeSet) {
 // saga's data type.
 func (sg *Saga) NewData() saga.Data {
 	return proto.Clone(sg.Prototype).(saga.Data)
-}
-
-// InstanceIDForMessage returns the ID of the saga instance to which the
-// given message is routed, if any.
-//
-// If ok is false the message is ignored; otherwise, the message is routed
-// to the saga instance with the returned ID.
-func (sg *Saga) InstanceIDForMessage(ctx context.Context, env ax.Envelope) (saga.InstanceID, bool, error) {
-	id, err := sg.Identifier.AggregateID(
-		env.Message.(ax.Command),
-	)
-
-	return saga.InstanceID{ID: id.ID}, true, err
 }
 
 // HandleMessage handles a message for a particular saga instance.

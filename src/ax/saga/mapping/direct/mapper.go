@@ -9,32 +9,32 @@ import (
 )
 
 // Mapper is an implementation of saga.Mapper that maps messages to saga
-// instances by having the saga implement a method that returns the instance ID
-// directly.
-//
-// The saga must implement the direct.Saga interface to use direct mapping.
-type Mapper struct{}
+// instances using only information contained in the message.
+type Mapper struct {
+	Resolver Resolver
+}
 
 // MapMessageToInstance returns the ID of the saga instance that is the target
 // of the given message.
 //
 // It returns false if the message should be ignored.
 func (m *Mapper) MapMessageToInstance(
-	ctx context.Context,
-	sg saga.Saga,
-	tx persistence.Tx,
+	_ context.Context,
+	_ saga.Saga,
+	_ persistence.Tx,
 	env ax.Envelope,
 ) (saga.InstanceID, bool, error) {
-	return sg.(Saga).InstanceIDForMessage(ctx, env)
+	id, ok := m.Resolver.InstanceIDForMessage(env)
+	return id, ok, nil
 }
 
 // UpdateMapping notifies the mapper that an instance has been modified,
 // allowing it to update it's mapping information, if necessary.
 func (m *Mapper) UpdateMapping(
-	ctx context.Context,
-	sg saga.Saga,
-	tx persistence.Tx,
-	i saga.Instance,
+	context.Context,
+	saga.Saga,
+	persistence.Tx,
+	saga.Instance,
 ) error {
 	return nil
 }
@@ -42,10 +42,10 @@ func (m *Mapper) UpdateMapping(
 // DeleteMapping notifies the mapper that an instance has been completed,
 // allowing it to remove it's mapping information, if necessary.
 func (m *Mapper) DeleteMapping(
-	ctx context.Context,
-	sg saga.Saga,
-	tx persistence.Tx,
-	i saga.Instance,
+	context.Context,
+	saga.Saga,
+	persistence.Tx,
+	saga.Instance,
 ) error {
 	return nil
 }
