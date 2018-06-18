@@ -71,10 +71,10 @@ func main() {
 		// crud sagas ...
 		&saga.MessageHandler{
 			Saga: domain.TransferWorkflowSaga,
-			Mapper: &keyset.Mapper{
-				Repository: axmysql.SagaKeySetRepository,
-				Resolver:   domain.TransferWorkflowResolver,
-			},
+			Mapper: keyset.ByField(
+				axmysql.SagaKeySetRepository,
+				"TransferId",
+			),
 			Persister: crudPersister,
 		},
 	)
