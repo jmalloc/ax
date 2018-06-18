@@ -30,7 +30,7 @@ type Aggregate struct {
 // For each command type to be handled, the aggregate's data struct must
 // implement a "handler" method that adheres to the following signature:
 //
-//     func (cmd *<T>, rec Recorder)
+//     func (cmd *<T>, rec ax.EventRecorder)
 //
 // Where T is a struct type that implements ax.Command.
 //
@@ -42,7 +42,7 @@ type Aggregate struct {
 // The names of handler methods are not meaningful. By convention the methods
 // are named the same as the command they accept, such as:
 //
-//     func (*BankAccount) CreditAccount(*messages.CreditAccount, Recorder)
+//     func (*BankAccount) CreditAccount(*messages.CreditAccount, ax.EventRecorder)
 //
 // For each of the event types passed to rec, the aggregate must implement an
 // "applier" method that adheres to the following signature:
