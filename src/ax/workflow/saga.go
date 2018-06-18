@@ -80,15 +80,6 @@ func (sg *Saga) NewData() saga.Data {
 	return proto.Clone(sg.Prototype).(saga.Data)
 }
 
-// InstanceIDForMessage returns the ID of the saga instance to which the
-// given message is routed, if any.
-//
-// If ok is false the message is ignored; otherwise, the message is routed
-// to the saga instance with the returned ID.
-func (sg *Saga) InstanceIDForMessage(ctx context.Context, env ax.Envelope) (saga.InstanceID, bool, error) {
-	return saga.InstanceID{ID: env.CorrelationID.ID}, true, nil
-}
-
 // HandleMessage handles a message for a particular saga instance.
 func (sg *Saga) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope, i saga.Instance) error {
 	h := sg.Handle

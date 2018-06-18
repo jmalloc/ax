@@ -22,6 +22,7 @@ import (
 	"github.com/jmalloc/ax/src/ax/routing"
 	"github.com/jmalloc/ax/src/ax/saga"
 	"github.com/jmalloc/ax/src/ax/saga/mapping/direct"
+	"github.com/jmalloc/ax/src/ax/saga/mapping/keyset"
 	"github.com/jmalloc/ax/src/ax/saga/persistence/crud"
 	"github.com/jmalloc/ax/src/ax/saga/persistence/eventsourcing"
 	"github.com/jmalloc/ax/src/axcli"
@@ -55,7 +56,7 @@ func main() {
 	}
 
 	htable, err := routing.NewHandlerTable(
-		// event sourced saga ...
+		// aggregates ...
 		&saga.MessageHandler{
 			Saga:      saga.NewAggregate(&domain.Account{}),
 			Mapper:    direct.ByField("AccountId"),
@@ -67,7 +68,7 @@ func main() {
 			Persister: esPersister,
 		},
 
-		// crud sagas ...
+		// workflows ...
 		&saga.MessageHandler{
 			Saga: workflows.TransferWorkflow,
 			Mapper: keyset.ByField(
