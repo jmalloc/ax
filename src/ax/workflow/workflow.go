@@ -1,12 +1,8 @@
 package workflow
 
 import (
-	"github.com/jmalloc/ax/src/ax/ident"
 	"github.com/jmalloc/ax/src/ax/saga"
 )
-
-// ID uniquely identifies a workflow instance.
-type ID struct{ ident.ID }
 
 // Workflow is an interface for application-defined process managers.
 //
