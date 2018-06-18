@@ -7,10 +7,9 @@ import (
 	"github.com/jmalloc/ax/src/ax/saga"
 )
 
-// Saga is an interface for sagas that use key set mapping.
-type Saga interface {
-	saga.Saga
-
+// Resolver is an interface that provides the application-defined logic for
+// mapping a message to its target saga instance.
+type Resolver interface {
 	// GenerateInstanceID returns the saga ID to use for a new instance.
 	//
 	// It is called when a "trigger" message is received and there is no

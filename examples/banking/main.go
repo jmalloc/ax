@@ -55,10 +55,6 @@ func main() {
 		SnapshotFrequency: 3,
 	}
 
-	ksMapper := &keyset.Mapper{
-		Repository: axmysql.SagaKeySetRepository,
-	}
-
 	htable, err := routing.NewHandlerTable(
 		// event sourced saga ...
 		&saga.MessageHandler{
@@ -74,8 +70,11 @@ func main() {
 
 		// crud sagas ...
 		&saga.MessageHandler{
-			Saga:      domain.TransferWorkflowSaga,
-			Mapper:    ksMapper,
+			Saga: domain.TransferWorkflowSaga,
+			Mapper: &keyset.Mapper{
+				Repository: axmysql.SagaKeySetRepository,
+				Resolver:   domain.TransferWorkflowResolver,
+			},
 			Persister: crudPersister,
 		},
 	)
