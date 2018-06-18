@@ -31,7 +31,7 @@ type Workflow struct {
 // For each event type to be handled, the aggregate must implement a "handler"
 // method that adheres to the following signature:
 //
-//     func (ev *<T>, do Executor)
+//     func (ev *<T>) []ax.Command
 //
 // Where T is a struct type that implements ax.Event.
 //
