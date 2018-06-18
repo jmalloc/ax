@@ -2,12 +2,8 @@ package aggregate
 
 import (
 	"github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/ax/ident"
 	"github.com/jmalloc/ax/src/ax/saga"
 )
-
-// ID uniquely identifies an aggregate instance.
-type ID struct{ ident.ID }
 
 // Aggregate is an interface for application-defined domain aggregates.
 //
