@@ -5,7 +5,8 @@ import "google/protobuf/any.proto";
 package axbolt.outbox;
 option go_package = "outbox";
 
-// OutboxMessage is a protocol buffers 
+// OutboxMessage is a container for holding outbox message-specific data
+// that is serialized into a protobuf format before persisted in Bolt bucket
 message OutboxMessage {
     string id = 1;
     string causation_id = 2;
