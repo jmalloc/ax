@@ -19,11 +19,3 @@ message Transfer {
     int32 amount_in_cents = 4;
     bool is_approved = 5;
 }
-
-message TransferWorkflow {
-    string transfer_id = 1;
-    string from_account_id = 2;
-    string to_account_id = 3;
-    int32 amount_in_cents = 4;
-    bool is_approved = 5;
-}
