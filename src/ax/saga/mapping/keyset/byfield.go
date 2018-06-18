@@ -21,6 +21,10 @@ import (
 // are empty, an empty keyset is produced, which results in a keyset validation
 // error while handling the message.
 func ByField(r Repository, f ...string) *Mapper {
+	if len(f) == 0 {
+		panic("at least one field must be specified")
+	}
+
 	return &Mapper{
 		r,
 		byFieldResolver{f},

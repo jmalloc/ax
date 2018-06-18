@@ -14,6 +14,10 @@ import (
 // All fields must be strings. If any of the fields are empty, the message is
 // not routed to any instance.
 func ByField(f ...string) *Mapper {
+	if len(f) == 0 {
+		panic("at least one field must be specified")
+	}
+
 	return &Mapper{
 		byFieldResolver{f},
 	}
