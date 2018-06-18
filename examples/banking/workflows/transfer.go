@@ -6,7 +6,6 @@ import (
 	"github.com/jmalloc/ax/examples/banking/messages"
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/ident"
-	"github.com/jmalloc/ax/src/ax/workflow"
 )
 
 // StartWhenTransferStarted responds to m.
@@ -60,8 +59,3 @@ func (w *Transfer) InstanceDescription() string {
 		ident.Format(w.TransferId),
 	)
 }
-
-// TransferWorkflow is a saga that implements the Account aggregate.
-var TransferWorkflow = workflow.New(
-	&Transfer{},
-)

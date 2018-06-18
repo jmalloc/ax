@@ -70,11 +70,8 @@ func main() {
 
 		// workflows ...
 		&saga.MessageHandler{
-			Saga: workflows.TransferWorkflow,
-			Mapper: keyset.ByField(
-				axmysql.SagaKeySetRepository,
-				"TransferId",
-			),
+			Saga:      saga.NewWorkflow(&workflows.Transfer{}),
+			Mapper:    keyset.ByField(axmysql.SagaKeySetRepository, "TransferId"),
 			Persister: crudPersister,
 		},
 	)
