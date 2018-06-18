@@ -59,7 +59,7 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 	}
 
 	// check if the instance is complete.
-	isComplete, err := h.isComplete(ctx, w.Instance())
+	isComplete, err := h.Saga.IsInstanceComplete(ctx, w.Instance())
 	if err != nil {
 		return err
 	}
@@ -133,13 +133,4 @@ func (h *MessageHandler) complete(ctx context.Context, tx persistence.Tx, w Unit
 func (h *MessageHandler) isTrigger(env ax.Envelope) bool {
 	triggers, _ := h.Saga.MessageTypes()
 	return triggers.Has(env.Type())
-}
-
-// isComplete returns true if h.Saga is a completable saga and i is complete.
-func (h *MessageHandler) isComplete(ctx context.Context, i Instance) (bool, error) {
-	if cs, ok := h.Saga.(CompletableSaga); ok {
-		return cs.IsInstanceComplete(ctx, i)
-	}
-
-	return false, nil
 }

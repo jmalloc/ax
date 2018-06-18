@@ -48,6 +48,9 @@ type Saga interface {
 	// HandleNotFound handles a message that is intended for a saga instance
 	// that could not be found.
 	HandleNotFound(context.Context, ax.Sender, ax.Envelope) error
+
+	// IsInstanceComplete returns true if the given instance is complete.
+	IsInstanceComplete(ctx context.Context, i Instance) (bool, error)
 }
 
 // EventedSaga is a saga that only mutates its data when an event occurs.
@@ -64,15 +67,4 @@ type EventedSaga interface {
 	//
 	// It may panic if env.Message does not implement ax.Event.
 	ApplyEvent(d Data, env ax.Envelope)
-}
-
-// CompletableSaga is a saga that has a notion of "completed" instances.
-//
-// The exact meaning of complete is application-defined. Typically it means
-// that some business process has ended.
-type CompletableSaga interface {
-	Saga
-
-	// IsInstanceComplete returns true if the given instance is complete.
-	IsInstanceComplete(ctx context.Context, i Instance) (bool, error)
 }
