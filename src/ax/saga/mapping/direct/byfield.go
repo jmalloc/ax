@@ -1,11 +1,9 @@
 package direct
 
 import (
-	"strings"
-
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/saga"
-	"github.com/jmalloc/ax/src/internal/reflectx"
+	"github.com/jmalloc/ax/src/ax/saga/mapping/internal/byfieldx"
 )
 
 // ByField returns a mapper that maps messages to instances using a set of
@@ -28,21 +26,20 @@ type byFieldResolver struct {
 }
 
 func (r byFieldResolver) InstanceIDForMessage(env ax.Envelope) (saga.InstanceID, bool) {
-	f, err := reflectx.StringFields(env.Message, r.fields)
+	k, err := byfieldx.FieldsToKey(env.Message, r.fields)
 	if err != nil {
+		// specifying incorrect fields is a programmer error
+		// TODO: this could be verified eagerly once
+		// https://github.com/jmalloc/ax/issues/81 is done
 		panic(err)
 	}
 
-	for _, v := range f {
-		if v == "" {
-			return saga.InstanceID{}, false
-		}
+	if k == "" {
+		return saga.InstanceID{}, false
 	}
 
 	var id saga.InstanceID
-	id.MustParse(
-		strings.Join(f, "."),
-	)
+	id.MustParse(k)
 
 	return id, true
 }

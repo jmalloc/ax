@@ -2,11 +2,10 @@ package keyset
 
 import (
 	"context"
-	"strings"
 
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/saga"
-	"github.com/jmalloc/ax/src/internal/reflectx"
+	"github.com/jmalloc/ax/src/ax/saga/mapping/internal/byfieldx"
 )
 
 // ByField returns a mapper that maps messages to instances using a set of
@@ -48,33 +47,33 @@ func (r byFieldResolver) MappingKeyForMessage(
 	_ context.Context,
 	env ax.Envelope,
 ) (string, bool, error) {
-	k, ok := r.buildKey(env.Message)
-	return k, ok, nil
+	k, err := byfieldx.FieldsToKey(env.Message, r.fields)
+	if err != nil {
+		// specifying incorrect fields is a programmer error
+		// TODO: this could be verified eagerly once
+		// https://github.com/jmalloc/ax/issues/81 is done
+		panic(err)
+	}
+
+	return k, k != "", nil
 }
 
 func (r byFieldResolver) MappingKeysForInstance(
 	_ context.Context,
 	i saga.Instance,
 ) ([]string, error) {
-	if k, ok := r.buildKey(i.Data); ok {
+	k, err := byfieldx.FieldsToKey(i.Data, r.fields)
+	if err != nil {
+		// specifying incorrect fields is a programmer error
+		// TODO: this could be verified eagerly once
+		// https://github.com/jmalloc/ax/issues/81 is done
+		panic(err)
+	}
+
+	if k != "" {
 		return []string{k}, nil
 	}
 
 	// returning an empty key set will cause a key-set validation error
 	return nil, nil
-}
-
-func (r byFieldResolver) buildKey(v interface{}) (string, bool) {
-	f, err := reflectx.StringFields(v, r.fields)
-	if err != nil {
-		panic(err)
-	}
-
-	for _, v := range f {
-		if v == "" {
-			return "", false
-		}
-	}
-
-	return strings.Join(f, "."), true
 }
