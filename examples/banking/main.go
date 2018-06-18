@@ -13,6 +13,7 @@ import (
 	"github.com/jmalloc/ax/examples/banking/messages"
 	"github.com/jmalloc/ax/examples/banking/projections"
 	"github.com/jmalloc/ax/src/ax"
+	"github.com/jmalloc/ax/src/ax/aggregate"
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/observability"
 	"github.com/jmalloc/ax/src/ax/outbox"
@@ -54,29 +55,26 @@ func main() {
 		SnapshotFrequency: 3,
 	}
 
-	directMapper := &direct.Mapper{}
-
-	ksMapper := &keyset.Mapper{
-		Repository: axmysql.SagaKeySetRepository,
-	}
-
 	htable, err := routing.NewHandlerTable(
 		// event sourced saga ...
 		&saga.MessageHandler{
-			Saga:      domain.AccountAggregate,
-			Mapper:    directMapper,
+			Saga:      aggregate.New(&domain.Account{}),
+			Mapper:    direct.ByField("AccountId"),
 			Persister: esPersister,
 		},
 		&saga.MessageHandler{
-			Saga:      domain.TransferAggregate,
-			Mapper:    directMapper,
+			Saga:      aggregate.New(&domain.Transfer{}),
+			Mapper:    direct.ByField("TransferId"),
 			Persister: esPersister,
 		},
 
 		// crud sagas ...
 		&saga.MessageHandler{
-			Saga:      domain.TransferWorkflowSaga,
-			Mapper:    ksMapper,
+			Saga: domain.TransferWorkflowSaga,
+			Mapper: keyset.ByField(
+				axmysql.SagaKeySetRepository,
+				"TransferId",
+			),
 			Persister: crudPersister,
 		},
 	)

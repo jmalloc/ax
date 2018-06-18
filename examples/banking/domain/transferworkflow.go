@@ -43,28 +43,8 @@ func (transferWorkflowSaga) MessageTypes() (tr ax.MessageTypeSet, mt ax.MessageT
 		)
 }
 
-func (transferWorkflowSaga) GenerateInstanceID(ctx context.Context, env ax.Envelope) (id saga.InstanceID, err error) {
-	id.GenerateUUID()
-	return
-}
-
 func (transferWorkflowSaga) NewData() saga.Data {
 	return &TransferWorkflow{}
-}
-
-func (transferWorkflowSaga) MappingKeyForMessage(ctx context.Context, env ax.Envelope) (k string, ok bool, err error) {
-	type hasTransferID interface {
-		GetTransferId() string
-	}
-
-	transferID := env.Message.(hasTransferID).GetTransferId()
-	return transferID, transferID != "", nil
-}
-
-func (transferWorkflowSaga) MappingKeysForInstance(_ context.Context, i saga.Instance) ([]string, error) {
-	return []string{
-		i.Data.(*TransferWorkflow).TransferId, // map based on the transfer ID
-	}, nil
 }
 
 func (transferWorkflowSaga) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope, i saga.Instance) error {

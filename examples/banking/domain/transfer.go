@@ -58,9 +58,3 @@ func (t *Transfer) InstanceDescription() string {
 		ident.Format(t.ToAccountId),
 	)
 }
-
-// TransferAggregate is a saga that implements the Account aggregate.
-var TransferAggregate = aggregate.New(
-	&Transfer{},
-	aggregate.IdentifyByField("TransferId"),
-)

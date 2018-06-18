@@ -17,6 +17,7 @@ import (
 // The saga must implement the keyset.Saga interface to use key set mapping.
 type Mapper struct {
 	Repository Repository
+	Resolver   Resolver
 }
 
 // MapMessageToInstance returns the ID of the saga instance that is the target
@@ -29,9 +30,7 @@ func (m *Mapper) MapMessageToInstance(
 	tx persistence.Tx,
 	env ax.Envelope,
 ) (saga.InstanceID, bool, error) {
-	s := sg.(Saga)
-
-	k, ok, err := s.MappingKeyForMessage(ctx, env)
+	k, ok, err := m.Resolver.MappingKeyForMessage(ctx, env)
 	if !ok || err != nil {
 		return saga.InstanceID{}, false, err
 	}
@@ -41,7 +40,7 @@ func (m *Mapper) MapMessageToInstance(
 		return id, true, err
 	}
 
-	id, err = s.GenerateInstanceID(ctx, env)
+	id, err = m.Resolver.GenerateInstanceID(ctx, env)
 	return id, true, err
 }
 
@@ -53,7 +52,7 @@ func (m *Mapper) UpdateMapping(
 	tx persistence.Tx,
 	i saga.Instance,
 ) error {
-	ks, err := sg.(Saga).MappingKeysForInstance(ctx, i)
+	ks, err := m.Resolver.MappingKeysForInstance(ctx, i)
 	if err != nil {
 		return err
 	}
