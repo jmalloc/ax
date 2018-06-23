@@ -134,7 +134,7 @@ func parseOutboxMessage(
 	env.Operation = endpoint.Operation(outmsg.GetOperation())
 	env.DestinationEndpoint = outmsg.GetDestinationEndpoint()
 
-	if err := ptypes.UnmarshalAny(outmsg.Message, env.Message); err != nil {
+	if err = ptypes.UnmarshalAny(outmsg.Message, env.Message); err != nil {
 		return env, err
 	}
 
@@ -143,11 +143,7 @@ func parseOutboxMessage(
 	}
 
 	env.Time, err = time.Parse(time.RFC3339Nano, outmsg.GetTime())
-	if err != nil {
-		return env, err
-	}
-
-	return env, nil
+	return env, err
 }
 
 func insertOutboxMessage(
