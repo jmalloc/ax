@@ -6,14 +6,13 @@ package axbolt.outbox;
 option go_package = "outbox";
 
 // OutboxMessage is a container for holding outbox message-specific data
-// that is serialized into a protobuf format before persisted in Bolt bucket
-message OutboxMessage {
+// that is serialized into a protobuf format before persisted in a Bolt bucket
+message OutboxMessage{
     string id = 1;
     string causation_id = 2;
     string correlation_id = 3;
     string time = 4;
-    string content_type = 5;
-    google.protobuf.Any body = 6;
+    google.protobuf.Any message = 6;
     int32 operation = 7;
     string destination_endpoint = 8;
 } 
