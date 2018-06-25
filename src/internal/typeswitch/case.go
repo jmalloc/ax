@@ -11,7 +11,7 @@ type Case struct {
 
 	// InputMap maps the index of the input parameters passed to Call() to the
 	// index of the method's input parameters. A value of -1 indicates that the
-	// method does require that parameter.
+	// method does not require that parameter.
 	InputMap []int
 
 	// OutputMap maps the index of the method's output parameters to the index of

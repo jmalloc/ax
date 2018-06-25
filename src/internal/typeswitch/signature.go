@@ -67,7 +67,7 @@ func (s *Signature) IsMatch(sw reflect.Type, m reflect.Method) (reflect.Type, bo
 
 // MapInputs generates a mapping between the types in p and s.In.
 // Any type present in p, that is not present in s.In is represented by -1.
-// It returns false if there are types in s.In that are not present in p.
+// It returns an error if there are types in s.In that are not present in p.
 func (s *Signature) MapInputs(p []reflect.Type) ([]int, error) {
 	m := make([]int, 0, len(p))
 	m = append(m, 0) // receiver is always the first parameter
@@ -95,7 +95,7 @@ func (s *Signature) MapInputs(p []reflect.Type) ([]int, error) {
 
 // MapOutputs generates a mapping between the types in s.Out and p.
 // Any type present in s.Out, that is not present in p is represented by -1.
-// It returns false if there are types in p that are not present in s.Out.
+// It returns an error if there are types in p that are not present in s.Out.
 func (s *Signature) MapOutputs(p []reflect.Type) ([]int, error) {
 	m := make([]int, 0, len(s.Out))
 
