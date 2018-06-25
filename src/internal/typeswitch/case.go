@@ -4,7 +4,7 @@ import (
 	"reflect"
 )
 
-// Case represents a single case within a TypeSwitch.
+// Case represents a single case within a Switch.
 type Case struct {
 	// Method is the method that is invoked when this case is hit.
 	Method reflect.Method
