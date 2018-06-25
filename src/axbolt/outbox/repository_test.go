@@ -28,6 +28,7 @@ var _ = Describe("Repository", func() {
 		if err := db.Close(); err != nil {
 			panic(err)
 		}
+		_ = os.Remove(fname)
 	})
 
 	fn := Describe
