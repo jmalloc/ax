@@ -13,7 +13,7 @@ import (
 )
 
 var _ = Describe("Repository", func() {
-	fname := os.Getenv("AX_BOLT_FILE")
+	fname := os.Getenv("AX_BOLT_DB")
 	var db *bolt.DB
 
 	BeforeEach(func() {
