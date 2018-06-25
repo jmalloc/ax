@@ -1,7 +1,8 @@
 CREATE TABLE IF NOT EXISTS account (
-    id      VARBINARY(255) NOT NULL,
-    name    VARBINARY(255),
-    balance DECIMAL(12, 2) NOT NULL DEFAULT  0,
+    id        VARBINARY(255) NOT NULL,
+    name      VARBINARY(255),
+    opened_at TIMESTAMP NULL DEFAULT NULL,
+    balance   DECIMAL(12, 2) NOT NULL DEFAULT 0,
 
     PRIMARY KEY (id)
 ) ROW_FORMAT=COMPRESSED;
