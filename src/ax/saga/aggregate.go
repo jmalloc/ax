@@ -134,23 +134,26 @@ func (a *Aggregate) NewData() Data {
 
 // HandleMessage handles a message for a particular saga instance.
 func (a *Aggregate) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope, i Instance) (err error) {
-	type recoverable struct {
-		err error // TODO: this is a hax
-	}
+	// recordError is a container for errors produced while attempting to record an
+	// event.
+	type recordError struct{ err error }
 
+	// recover from errors that occur when attempting to record an event
+	// re-panic for any other error
 	defer func() {
 		if r := recover(); r != nil {
-			if e, ok := r.(recoverable); ok {
-				err = e.err
+			if v, ok := r.(recordError); ok {
+				err = v.err
 			} else {
 				panic(r)
 			}
 		}
 	}()
 
+	// wrap any error that occurs while publish in recordError
 	rec := func(m ax.Event) {
 		if _, err := s.PublishEvent(ctx, m); err != nil {
-			panic(recoverable{err})
+			panic(recordError{err})
 		}
 	}
 
