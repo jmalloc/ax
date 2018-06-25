@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/jmalloc/ax/src/ax"
 
 	"github.com/jmalloc/ax/examples/banking/messages"
@@ -38,8 +37,6 @@ func insertAccount(
 	name string,
 	at time.Time,
 ) error {
-	spew.Dump(at)
-
 	_, err := tx.ExecContext(
 		ctx,
 		`INSERT INTO account SET
