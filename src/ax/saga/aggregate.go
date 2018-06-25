@@ -28,9 +28,10 @@ type Aggregate struct {
 // It accepts a prototype data instance which is cloned for new instances.
 //
 // For each command type to be handled, the aggregate's data struct must
-// implement a "handler" method that adheres to the following signature:
+// implement a "handler" method that adheres to one of the following signatures:
 //
 //     func (cmd *<T>, rec ax.EventRecorder)
+//     func (cmd *<T>, env ax.Envelope, rec ax.EventRecorder)
 //
 // Where T is a struct type that implements ax.Command.
 //
@@ -45,9 +46,10 @@ type Aggregate struct {
 //     func (*BankAccount) CreditAccount(*messages.CreditAccount, ax.EventRecorder)
 //
 // For each of the event types passed to rec, the aggregate must implement an
-// "applier" method that adheres to the following signature:
+// "applier" method that adheres to one of the following signatures:
 //
 //     func (ev *T)
+//     func (ev *T, env ax.Envelope)
 //
 // Where T is a struct type that implements ax.Event.
 //
@@ -66,30 +68,34 @@ func NewAggregate(p Data) *Aggregate {
 	}
 
 	// setup type-switch for command handlers.
-	sw, types, err := typeswitch.New(
+	sw, _, err := typeswitch.New(
 		[]reflect.Type{
 			reflect.TypeOf(p),
 			reflect.TypeOf((*ax.Command)(nil)).Elem(),
+			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
 			reflect.TypeOf((*ax.EventRecorder)(nil)).Elem(),
 		},
 		nil, // no outputs
 		aggregateHandleSignature,
+		aggregateHandleWithEnvelopeSignature,
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	a.Handle = sw
-	a.Triggers = ax.TypesByGoType(types[aggregateHandleSignature]...)
+	a.Triggers = ax.TypesByGoType(sw.Types()...)
 
 	// setup type-switch for event appliers.
 	a.Apply, _, err = typeswitch.New(
 		[]reflect.Type{
 			reflect.TypeOf(p),
 			reflect.TypeOf((*ax.Event)(nil)).Elem(),
+			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
 		},
 		nil, // no outputs
 		aggregateApplySignature,
+		aggregateApplyWithEnvelopeSignature,
 	)
 	if err != nil {
 		panic(err)
@@ -151,6 +157,7 @@ func (a *Aggregate) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envel
 	a.Handle.Dispatch(
 		i.Data,
 		env.Message.(ax.Command),
+		env,
 		rec,
 	)
 
@@ -161,8 +168,11 @@ func (a *Aggregate) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envel
 //
 // It may panic if env.Message does not implement ax.Event.
 func (a *Aggregate) ApplyEvent(d Data, env ax.Envelope) {
-	m := env.Message.(ax.Event)
-	a.Apply.Dispatch(d, m)
+	a.Apply.Dispatch(
+		d,
+		env.Message.(ax.Event),
+		env,
+	)
 }
 
 var (
@@ -174,11 +184,29 @@ var (
 		},
 	}
 
+	aggregateHandleWithEnvelopeSignature = &typeswitch.Signature{
+		In: []reflect.Type{
+			reflect.TypeOf((*Data)(nil)).Elem(),
+			reflect.TypeOf((*ax.Command)(nil)).Elem(),
+			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
+			reflect.TypeOf((*ax.EventRecorder)(nil)).Elem(),
+		},
+	}
+
 	aggregateApplySignature = &typeswitch.Signature{
 		Prefix: "When",
 		In: []reflect.Type{
 			reflect.TypeOf((*Data)(nil)).Elem(),
 			reflect.TypeOf((*ax.Event)(nil)).Elem(),
+		},
+	}
+
+	aggregateApplyWithEnvelopeSignature = &typeswitch.Signature{
+		Prefix: "When",
+		In: []reflect.Type{
+			reflect.TypeOf((*Data)(nil)).Elem(),
+			reflect.TypeOf((*ax.Event)(nil)).Elem(),
+			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
 		},
 	}
 )

@@ -71,6 +71,16 @@ func (s Switch) Dispatch(in ...interface{}) []interface{} {
 	))
 }
 
+// Types returns a slice of all of the case types supported by this switch.
+func (s Switch) Types() []reflect.Type {
+	types := make([]reflect.Type, 0, len(s))
+	for t := range s {
+		types = append(types, t)
+	}
+
+	return types
+}
+
 func (s Switch) addCase(
 	t reflect.Type,
 	m reflect.Method,

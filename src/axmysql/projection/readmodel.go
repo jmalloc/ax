@@ -18,9 +18,10 @@ import (
 // read-model in a MySQL database.
 //
 // For each event type to be applied to the read-model, the projector must
-// implement an "apply" method that adheres to the following signature:
+// implement an "apply" method that adheres to one of the following signatures:
 //
 //     func (ctx context.Context, tx *sql.Tx, ev *<T>)
+//     func (ctx context.Context, tx *sql.Tx, ev *<T>, env ax.Envelope)
 //
 // Where T is a struct type that implements ax.Event.
 //
@@ -57,10 +58,11 @@ func NewReadModelProjector(rm ReadModel) *ReadModelProjector {
 		ReadModel: rm,
 	}
 
-	sw, types, err := typeswitch.New(
+	sw, _, err := typeswitch.New(
 		[]reflect.Type{
 			reflect.TypeOf(rm),
 			reflect.TypeOf((*ax.Event)(nil)).Elem(),
+			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
 			reflect.TypeOf((*context.Context)(nil)).Elem(),
 			reflect.TypeOf((*sql.Tx)(nil)),
 		},
@@ -68,13 +70,14 @@ func NewReadModelProjector(rm ReadModel) *ReadModelProjector {
 			reflect.TypeOf((*error)(nil)).Elem(),
 		},
 		readModelApplySignature,
+		readModelApplyWithEnvelopeSignature,
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	p.Apply = sw
-	p.EventTypes = ax.TypesByGoType(types[readModelApplySignature]...)
+	p.EventTypes = ax.TypesByGoType(sw.Types()...)
 
 	return p
 }
@@ -108,6 +111,7 @@ func (p ReadModelProjector) ApplyMessage(ctx context.Context, env ax.Envelope) e
 	out := p.Apply.Dispatch(
 		p.ReadModel,
 		env.Message.(ax.Event),
+		env,
 		ctx,
 		tx,
 	)
@@ -126,6 +130,19 @@ var (
 			reflect.TypeOf((*context.Context)(nil)).Elem(),
 			reflect.TypeOf((*sql.Tx)(nil)),
 			reflect.TypeOf((*ax.Event)(nil)).Elem(),
+		},
+		Out: []reflect.Type{
+			reflect.TypeOf((*error)(nil)).Elem(),
+		},
+	}
+
+	readModelApplyWithEnvelopeSignature = &typeswitch.Signature{
+		In: []reflect.Type{
+			reflect.TypeOf((*ReadModel)(nil)).Elem(),
+			reflect.TypeOf((*context.Context)(nil)).Elem(),
+			reflect.TypeOf((*sql.Tx)(nil)),
+			reflect.TypeOf((*ax.Event)(nil)).Elem(),
+			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
 		},
 		Out: []reflect.Type{
 			reflect.TypeOf((*error)(nil)).Elem(),

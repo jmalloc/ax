@@ -28,9 +28,10 @@ type Workflow struct {
 // It accepts a prototype data instance which is cloned for new instances.
 //
 // For each event type to be handled, the aggregate must implement a "handler"
-// method that adheres to the following signature:
+// method that adheres to one of the following signatures:
 //
 //     func (ev *<T>) []ax.Command
+//     func (ev *<T>, env ax.Envelope) []ax.Command
 //
 // Where T is a struct type that implements ax.Event.
 //
@@ -61,15 +62,29 @@ func NewWorkflow(p Data) *Workflow {
 			reflect.TypeOf(([]ax.Command)(nil)),
 		},
 		workflowStartWhenSignature,
+		workflowStartWhenWithEnvelopeSignature,
 		workflowWhenSignature,
+		workflowWhenWithEnvelopeSignature,
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	w.Handle = sw
-	w.Triggers = ax.TypesByGoType(types[workflowStartWhenSignature]...)
-	w.NonTriggers = ax.TypesByGoType(types[workflowWhenSignature]...)
+
+	w.Triggers = ax.TypesByGoType(
+		append(
+			types[workflowStartWhenSignature],
+			types[workflowStartWhenWithEnvelopeSignature]...,
+		)...,
+	)
+
+	w.NonTriggers = ax.TypesByGoType(
+		append(
+			types[workflowWhenSignature],
+			types[workflowWhenWithEnvelopeSignature]...,
+		)...,
+	)
 
 	return w
 }
@@ -106,11 +121,14 @@ func (w *Workflow) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelo
 	out := w.Handle.Dispatch(
 		i.Data,
 		env.Message.(ax.Event),
+		env,
 	)
 
-	for _, m := range out[0].([]ax.Command) {
-		if _, err := s.ExecuteCommand(ctx, m); err != nil {
-			return err
+	if cmds := out[0]; cmds != nil {
+		for _, m := range cmds.([]ax.Command) {
+			if _, err := s.ExecuteCommand(ctx, m); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -129,11 +147,35 @@ var (
 		},
 	}
 
+	workflowStartWhenWithEnvelopeSignature = &typeswitch.Signature{
+		Prefix: "StartWhen",
+		In: []reflect.Type{
+			reflect.TypeOf((*Data)(nil)).Elem(),
+			reflect.TypeOf((*ax.Event)(nil)).Elem(),
+			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
+		},
+		Out: []reflect.Type{
+			reflect.TypeOf(([]ax.Command)(nil)),
+		},
+	}
+
 	workflowWhenSignature = &typeswitch.Signature{
 		Prefix: "When",
 		In: []reflect.Type{
 			reflect.TypeOf((*Data)(nil)).Elem(),
 			reflect.TypeOf((*ax.Event)(nil)).Elem(),
+		},
+		Out: []reflect.Type{
+			reflect.TypeOf(([]ax.Command)(nil)),
+		},
+	}
+
+	workflowWhenWithEnvelopeSignature = &typeswitch.Signature{
+		Prefix: "When",
+		In: []reflect.Type{
+			reflect.TypeOf((*Data)(nil)).Elem(),
+			reflect.TypeOf((*ax.Event)(nil)).Elem(),
+			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
 		},
 		Out: []reflect.Type{
 			reflect.TypeOf(([]ax.Command)(nil)),
