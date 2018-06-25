@@ -17,7 +17,7 @@ import (
 	boltpersistance "github.com/jmalloc/ax/src/axbolt/persistence"
 )
 
-// Repository is a MySQL-backed implementation of Ax's outbox.Repository
+// Repository is a Bolt-backed implementation of Ax's outbox.Repository
 // interface.
 type Repository struct{}
 
