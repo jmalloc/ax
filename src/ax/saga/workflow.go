@@ -6,7 +6,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/internal/visitor"
+	"github.com/jmalloc/ax/src/internal/typeswitch"
 )
 
 // Workflow is a Saga for implementing application-defined workflows.
@@ -14,11 +14,10 @@ type Workflow struct {
 	ErrorIfNotFound
 	CompletableByData
 
-	Prototype     Data
-	Triggers      ax.MessageTypeSet
-	NonTriggers   ax.MessageTypeSet
-	HandleTrigger func(Data, ax.Event) []ax.Command
-	Handle        func(Data, ax.Event) []ax.Command
+	Prototype   Data
+	Triggers    ax.MessageTypeSet
+	NonTriggers ax.MessageTypeSet
+	Handle      typeswitch.Switch
 }
 
 // NewWorkflow returns a saga that forwards to the given aggregate.
@@ -52,26 +51,25 @@ func NewWorkflow(p Data) *Workflow {
 		Prototype: p,
 	}
 
-	triggerTypes := visitor.MakeAcceptor(
-		&w.HandleTrigger,
-		reflect.TypeOf((*ax.Event)(nil)).Elem(),
-		reflect.TypeOf(p),
-		"StartWhen",
+	// setup type-switch for event handlers.
+	sw, types, err := typeswitch.New(
+		[]reflect.Type{
+			reflect.TypeOf(p),
+			reflect.TypeOf((*ax.Event)(nil)).Elem(),
+		},
+		[]reflect.Type{
+			reflect.TypeOf(([]ax.Command)(nil)),
+		},
+		workflowStartWhenSignature,
+		workflowWhenSignature,
 	)
-
-	nonTriggerTypes := visitor.MakeAcceptor(
-		&w.Handle,
-		reflect.TypeOf((*ax.Event)(nil)).Elem(),
-		reflect.TypeOf(p),
-		"When",
-	)
-
-	w.Triggers = ax.TypesByGoType(triggerTypes...)
-	w.NonTriggers = ax.TypesByGoType(nonTriggerTypes...)
-
-	for _, mt := range w.Triggers.Intersection(w.NonTriggers).Members() {
-		panic("workflow defines multiple handlers for " + mt.Name)
+	if err != nil {
+		panic(err)
 	}
+
+	w.Handle = sw
+	w.Triggers = ax.TypesByGoType(types[workflowStartWhenSignature]...)
+	w.NonTriggers = ax.TypesByGoType(types[workflowWhenSignature]...)
 
 	return w
 }
@@ -105,17 +103,12 @@ func (w *Workflow) NewData() Data {
 
 // HandleMessage handles a message for a particular saga instance.
 func (w *Workflow) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope, i Instance) error {
-	h := w.Handle
-	if w.Triggers.Has(env.Type()) {
-		h = w.HandleTrigger
-	}
-
-	cmds := h(
+	out := w.Handle.Dispatch(
 		i.Data,
 		env.Message.(ax.Event),
 	)
 
-	for _, m := range cmds {
+	for _, m := range out[0].([]ax.Command) {
 		if _, err := s.ExecuteCommand(ctx, m); err != nil {
 			return err
 		}
@@ -123,3 +116,27 @@ func (w *Workflow) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelo
 
 	return nil
 }
+
+var (
+	workflowStartWhenSignature = &typeswitch.Signature{
+		Prefix: "StartWhen",
+		In: []reflect.Type{
+			reflect.TypeOf((*Data)(nil)).Elem(),
+			reflect.TypeOf((*ax.Event)(nil)).Elem(),
+		},
+		Out: []reflect.Type{
+			reflect.TypeOf(([]ax.Command)(nil)),
+		},
+	}
+
+	workflowWhenSignature = &typeswitch.Signature{
+		Prefix: "When",
+		In: []reflect.Type{
+			reflect.TypeOf((*Data)(nil)).Elem(),
+			reflect.TypeOf((*ax.Event)(nil)).Elem(),
+		},
+		Out: []reflect.Type{
+			reflect.TypeOf(([]ax.Command)(nil)),
+		},
+	}
+)

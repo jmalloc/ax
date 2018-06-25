@@ -6,7 +6,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/internal/visitor"
+	"github.com/jmalloc/ax/src/internal/typeswitch"
 )
 
 // Aggregate is a Saga for implementing application-defined domain aggregates.
@@ -16,8 +16,8 @@ type Aggregate struct {
 
 	Prototype Data
 	Triggers  ax.MessageTypeSet
-	Handle    func(Data, ax.Command, ax.EventRecorder)
-	Apply     func(Data, ax.Event)
+	Handle    typeswitch.Switch
+	Apply     typeswitch.Switch
 }
 
 // NewAggregate returns a new aggregate saga.
@@ -65,21 +65,35 @@ func NewAggregate(p Data) *Aggregate {
 		Prototype: p,
 	}
 
-	commandTypes := visitor.MakeAcceptor(
-		&a.Handle,
-		reflect.TypeOf((*ax.Command)(nil)).Elem(),
-		reflect.TypeOf(p),
-		"", // command handlers do not require any prefix
+	// setup type-switch for command handlers.
+	sw, types, err := typeswitch.New(
+		[]reflect.Type{
+			reflect.TypeOf(p),
+			reflect.TypeOf((*ax.Command)(nil)).Elem(),
+			reflect.TypeOf((*ax.EventRecorder)(nil)).Elem(),
+		},
+		nil, // no outputs
+		aggregateHandleSignature,
 	)
+	if err != nil {
+		panic(err)
+	}
 
-	visitor.MakeAcceptor(
-		&a.Apply,
-		reflect.TypeOf((*ax.Event)(nil)).Elem(),
-		reflect.TypeOf(p),
-		"When",
+	a.Handle = sw
+	a.Triggers = ax.TypesByGoType(types[aggregateHandleSignature]...)
+
+	// setup type-switch for event appliers.
+	a.Apply, _, err = typeswitch.New(
+		[]reflect.Type{
+			reflect.TypeOf(p),
+			reflect.TypeOf((*ax.Event)(nil)).Elem(),
+		},
+		nil, // no outputs
+		aggregateApplySignature,
 	)
-
-	a.Triggers = ax.TypesByGoType(commandTypes...)
+	if err != nil {
+		panic(err)
+	}
 
 	return a
 }
@@ -102,7 +116,8 @@ func (a *Aggregate) PersistenceKey() string {
 // they can not be routed to an existing instance, the HandleNotFound()
 // method is called instead.
 func (a *Aggregate) MessageTypes() (tr ax.MessageTypeSet, mt ax.MessageTypeSet) {
-	return a.Triggers, ax.MessageTypeSet{}
+	tr = a.Triggers
+	return
 }
 
 // NewData returns a pointer to a new zero-value instance of the
@@ -113,10 +128,14 @@ func (a *Aggregate) NewData() Data {
 
 // HandleMessage handles a message for a particular saga instance.
 func (a *Aggregate) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope, i Instance) (err error) {
+	type recoverable struct {
+		err error // TODO: this is a hax
+	}
+
 	defer func() {
 		if r := recover(); r != nil {
-			if e, ok := r.(error); ok {
-				err = e
+			if e, ok := r.(recoverable); ok {
+				err = e.err
 			} else {
 				panic(r)
 			}
@@ -125,11 +144,11 @@ func (a *Aggregate) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envel
 
 	rec := func(m ax.Event) {
 		if _, err := s.PublishEvent(ctx, m); err != nil {
-			panic(err)
+			panic(recoverable{err})
 		}
 	}
 
-	a.Handle(
+	a.Handle.Dispatch(
 		i.Data,
 		env.Message.(ax.Command),
 		rec,
@@ -143,5 +162,23 @@ func (a *Aggregate) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envel
 // It may panic if env.Message does not implement ax.Event.
 func (a *Aggregate) ApplyEvent(d Data, env ax.Envelope) {
 	m := env.Message.(ax.Event)
-	a.Apply(d, m)
+	a.Apply.Dispatch(d, m)
 }
+
+var (
+	aggregateHandleSignature = &typeswitch.Signature{
+		In: []reflect.Type{
+			reflect.TypeOf((*Data)(nil)).Elem(),
+			reflect.TypeOf((*ax.Command)(nil)).Elem(),
+			reflect.TypeOf((*ax.EventRecorder)(nil)).Elem(),
+		},
+	}
+
+	aggregateApplySignature = &typeswitch.Signature{
+		Prefix: "When",
+		In: []reflect.Type{
+			reflect.TypeOf((*Data)(nil)).Elem(),
+			reflect.TypeOf((*ax.Event)(nil)).Elem(),
+		},
+	}
+)
