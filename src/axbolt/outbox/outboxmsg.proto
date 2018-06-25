@@ -5,14 +5,14 @@ import "google/protobuf/any.proto";
 package axbolt.outbox;
 option go_package = "outbox";
 
-// OutboxMessage is a container for holding outbox message-specific data
-// that is serialized into a protobuf format before persisted in a Bolt bucket
+// OutboxMessage is a container for holding outbox message-specific data that is
+// serialized into the protobuf format before being persisted in a Bolt bucket
 message OutboxMessage{
     string id = 1;
     string causation_id = 2;
     string correlation_id = 3;
     string time = 4;
-    google.protobuf.Any message = 6;
-    int32 operation = 7;
-    string destination_endpoint = 8;
+    google.protobuf.Any message = 5;
+    int32 operation = 6;
+    string destination_endpoint = 7;
 } 
