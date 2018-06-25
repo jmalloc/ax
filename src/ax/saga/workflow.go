@@ -57,6 +57,7 @@ func NewWorkflow(p Data) *Workflow {
 		[]reflect.Type{
 			reflect.TypeOf(p),
 			reflect.TypeOf((*ax.Event)(nil)).Elem(),
+			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
 		},
 		[]reflect.Type{
 			reflect.TypeOf(([]ax.Command)(nil)),
