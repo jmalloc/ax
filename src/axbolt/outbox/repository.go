@@ -2,6 +2,7 @@ package outbox
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -40,7 +41,7 @@ func (Repository) LoadOutbox(
 		return nil, false, nil
 	}
 
-	outMsgBkt := outboxBkt.Bucket([]byte(id.String()))
+	outMsgBkt := outboxBkt.Bucket([]byte(id.Get()))
 	if outMsgBkt == nil {
 		return nil, false, nil
 	}
@@ -50,13 +51,9 @@ func (Repository) LoadOutbox(
 	for k, v := c.First(); k != nil; k, v = c.Next() {
 		env, err := parseOutboxMessage(v, id)
 		if err != nil {
-			return nil, false, nil
+			return nil, false, err
 		}
 		envelopes = append(envelopes, env)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return nil, false, err
 	}
 
 	return envelopes, true, nil
@@ -70,17 +67,18 @@ func (Repository) SaveOutbox(
 	id ax.MessageID,
 	envs []endpoint.OutboundEnvelope,
 ) error {
-	if len(envs) == 0 {
-		return nil
-	}
-
 	tx := boltpersistance.ExtractTx(ptx)
 	outboxBkt, err := tx.CreateBucketIfNotExists([]byte("ax_outbox"))
 	if err != nil {
 		return err
 	}
 
-	outMsgBkt, err := outboxBkt.CreateBucketIfNotExists([]byte(id.String()))
+	var outMsgBkt *bolt.Bucket
+	if outMsgBkt = outboxBkt.Bucket([]byte(id.Get())); outMsgBkt != nil {
+		return errors.New("outbox already exists")
+	}
+
+	outMsgBkt, err = outboxBkt.CreateBucket([]byte(id.Get()))
 	if err != nil {
 		return err
 	}
@@ -105,12 +103,12 @@ func (Repository) MarkAsSent(
 	if outboxBkt == nil {
 		return nil
 	}
-	outMsgBkt := outboxBkt.Bucket([]byte(env.CausationID.String()))
+	outMsgBkt := outboxBkt.Bucket([]byte(env.CausationID.Get()))
 	if outMsgBkt == nil {
 		return nil
 	}
 
-	return outMsgBkt.Delete([]byte(env.CausationID.String()))
+	return outMsgBkt.Delete([]byte(env.MessageID.Get()))
 }
 
 func parseOutboxMessage(
@@ -131,16 +129,20 @@ func parseOutboxMessage(
 		return env, err
 	}
 
-	env.Operation = endpoint.Operation(outmsg.GetOperation())
-	env.DestinationEndpoint = outmsg.GetDestinationEndpoint()
-
-	if err = ptypes.UnmarshalAny(outmsg.Message, env.Message); err != nil {
+	var x ptypes.DynamicAny
+	if err = ptypes.UnmarshalAny(outmsg.Message, &x); err != nil {
 		return env, err
 	}
+	env.Message, _ = x.Message.(ax.Message)
 
 	if err = env.MessageID.Parse(outmsg.GetId()); err != nil {
 		return env, err
 	}
+	if err = env.CorrelationID.Parse(outmsg.GetCorrelationId()); err != nil {
+		return env, err
+	}
+	env.Operation = endpoint.Operation(outmsg.GetOperation())
+	env.DestinationEndpoint = outmsg.GetDestinationEndpoint()
 
 	env.Time, err = time.Parse(time.RFC3339Nano, outmsg.GetTime())
 	return env, err
@@ -155,9 +157,9 @@ func insertOutboxMessage(
 		pb  []byte
 	)
 	outmsg := &OutboxMessage{
-		Id:                  env.MessageID.String(),
-		CausationId:         env.CausationID.String(),
-		CorrelationId:       env.CorrelationID.String(),
+		Id:                  env.MessageID.Get(),
+		CausationId:         env.CausationID.Get(),
+		CorrelationId:       env.CorrelationID.Get(),
 		Time:                env.Time.Format(time.RFC3339Nano),
 		Operation:           int32(env.Operation),
 		DestinationEndpoint: env.DestinationEndpoint,
