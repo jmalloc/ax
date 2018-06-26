@@ -56,6 +56,7 @@ func RepositorySuite(
 
 					m1 = endpoint.OutboundEnvelope{
 						Envelope: ax.Envelope{
+							MessageID:     ax.GenerateMessageID(),
 							CausationID:   causationID,
 							CorrelationID: correlationID,
 							Time:          t1,
@@ -66,10 +67,10 @@ func RepositorySuite(
 						Operation:           endpoint.OpSendUnicast,
 						DestinationEndpoint: "<dest>",
 					}
-					m1.MessageID.GenerateUUID()
 
 					m2 = endpoint.OutboundEnvelope{
 						Envelope: ax.Envelope{
+							MessageID:     ax.GenerateMessageID(),
 							CausationID:   causationID,
 							CorrelationID: correlationID,
 							Time:          t2,
@@ -79,7 +80,6 @@ func RepositorySuite(
 						},
 						Operation: endpoint.OpSendMulticast,
 					}
-					m2.MessageID.GenerateUUID()
 
 					tx, com, err := store.BeginTx(ctx)
 					if err != nil {
@@ -218,6 +218,7 @@ func RepositorySuite(
 
 				env := endpoint.OutboundEnvelope{
 					Envelope: ax.Envelope{
+						MessageID:     ax.GenerateMessageID(),
 						CausationID:   causationID,
 						CorrelationID: correlationID,
 						Time:          time.Now(),
@@ -226,7 +227,6 @@ func RepositorySuite(
 					Operation:           endpoint.OpSendUnicast,
 					DestinationEndpoint: "<dest>",
 				}
-				env.MessageID.GenerateUUID()
 
 				err = repo.SaveOutbox(
 					ctx,
@@ -254,6 +254,7 @@ func RepositorySuite(
 
 				env := endpoint.OutboundEnvelope{
 					Envelope: ax.Envelope{
+						MessageID:     ax.GenerateMessageID(),
 						CausationID:   causationID,
 						CorrelationID: correlationID,
 						Time:          time.Now(),
@@ -262,7 +263,6 @@ func RepositorySuite(
 					Operation:           endpoint.OpSendUnicast,
 					DestinationEndpoint: "<dest>",
 				}
-				env.MessageID.GenerateUUID()
 
 				err = repo.SaveOutbox(
 					ctx,

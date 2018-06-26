@@ -57,14 +57,15 @@ type Envelope struct {
 // It generates a UUID-based message ID and configures the envelope such that m
 // is at the root of a new tree of messages.
 func NewEnvelope(m Message) Envelope {
-	env := Envelope{
-		Time:    time.Now(),
-		Message: m,
-	}
+	id := GenerateMessageID()
 
-	env.MessageID.GenerateUUID()
-	env.CausationID = env.MessageID
-	env.CorrelationID = env.MessageID
+	env := Envelope{
+		MessageID:     id,
+		CausationID:   id,
+		CorrelationID: id,
+		Time:          time.Now(),
+		Message:       m,
+	}
 
 	return env
 }
@@ -75,13 +76,12 @@ func NewEnvelope(m Message) Envelope {
 // m is a child of e.Message within an existing tree of messages.
 func (e Envelope) NewChild(m Message) Envelope {
 	env := Envelope{
+		MessageID:     GenerateMessageID(),
 		CorrelationID: e.CorrelationID,
 		CausationID:   e.MessageID,
 		Time:          time.Now(),
 		Message:       m,
 	}
-
-	env.MessageID.GenerateUUID()
 
 	return env
 }
