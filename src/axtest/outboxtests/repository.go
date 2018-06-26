@@ -37,11 +37,8 @@ func RepositorySuite(
 			ctx, fn = context.WithTimeout(context.Background(), 15*time.Second)
 			cancel = fn // defeat go vet warning about unused cancel func
 
-			causationID = ax.MessageID{}
-			causationID.GenerateUUID()
-
-			correlationID = ax.MessageID{}
-			correlationID.GenerateUUID()
+			causationID = ax.GenerateMessageID()
+			correlationID = ax.GenerateMessageID()
 		})
 
 		g.AfterEach(func() {

@@ -38,8 +38,7 @@ func (r byFieldResolver) InstanceIDForMessage(env ax.Envelope) (saga.InstanceID,
 		return saga.InstanceID{}, false
 	}
 
-	var id saga.InstanceID
-	id.MustParse(k)
+	id := saga.MustParseInstanceID(k)
 
 	return id, true
 }
