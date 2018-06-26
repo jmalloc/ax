@@ -38,9 +38,7 @@ func (r byFieldResolver) GenerateInstanceID(
 	context.Context,
 	ax.Envelope,
 ) (saga.InstanceID, error) {
-	var id saga.InstanceID
-	id.GenerateUUID()
-	return id, nil
+	return saga.GenerateInstanceID(), nil
 }
 
 func (r byFieldResolver) MappingKeyForMessage(

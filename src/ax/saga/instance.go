@@ -9,6 +9,29 @@ type InstanceID struct {
 	ident.ID
 }
 
+// GenerateInstanceID generates a new unique identifier for a saga instance.
+func GenerateInstanceID() InstanceID {
+	var id InstanceID
+	id.GenerateUUID()
+	return id
+}
+
+// ParseInstanceID parses s into a saga instance ID and returns it. It returns
+// an error if s is empty.
+func ParseInstanceID(s string) (InstanceID, error) {
+	var id InstanceID
+	err := id.Parse(s)
+	return id, err
+}
+
+// MustParseInstanceID parses s into a saga instance ID and returns it. It
+// panics if s is empty.
+func MustParseInstanceID(s string) InstanceID {
+	var id InstanceID
+	id.MustParse(s)
+	return id
+}
+
 // Instance is an instance of a saga.
 //
 // It encapsulates the application-defined saga data and its meta-data.

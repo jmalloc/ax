@@ -32,13 +32,12 @@ var _ = Describe("Logger", func() {
 	Context("inbound messages", func() {
 		env := endpoint.InboundEnvelope{
 			Envelope: ax.Envelope{
-				Message: &testmessages.Command{},
+				MessageID:     ax.MustParseMessageID("<message-id>"),
+				CausationID:   ax.MustParseMessageID("<causation-id>"),
+				CorrelationID: ax.MustParseMessageID("<correlation-id>"),
+				Message:       &testmessages.Command{},
 			},
 		}
-
-		env.MessageID.MustParse("<message-id>")
-		env.CausationID.MustParse("<causation-id>")
-		env.CorrelationID.MustParse("<correlation-id>")
 
 		Describe("BeforeInbound", func() {
 			It("logs information about the message", func() {
@@ -77,13 +76,12 @@ var _ = Describe("Logger", func() {
 	Context("outbound messages", func() {
 		env := endpoint.OutboundEnvelope{
 			Envelope: ax.Envelope{
-				Message: &testmessages.Command{},
+				MessageID:     ax.MustParseMessageID("<message-id>"),
+				CausationID:   ax.MustParseMessageID("<causation-id>"),
+				CorrelationID: ax.MustParseMessageID("<correlation-id>"),
+				Message:       &testmessages.Command{},
 			},
 		}
-
-		env.MessageID.MustParse("<message-id>")
-		env.CausationID.MustParse("<causation-id>")
-		env.CorrelationID.MustParse("<correlation-id>")
 
 		Describe("AfterOutbound", func() {
 			It("logs information about the message", func() {

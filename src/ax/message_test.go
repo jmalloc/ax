@@ -6,11 +6,66 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	. "github.com/jmalloc/ax/src/ax"
+	"github.com/jmalloc/ax/src/ax/ident"
 	"github.com/jmalloc/ax/src/axtest/testmessages"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
+	uuid "github.com/satori/go.uuid"
 )
+
+var _ = Describe("GenerateMessageID", func() {
+	It("generates a unique identifier for a message", func() {
+		id := GenerateMessageID()
+		u, err := uuid.FromString(id.Get())
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(u.String()).To(Equal(id.Get()))
+	})
+})
+
+var _ = Describe("ParseMessageID", func() {
+	It("sets the ID to the parsed value", func() {
+		id, err := ParseMessageID("<id>")
+
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(id.Get()).To(Equal("<id>"))
+	})
+
+	It("returns an error if the value is empty", func() {
+		_, err := ParseMessageID("")
+
+		Expect(err).To(Equal(ident.ErrEmptyID))
+	})
+
+	It("returns an error if the ID is already set", func() {
+		id := MustParseMessageID("<id>")
+		err := id.Parse("<id>")
+
+		Expect(err).To(Equal(ident.ErrIDNotEmpty))
+	})
+})
+
+var _ = Describe("MustParseMessageID", func() {
+	It("sets the ID to the parsed value", func() {
+		id := MustParseMessageID("<id>")
+
+		Expect(id.Get()).To(Equal("<id>"))
+	})
+
+	It("panics if the value is empty", func() {
+		Expect(func() {
+			MustParseMessageID("")
+		}).To(Panic())
+	})
+
+	It("panics if the ID is already set", func() {
+		id := MustParseMessageID("<id>")
+
+		Expect(func() {
+			id.MustParse("<id>")
+		}).To(Panic())
+	})
+})
 
 var _ = Describe("MarshalMessage", func() {
 	message := &testmessages.Message{
