@@ -36,16 +36,16 @@ func (Repository) LoadOutbox(
 	}
 	defer tx.Rollback()
 
-	outboxBkt := tx.Bucket([]byte("ax_outbox"))
-	if outboxBkt == nil {
+	obBkt := tx.Bucket([]byte("ax_outbox"))
+	if obBkt == nil {
 		return nil, false, nil
 	}
 
-	outMsgBkt := outboxBkt.Bucket([]byte(id.Get()))
-	if outMsgBkt == nil {
+	msgBkt := obBkt.Bucket([]byte(id.Get()))
+	if msgBkt == nil {
 		return nil, false, nil
 	}
-	c := outMsgBkt.Cursor()
+	c := msgBkt.Cursor()
 
 	var envelopes []endpoint.OutboundEnvelope
 	for k, v := c.First(); k != nil; k, v = c.Next() {
@@ -59,6 +59,10 @@ func (Repository) LoadOutbox(
 	return envelopes, true, nil
 }
 
+// ErrOutboxExists is returned by SaveOutbox method if the outbox messages
+// with the same causation id already exist in the database
+var ErrOutboxExists = errors.New("outbox already exists in the database")
+
 // SaveOutbox saves a set of unsent outbound messages that were produced
 // when the message identified by id was delivered.
 func (Repository) SaveOutbox(
@@ -68,23 +72,23 @@ func (Repository) SaveOutbox(
 	envs []endpoint.OutboundEnvelope,
 ) error {
 	tx := boltpersistance.ExtractTx(ptx)
-	outboxBkt, err := tx.CreateBucketIfNotExists([]byte("ax_outbox"))
+	obBkt, err := tx.CreateBucketIfNotExists([]byte("ax_outbox"))
 	if err != nil {
 		return err
 	}
 
-	var outMsgBkt *bolt.Bucket
-	if outMsgBkt = outboxBkt.Bucket([]byte(id.Get())); outMsgBkt != nil {
-		return errors.New("outbox already exists")
+	var msgBkt *bolt.Bucket
+	if msgBkt = obBkt.Bucket([]byte(id.Get())); msgBkt != nil {
+		return ErrOutboxExists
 	}
 
-	outMsgBkt, err = outboxBkt.CreateBucket([]byte(id.Get()))
+	msgBkt, err = obBkt.CreateBucket([]byte(id.Get()))
 	if err != nil {
 		return err
 	}
 
 	for _, env := range envs {
-		if err := insertOutboxMessage(outMsgBkt, env); err != nil {
+		if err := insertOutboxMessage(msgBkt, env); err != nil {
 			return err
 		}
 	}
@@ -99,11 +103,11 @@ func (Repository) MarkAsSent(
 	env endpoint.OutboundEnvelope,
 ) error {
 	tx := boltpersistance.ExtractTx(ptx)
-	outboxBkt := tx.Bucket([]byte("ax_outbox"))
-	if outboxBkt == nil {
+	obBkt := tx.Bucket([]byte("ax_outbox"))
+	if obBkt == nil {
 		return nil
 	}
-	outMsgBkt := outboxBkt.Bucket([]byte(env.CausationID.Get()))
+	outMsgBkt := obBkt.Bucket([]byte(env.CausationID.Get()))
 	if outMsgBkt == nil {
 		return nil
 	}
