@@ -107,12 +107,12 @@ func (Repository) MarkAsSent(
 	if obBkt == nil {
 		return nil
 	}
-	outMsgBkt := obBkt.Bucket([]byte(env.CausationID.Get()))
-	if outMsgBkt == nil {
+	msgBkt := obBkt.Bucket([]byte(env.CausationID.Get()))
+	if msgBkt == nil {
 		return nil
 	}
 
-	return outMsgBkt.Delete([]byte(env.MessageID.Get()))
+	return msgBkt.Delete([]byte(env.MessageID.Get()))
 }
 
 func parseOutboxMessage(
