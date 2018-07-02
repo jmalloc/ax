@@ -3,6 +3,7 @@ package saga
 import (
 	"context"
 	"fmt"
+	"time"
 
 	bolt "github.com/coreos/bbolt"
 	"github.com/golang/protobuf/proto"
@@ -45,7 +46,12 @@ func (r CRUDRepository) LoadSagaInstance(
 		return saga.Instance{}, false, nil
 	}
 
-	pb := sgBkt.Get([]byte(id.Get()))
+	sgiBkt := sgBkt.Bucket([]byte("ax_saga_instance"))
+	if sgiBkt == nil {
+		return saga.Instance{}, false, nil
+	}
+
+	pb := sgiBkt.Get([]byte(id.Get()))
 	if pb != nil {
 		return saga.Instance{}, false, nil
 	}
@@ -56,7 +62,7 @@ func (r CRUDRepository) LoadSagaInstance(
 	}
 
 	i.Revision = saga.Revision(sgi.GetRevision())
-	if err := i.InstanceID.Parse(sgi.GetId()); err != nil {
+	if err = i.InstanceID.Parse(sgi.GetId()); err != nil {
 		return saga.Instance{}, false, err
 	}
 
@@ -115,11 +121,21 @@ func (r CRUDRepository) SaveSagaInstance(
 		return err
 	}
 
-	if i.Revision == 0 {
-		return r.insertInstance(sgBkt, sgi)
+	sgBkt, err = sgBkt.CreateBucketIfNotExists([]byte("ax_saga_instance"))
+	if err != nil {
+		return err
 	}
 
-	return r.updateInstance(sgBkt, sgi)
+	sgiBkt := sgBkt.Bucket([]byte("ax_saga_instance"))
+	if sgiBkt == nil {
+		return err
+	}
+
+	if i.Revision == 0 {
+		return r.insertInstance(sgiBkt, sgi)
+	}
+
+	return r.updateInstance(sgiBkt, sgi)
 }
 
 // insertInstance inserts a new saga instance.
@@ -127,12 +143,16 @@ func (CRUDRepository) insertInstance(
 	bkt *bolt.Bucket,
 	new *SagaInstance,
 ) error {
+
 	if bkt.Get([]byte(new.GetId())) != nil {
 		return fmt.Errorf(
 			"error inserting new saga: instance %s already exists",
 			new.Id,
 		)
 	}
+
+	new.InsertTime = time.Now().Format(time.RFC3339Nano)
+	new.UpdateTime = new.InsertTime
 
 	pb, err := proto.Marshal(new)
 	if err != nil {
@@ -174,6 +194,9 @@ func (CRUDRepository) updateInstance(
 			old.GetPersistenceKey(),
 		)
 	}
+
+	new.InsertTime = old.InsertTime
+	new.UpdateTime = time.Now().Format(time.RFC3339Nano)
 
 	pb, err := proto.Marshal(new)
 	if err != nil {
