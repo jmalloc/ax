@@ -84,7 +84,7 @@ func (KeySetRepository) SaveKeys(
 
 	c := bkt.Cursor()
 	if k, v := c.First(); k != nil && v != nil {
-		for k, v = c.First(); k != nil; k, v = c.Next() {
+		for k, v = c.Last(); k != nil; k, v = c.Prev() {
 			if err = c.Delete(); err != nil {
 				return err
 			}
