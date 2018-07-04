@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+import "google/protobuf/any.proto"; 
+
+package axbolt.saga;
+option go_package = "saga";
+
+// SagaSnapshot is a container for a saga snapshot serialized into the
+// protobuf format before being persisted in a Bolt bucket
+message SagaSnapshot {
+    string instance_id = 1;
+    int64  revision = 2;
+    string persistence_key = 3;
+    google.protobuf.Any data = 4;
+    string insert_time = 5;
+} 
