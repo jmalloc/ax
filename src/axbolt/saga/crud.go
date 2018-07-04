@@ -41,17 +41,17 @@ func (r CRUDRepository) LoadSagaInstance(
 
 	tx := boltpersistence.ExtractTx(ptx)
 
-	sgBkt := tx.Bucket([]byte("ax_saga"))
-	if sgBkt == nil {
+	bkt := tx.Bucket([]byte("ax_saga"))
+	if bkt == nil {
 		return saga.Instance{}, false, nil
 	}
 
-	sgiBkt := sgBkt.Bucket([]byte("ax_saga_instance"))
-	if sgiBkt == nil {
+	bkt = bkt.Bucket([]byte("ax_saga_instance"))
+	if bkt == nil {
 		return saga.Instance{}, false, nil
 	}
 
-	pb := sgiBkt.Get([]byte(id.Get()))
+	pb := bkt.Get([]byte(id.Get()))
 	if pb != nil {
 		return saga.Instance{}, false, nil
 	}
@@ -62,7 +62,7 @@ func (r CRUDRepository) LoadSagaInstance(
 	}
 
 	i.Revision = saga.Revision(sgi.GetRevision())
-	if err = i.InstanceID.Parse(sgi.GetId()); err != nil {
+	if err = i.InstanceID.Parse(sgi.GetInstanceId()); err != nil {
 		return saga.Instance{}, false, err
 	}
 
@@ -102,12 +102,12 @@ func (r CRUDRepository) SaveSagaInstance(
 	i saga.Instance,
 ) error {
 	var (
-		err   error
-		sgBkt *bolt.Bucket
+		err error
+		bkt *bolt.Bucket
 	)
 	tx := boltpersistence.ExtractTx(ptx)
 	sgi := &SagaInstance{
-		Id:             i.InstanceID.Get(),
+		InstanceId:     i.InstanceID.Get(),
 		Revision:       int64(i.Revision),
 		PersistenceKey: pk,
 	}
@@ -116,26 +116,26 @@ func (r CRUDRepository) SaveSagaInstance(
 		return err
 	}
 
-	sgBkt, err = tx.CreateBucketIfNotExists([]byte("ax_saga"))
+	bkt, err = tx.CreateBucketIfNotExists([]byte("ax_saga"))
 	if err != nil {
 		return err
 	}
 
-	sgBkt, err = sgBkt.CreateBucketIfNotExists([]byte("ax_saga_instance"))
+	bkt, err = bkt.CreateBucketIfNotExists([]byte("ax_saga_instance"))
 	if err != nil {
 		return err
 	}
 
-	sgiBkt := sgBkt.Bucket([]byte("ax_saga_instance"))
-	if sgiBkt == nil {
+	bkt = bkt.Bucket([]byte("ax_saga_instance"))
+	if bkt == nil {
 		return err
 	}
 
 	if i.Revision == 0 {
-		return r.insertInstance(sgiBkt, sgi)
+		return r.insertInstance(bkt, sgi)
 	}
 
-	return r.updateInstance(sgiBkt, sgi)
+	return r.updateInstance(bkt, sgi)
 }
 
 // insertInstance inserts a new saga instance.
@@ -144,10 +144,10 @@ func (CRUDRepository) insertInstance(
 	new *SagaInstance,
 ) error {
 
-	if bkt.Get([]byte(new.GetId())) != nil {
+	if bkt.Get([]byte(new.GetInstanceId())) != nil {
 		return fmt.Errorf(
 			"error inserting new saga: instance %s already exists",
-			new.Id,
+			new.GetInstanceId(),
 		)
 	}
 
@@ -159,7 +159,7 @@ func (CRUDRepository) insertInstance(
 		return err
 	}
 
-	return bkt.Put([]byte(new.GetId()), pb)
+	return bkt.Put([]byte(new.GetInstanceId()), pb)
 }
 
 // updateInstance updates an existing saga instance.
@@ -168,11 +168,11 @@ func (CRUDRepository) updateInstance(
 	bkt *bolt.Bucket,
 	new *SagaInstance,
 ) error {
-	pbold := bkt.Get([]byte(new.GetId()))
+	pbold := bkt.Get([]byte(new.GetInstanceId()))
 	if pbold == nil {
 		return fmt.Errorf(
 			"error updating saga instance %s: not found",
-			new.Id,
+			new.GetInstanceId(),
 		)
 	}
 	var old SagaInstance
@@ -182,14 +182,14 @@ func (CRUDRepository) updateInstance(
 	if new.GetRevision() != old.GetRevision() {
 		return fmt.Errorf(
 			"can not update saga instance %s, revision %d is not the current revision",
-			new.GetId(),
+			new.GetInstanceId(),
 			new.GetRevision(),
 		)
 	}
 	if new.GetPersistenceKey() != old.GetPersistenceKey() {
 		return fmt.Errorf(
 			"can not save saga instance %s for saga %s, it belongs to %s",
-			new.GetId(),
+			new.GetInstanceId(),
 			new.GetPersistenceKey(),
 			old.GetPersistenceKey(),
 		)
@@ -203,5 +203,5 @@ func (CRUDRepository) updateInstance(
 		return err
 	}
 
-	return bkt.Put([]byte(new.GetId()), pb)
+	return bkt.Put([]byte(new.GetInstanceId()), pb)
 }
