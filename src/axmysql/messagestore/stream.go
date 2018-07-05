@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/jmalloc/ax/src/ax"
+	"github.com/jmalloc/ax/src/ax/marshaling"
 )
 
 const (
@@ -83,17 +84,19 @@ func (s *Stream) Get(ctx context.Context) (ax.Envelope, error) {
 	}
 
 	var (
-		env         ax.Envelope
-		contentType string
-		data        []byte
-		timeStr     string
+		env          ax.Envelope
+		contentType  string
+		data         []byte
+		createdAt    string
+		delayedUntil string
 	)
 
 	err := s.rows.Scan(
 		&env.MessageID,
 		&env.CausationID,
 		&env.CorrelationID,
-		&timeStr,
+		&createdAt,
+		&delayedUntil,
 		&contentType,
 		&data,
 	)
@@ -101,7 +104,12 @@ func (s *Stream) Get(ctx context.Context) (ax.Envelope, error) {
 		return ax.Envelope{}, err
 	}
 
-	env.Time, err = time.Parse(time.RFC3339Nano, timeStr)
+	err = marshaling.UnmarshalTime(createdAt, &env.CreatedAt)
+	if err != nil {
+		return ax.Envelope{}, err
+	}
+
+	err = marshaling.UnmarshalTime(delayedUntil, &env.DelayedUntil)
 	if err != nil {
 		return ax.Envelope{}, err
 	}

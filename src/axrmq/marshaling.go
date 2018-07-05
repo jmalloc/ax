@@ -1,9 +1,23 @@
 package axrmq
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
+	"github.com/jmalloc/ax/src/ax/marshaling"
 	"github.com/streadway/amqp"
+)
+
+const (
+	// delayedUntilHeader is the name of the AMQP message header that carries the
+	// ax.Envelope.CreatedAt field.
+	createdAtHeader = "ax-created-at"
+
+	// delayedUntilHeader is the name of the AMQP message header that carries the
+	// ax.Envelope.DelayedUntil field.
+	delayedUntilHeader = "ax-delayed-until"
 )
 
 // marshalMessage marshals a message envelope to an AMQP "publishing" message.
@@ -13,8 +27,16 @@ func marshalMessage(ep string, env endpoint.OutboundEnvelope) (amqp.Publishing, 
 		MessageId:     env.MessageID.Get(),
 		ReplyTo:       env.CausationID.Get(), // hijack reply-to for causation
 		CorrelationId: env.CorrelationID.Get(),
-		Timestamp:     env.Time,
+		Timestamp:     time.Now(), // informational only, envelope times are in headers to retain TZ
 		Type:          ax.TypeOf(env.Message).Name,
+		Headers: amqp.Table{
+			createdAtHeader: marshaling.MarshalTime(env.CreatedAt),
+		},
+	}
+
+	// only add the delayed-until header if the message was actually delayed
+	if env.DelayedUntil.After(env.CreatedAt) {
+		pub.Headers[delayedUntilHeader] = marshaling.MarshalTime(env.DelayedUntil)
 	}
 
 	var err error
@@ -32,20 +54,31 @@ func unmarshalMessage(del amqp.Delivery) (endpoint.InboundEnvelope, error) {
 	}
 
 	if err := env.MessageID.Parse(del.MessageId); err != nil {
-		return env, err
+		return endpoint.InboundEnvelope{}, err
 	}
 
 	if err := env.CausationID.Parse(del.ReplyTo); err != nil {
-		return env, err
+		return endpoint.InboundEnvelope{}, err
 	}
 
 	if err := env.CorrelationID.Parse(del.CorrelationId); err != nil {
-		return env, err
+		return endpoint.InboundEnvelope{}, err
 	}
 
-	env.Time = del.Timestamp
+	ok, err := unmarshalTimeFromHeader(del.Headers, createdAtHeader, &env.CreatedAt)
+	if err != nil {
+		return endpoint.InboundEnvelope{}, err
+	} else if !ok {
+		return endpoint.InboundEnvelope{}, fmt.Errorf("message %s does not contain a %s header", env.MessageID, createdAtHeader)
+	}
 
-	var err error
+	ok, err = unmarshalTimeFromHeader(del.Headers, delayedUntilHeader, &env.DelayedUntil)
+	if err != nil {
+		return endpoint.InboundEnvelope{}, err
+	} else if !ok {
+		env.DelayedUntil = env.CreatedAt
+	}
+
 	env.Message, err = ax.UnmarshalMessage(del.ContentType, del.Body)
 
 	return env, err
@@ -86,4 +119,21 @@ func countDeliveries(del amqp.Delivery) uint {
 	}
 
 	return count
+}
+
+// unmarshalTimeFromHeader unmarshals a time from headers[n].
+// It returns an error if the header is not a string, or contains an invalid time.
+// It returns false if no header is present at all.
+func unmarshalTimeFromHeader(headers amqp.Table, n string, t *time.Time) (bool, error) {
+	v, ok := headers[n]
+	if !ok {
+		return false, nil
+	}
+
+	s, ok := v.(string)
+	if !ok {
+		return false, fmt.Errorf("%s header is not a string", n)
+	}
+
+	return true, marshaling.UnmarshalTime(s, t)
 }

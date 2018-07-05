@@ -3,10 +3,10 @@ package outbox
 import (
 	"context"
 	"database/sql"
-	"time"
 
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
+	"github.com/jmalloc/ax/src/ax/marshaling"
 	"github.com/jmalloc/ax/src/ax/persistence"
 	mysqlpersistence "github.com/jmalloc/ax/src/axmysql/persistence"
 )
@@ -46,7 +46,8 @@ func (Repository) LoadOutbox(
 		`SELECT
 			message_id,
 			correlation_id,
-			time,
+			created_at,
+			delayed_until,
 			content_type,
 			body,
 			operation,
@@ -126,27 +127,34 @@ func scanOutboxMessage(rows *sql.Rows, causationID ax.MessageID) (endpoint.Outbo
 	}
 
 	var (
-		ct      string
-		body    []byte
-		timeStr string
+		ct           string
+		body         []byte
+		createdAt    string
+		delayedUntil string
 	)
 
 	err := rows.Scan(
 		&env.MessageID,
 		&env.CorrelationID,
-		&timeStr,
+		&createdAt,
+		&delayedUntil,
 		&ct,
 		&body,
 		&env.Operation,
 		&env.DestinationEndpoint,
 	)
 	if err != nil {
-		return env, err
+		return endpoint.OutboundEnvelope{}, err
 	}
 
-	env.Time, err = time.Parse(time.RFC3339Nano, timeStr)
+	err = marshaling.UnmarshalTime(createdAt, &env.CreatedAt)
 	if err != nil {
-		return env, err
+		return endpoint.OutboundEnvelope{}, err
+	}
+
+	err = marshaling.UnmarshalTime(delayedUntil, &env.DelayedUntil)
+	if err != nil {
+		return endpoint.OutboundEnvelope{}, err
 	}
 
 	env.Message, err = ax.UnmarshalMessage(ct, body)
@@ -170,7 +178,8 @@ func insertOutboxMessage(
 			message_id = ?,
 			causation_id = ?,
 			correlation_id = ?,
-			time = ?,
+			created_at = ?,
+			delayed_until = ?,
 			content_type = ?,
 			body = ?,
 			operation = ?,
@@ -178,7 +187,8 @@ func insertOutboxMessage(
 		env.MessageID,
 		env.CausationID,
 		env.CorrelationID,
-		env.Time.Format(time.RFC3339Nano),
+		marshaling.MarshalTime(env.CreatedAt),
+		marshaling.MarshalTime(env.DelayedUntil),
 		ct,
 		body,
 		env.Operation,

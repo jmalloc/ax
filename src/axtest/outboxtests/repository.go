@@ -48,18 +48,21 @@ func RepositorySuite(
 		g.Describe("LoadOutbox", func() {
 			g.Context("when the outbox exists", func() {
 				var m1, m2 endpoint.OutboundEnvelope
-				var t1, t2 time.Time
+				var t1, t2, t3, t4 time.Time
 
 				g.BeforeEach(func() {
 					t1 = time.Now()
 					t2 = time.Now()
+					t3 = time.Now()
+					t4 = time.Now()
 
 					m1 = endpoint.OutboundEnvelope{
 						Envelope: ax.Envelope{
 							MessageID:     ax.GenerateMessageID(),
 							CausationID:   causationID,
 							CorrelationID: correlationID,
-							Time:          t1,
+							CreatedAt:     t1,
+							DelayedUntil:  t2,
 							Message: &testmessages.Command{
 								Value: "<foo>",
 							},
@@ -73,7 +76,8 @@ func RepositorySuite(
 							MessageID:     ax.GenerateMessageID(),
 							CausationID:   causationID,
 							CorrelationID: correlationID,
-							Time:          t2,
+							CreatedAt:     t3,
+							DelayedUntil:  t4,
 							Message: &testmessages.Event{
 								Value: "<bar>",
 							},
@@ -221,7 +225,8 @@ func RepositorySuite(
 						MessageID:     ax.GenerateMessageID(),
 						CausationID:   causationID,
 						CorrelationID: correlationID,
-						Time:          time.Now(),
+						CreatedAt:     time.Now(),
+						DelayedUntil:  time.Now(),
 						Message:       &testmessages.Message{},
 					},
 					Operation:           endpoint.OpSendUnicast,
@@ -257,7 +262,8 @@ func RepositorySuite(
 						MessageID:     ax.GenerateMessageID(),
 						CausationID:   causationID,
 						CorrelationID: correlationID,
-						Time:          time.Now(),
+						CreatedAt:     time.Now(),
+						DelayedUntil:  time.Now(),
 						Message:       &testmessages.Message{},
 					},
 					Operation:           endpoint.OpSendUnicast,

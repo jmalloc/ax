@@ -9,7 +9,8 @@ import (
 const fetchColumns = `message_id,
 					  causation_id,
 					  correlation_id,
-					  time,
+					  created_at,
+					  delayed_until,
 					  content_type,
 					  data`
 

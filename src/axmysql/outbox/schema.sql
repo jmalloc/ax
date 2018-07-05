@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS ax_outbox_message (
     message_id     VARBINARY(255) NOT NULL,
     causation_id   VARBINARY(255) NOT NULL, -- ax_outbox.causation_id
     correlation_id VARBINARY(255) NOT NULL,
-    time           VARBINARY(255) NOT NULL,
+    created_at     VARBINARY(255) NOT NULL,
+    delayed_until  VARBINARY(255) NOT NULL,
     content_type   VARBINARY(255) NOT NULL,
     body           BLOB NOT NULL,
     operation      INTEGER NOT NULL,
