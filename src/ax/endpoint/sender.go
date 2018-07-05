@@ -17,35 +17,18 @@ type SinkSender struct {
 //
 // If ctx contains a message envelope, m is sent as a child of the message in
 // that envelope.
-func (s SinkSender) ExecuteCommand(ctx context.Context, m ax.Command) (ax.Envelope, error) {
-	return s.send(ctx, OpSendUnicast, m)
-}
-
-// PublishEvent sends an event message.
-//
-// If ctx contains a message envelope, m is sent as a child of the message in
-// that envelope.
-func (s SinkSender) PublishEvent(ctx context.Context, m ax.Event) (ax.Envelope, error) {
-	return s.send(ctx, OpSendMulticast, m)
-}
-
-// send wraps m in an envelope and passes that envelope to s.Sink.
-// The new envelope is configured as a child of the envelope in ctx, if any.
-func (s SinkSender) send(ctx context.Context, op Operation, m ax.Message) (ax.Envelope, error) {
-	env, ok := GetEnvelope(ctx)
-
-	if ok {
-		env = env.NewChild(m)
-	} else {
-		env = ax.NewEnvelope(m)
+func (s SinkSender) ExecuteCommand(
+	ctx context.Context,
+	m ax.Command,
+	opts ...ax.ExecuteOption,
+) (ax.Envelope, error) {
+	env, err := s.newEnvelope(ctx, m)
+	if err != nil {
+		return ax.Envelope{}, err
 	}
 
-	if len(s.Validators) == 0 {
-		s.Validators = DefaultValidators
-	}
-
-	for _, v := range s.Validators {
-		if err := v.Validate(ctx, m); err != nil {
+	for _, o := range opts {
+		if err := o.ApplyExecuteOption(&env); err != nil {
 			return ax.Envelope{}, err
 		}
 	}
@@ -54,7 +37,57 @@ func (s SinkSender) send(ctx context.Context, op Operation, m ax.Message) (ax.En
 		ctx,
 		OutboundEnvelope{
 			Envelope:  env,
-			Operation: op,
+			Operation: OpSendUnicast,
 		},
 	)
+}
+
+// PublishEvent sends an event message.
+//
+// If ctx contains a message envelope, m is sent as a child of the message in
+// that envelope.
+func (s SinkSender) PublishEvent(
+	ctx context.Context,
+	m ax.Event,
+	opts ...ax.PublishOption,
+) (ax.Envelope, error) {
+	env, err := s.newEnvelope(ctx, m)
+	if err != nil {
+		return ax.Envelope{}, err
+	}
+
+	for _, o := range opts {
+		if err := o.ApplyPublishOption(&env); err != nil {
+			return ax.Envelope{}, err
+		}
+	}
+
+	return env, s.Sink.Accept(
+		ctx,
+		OutboundEnvelope{
+			Envelope:  env,
+			Operation: OpSendMulticast,
+		},
+	)
+}
+
+// newEnvelope returns an envelope containing m.
+// The new envelope is configured as a child of the envelope in ctx, if any.
+func (s SinkSender) newEnvelope(ctx context.Context, m ax.Message) (ax.Envelope, error) {
+	validators := s.Validators
+	if len(validators) == 0 {
+		validators = DefaultValidators
+	}
+
+	for _, v := range validators {
+		if err := v.Validate(ctx, m); err != nil {
+			return ax.Envelope{}, err
+		}
+	}
+
+	if env, ok := GetEnvelope(ctx); ok {
+		return env.NewChild(m), nil
+	}
+
+	return ax.NewEnvelope(m), nil
 }

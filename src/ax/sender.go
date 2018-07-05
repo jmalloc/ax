@@ -10,10 +10,28 @@ type Sender interface {
 	//
 	// Commands are routed to a single endpoint as per the routing rules of the
 	// outbound message pipeline.
-	ExecuteCommand(context.Context, Command) (Envelope, error)
+	ExecuteCommand(context.Context, Command, ...ExecuteOption) (Envelope, error)
 
 	// PublishEvent sends an event message.
 	//
 	// Events are routed to endpoints that subscribe to messages of that type.
-	PublishEvent(context.Context, Event) (Envelope, error)
+	PublishEvent(context.Context, Event, ...PublishOption) (Envelope, error)
+}
+
+// ExecuteOption is configures an envelope containing a command message to
+// exhibit some specific behavior.
+type ExecuteOption interface {
+	ApplyExecuteOption(env *Envelope) error
+}
+
+// PublishOption is configures an envelope containing an event message to
+// exhibit some specific behavior.
+type PublishOption interface {
+	ApplyPublishOption(env *Envelope) error
+}
+
+// SendOption is an option that can be used for both commands and events.
+type SendOption interface {
+	ExecuteOption
+	PublishOption
 }
