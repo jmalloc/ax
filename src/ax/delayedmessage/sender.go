@@ -52,13 +52,32 @@ func (s *Sender) tick(ctx context.Context) error {
 		delay := time.Until(env.SendAt)
 
 		if delay <= 0 {
-			return s.Out.Accept(ctx, env)
+			return s.send(ctx, env)
 		} else if delay < d {
 			d = delay
 		}
 	}
 
 	return s.sleep(ctx, d)
+}
+
+// send sends a message and marks it as sent.
+func (s *Sender) send(ctx context.Context, env endpoint.OutboundEnvelope) error {
+	if err := s.Out.Accept(ctx, env); err != nil {
+		return err
+	}
+
+	tx, com, err := s.DataStore.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
+	defer com.Rollback()
+
+	if err := s.Repository.MarkAsSent(ctx, tx, env); err != nil {
+		return err
+	}
+
+	return com.Commit()
 }
 
 // sleep blocks until ctx is canceled or the given duration elapses.
