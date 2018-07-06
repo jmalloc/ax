@@ -19,7 +19,7 @@ func (account) PersistenceKey() string {
 }
 
 func (account) WhenAccountOpened(ctx context.Context, tx *sql.Tx, ev *messages.AccountOpened, env ax.Envelope) error {
-	return insertAccount(ctx, tx, ev.AccountId, ev.Name, env.Time)
+	return insertAccount(ctx, tx, ev.AccountId, ev.Name, env.CreatedAt)
 }
 
 func (account) WhenAccountDebited(ctx context.Context, tx *sql.Tx, ev *messages.AccountDebited) error {
