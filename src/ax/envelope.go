@@ -49,16 +49,16 @@ type Envelope struct {
 	//
 	// Depending on the application this field may not be appropriate for use as an
 	// "occurred" time. Care must be taken to choose appropriately between
-	// CreatedAt and DelayedUntil for each use case.
+	// CreatedAt and SendAt for each use case.
 	CreatedAt time.Time
 
-	// DelayedUntil is the time at which the message should be sent.
-	// If it is equal to CreatedAt, no delay was specified.
+	// SendAt is the time at which the message should be sent by the endpoint,
+	// which may be after the CreatedAt time.
 	//
 	// Depending on the application this field may not be appropriate for use as an
 	// "occurred" time. Care must be taken to choose appropriately between
-	// CreatedAt and DelayedUntil for each use case.
-	DelayedUntil time.Time
+	// CreatedAt and SendAt for each use case.
+	SendAt time.Time
 
 	// Message is the application-defined message encapsulated by the envelope.
 	Message Message
@@ -77,7 +77,7 @@ func NewEnvelope(m Message) Envelope {
 		CausationID:   id,
 		CorrelationID: id,
 		CreatedAt:     t,
-		DelayedUntil:  t,
+		SendAt:        t,
 		Message:       m,
 	}
 
@@ -96,7 +96,7 @@ func (e Envelope) NewChild(m Message) Envelope {
 		CorrelationID: e.CorrelationID,
 		CausationID:   e.MessageID,
 		CreatedAt:     t,
-		DelayedUntil:  t,
+		SendAt:        t,
 		Message:       m,
 	}
 

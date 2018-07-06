@@ -84,11 +84,11 @@ func (s *Stream) Get(ctx context.Context) (ax.Envelope, error) {
 	}
 
 	var (
-		env          ax.Envelope
-		contentType  string
-		data         []byte
-		createdAt    string
-		delayedUntil string
+		env         ax.Envelope
+		contentType string
+		data        []byte
+		createdAt   string
+		sendAt      string
 	)
 
 	err := s.rows.Scan(
@@ -96,7 +96,7 @@ func (s *Stream) Get(ctx context.Context) (ax.Envelope, error) {
 		&env.CausationID,
 		&env.CorrelationID,
 		&createdAt,
-		&delayedUntil,
+		&sendAt,
 		&contentType,
 		&data,
 	)
@@ -109,7 +109,7 @@ func (s *Stream) Get(ctx context.Context) (ax.Envelope, error) {
 		return ax.Envelope{}, err
 	}
 
-	err = marshaling.UnmarshalTime(delayedUntil, &env.DelayedUntil)
+	err = marshaling.UnmarshalTime(sendAt, &env.SendAt)
 	if err != nil {
 		return ax.Envelope{}, err
 	}

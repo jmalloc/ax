@@ -38,7 +38,7 @@ func EnvelopesEqual(a, b ax.Envelope) bool {
 		return false
 	}
 
-	if !a.DelayedUntil.Equal(b.DelayedUntil) {
+	if !a.SendAt.Equal(b.SendAt) {
 		return false
 	}
 
@@ -49,7 +49,7 @@ func EnvelopesEqual(a, b ax.Envelope) bool {
 	// ensure the "difficult to compare" values are equal so the remainder of
 	// the struct can be compared using the equality operator.
 	a.CreatedAt = b.CreatedAt
-	a.DelayedUntil = b.DelayedUntil
+	a.SendAt = b.SendAt
 	a.Message = b.Message
 
 	return a == b

@@ -17,7 +17,7 @@ var _ = Describe("Delay", func() {
 
 		err := opt.ApplyExecuteOption(&env)
 		Expect(err).ShouldNot(HaveOccurred())
-		Expect(env.DelayedUntil).To(BeTemporally("~", t.Add(d)))
+		Expect(env.SendAt).To(BeTemporally("~", t.Add(d)))
 	})
 })
 
@@ -29,6 +29,6 @@ var _ = Describe("DelayUntil", func() {
 
 		err := opt.ApplyExecuteOption(&env)
 		Expect(err).ShouldNot(HaveOccurred())
-		Expect(env.DelayedUntil).To(BeTemporally("==", t))
+		Expect(env.SendAt).To(BeTemporally("==", t))
 	})
 })

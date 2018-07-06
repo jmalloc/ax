@@ -22,6 +22,6 @@ type delayOption struct {
 }
 
 func (o delayOption) ApplyExecuteOption(env *Envelope) error {
-	env.DelayedUntil = o.Time
+	env.SendAt = o.Time
 	return nil
 }

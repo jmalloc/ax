@@ -11,13 +11,13 @@ import (
 )
 
 const (
-	// delayedUntilHeader is the name of the AMQP message header that carries the
+	// createdAtHeader is the name of the AMQP message header that carries the
 	// ax.Envelope.CreatedAt field.
 	createdAtHeader = "ax-created-at"
 
-	// delayedUntilHeader is the name of the AMQP message header that carries the
-	// ax.Envelope.DelayedUntil field.
-	delayedUntilHeader = "ax-delayed-until"
+	// sendAtHeader is the name of the AMQP message header that carries the
+	// ax.Envelope.SendAt field.
+	sendAtHeader = "ax-send-at"
 )
 
 // marshalMessage marshals a message envelope to an AMQP "publishing" message.
@@ -35,8 +35,8 @@ func marshalMessage(ep string, env endpoint.OutboundEnvelope) (amqp.Publishing, 
 	}
 
 	// only add the delayed-until header if the message was actually delayed
-	if env.DelayedUntil.After(env.CreatedAt) {
-		pub.Headers[delayedUntilHeader] = marshaling.MarshalTime(env.DelayedUntil)
+	if env.SendAt.After(env.CreatedAt) {
+		pub.Headers[sendAtHeader] = marshaling.MarshalTime(env.SendAt)
 	}
 
 	var err error
@@ -72,11 +72,11 @@ func unmarshalMessage(del amqp.Delivery) (endpoint.InboundEnvelope, error) {
 		return endpoint.InboundEnvelope{}, fmt.Errorf("message %s does not contain a %s header", env.MessageID, createdAtHeader)
 	}
 
-	ok, err = unmarshalTimeFromHeader(del.Headers, delayedUntilHeader, &env.DelayedUntil)
+	ok, err = unmarshalTimeFromHeader(del.Headers, sendAtHeader, &env.SendAt)
 	if err != nil {
 		return endpoint.InboundEnvelope{}, err
 	} else if !ok {
-		env.DelayedUntil = env.CreatedAt
+		env.SendAt = env.CreatedAt
 	}
 
 	env.Message, err = ax.UnmarshalMessage(del.ContentType, del.Body)

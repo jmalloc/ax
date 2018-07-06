@@ -47,7 +47,7 @@ func (Repository) LoadOutbox(
 			message_id,
 			correlation_id,
 			created_at,
-			delayed_until,
+			send_at,
 			content_type,
 			body,
 			operation,
@@ -127,17 +127,17 @@ func scanOutboxMessage(rows *sql.Rows, causationID ax.MessageID) (endpoint.Outbo
 	}
 
 	var (
-		ct           string
-		body         []byte
-		createdAt    string
-		delayedUntil string
+		ct        string
+		body      []byte
+		createdAt string
+		sendAt    string
 	)
 
 	err := rows.Scan(
 		&env.MessageID,
 		&env.CorrelationID,
 		&createdAt,
-		&delayedUntil,
+		&sendAt,
 		&ct,
 		&body,
 		&env.Operation,
@@ -152,7 +152,7 @@ func scanOutboxMessage(rows *sql.Rows, causationID ax.MessageID) (endpoint.Outbo
 		return endpoint.OutboundEnvelope{}, err
 	}
 
-	err = marshaling.UnmarshalTime(delayedUntil, &env.DelayedUntil)
+	err = marshaling.UnmarshalTime(sendAt, &env.SendAt)
 	if err != nil {
 		return endpoint.OutboundEnvelope{}, err
 	}
@@ -179,7 +179,7 @@ func insertOutboxMessage(
 			causation_id = ?,
 			correlation_id = ?,
 			created_at = ?,
-			delayed_until = ?,
+			send_at = ?,
 			content_type = ?,
 			body = ?,
 			operation = ?,
@@ -188,7 +188,7 @@ func insertOutboxMessage(
 		env.CausationID,
 		env.CorrelationID,
 		marshaling.MarshalTime(env.CreatedAt),
-		marshaling.MarshalTime(env.DelayedUntil),
+		marshaling.MarshalTime(env.SendAt),
 		ct,
 		body,
 		env.Operation,

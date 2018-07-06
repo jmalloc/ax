@@ -157,7 +157,7 @@ func insertMessage(
 			causation_id = ?,
 			correlation_id = ?,
 			created_at = ?,
-			delayed_until = ?,
+			send_at = ?,
 			content_type = ?,
 			data = ?`,
 		g,
@@ -168,7 +168,7 @@ func insertMessage(
 		env.CausationID,
 		env.CorrelationID,
 		marshaling.MarshalTime(env.CreatedAt),
-		marshaling.MarshalTime(env.DelayedUntil),
+		marshaling.MarshalTime(env.SendAt),
 		contentType,
 		data,
 	)

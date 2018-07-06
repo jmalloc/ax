@@ -10,7 +10,7 @@ const fetchColumns = `message_id,
 					  causation_id,
 					  correlation_id,
 					  created_at,
-					  delayed_until,
+					  send_at,
 					  content_type,
 					  data`
 
