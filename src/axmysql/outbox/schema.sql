@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS ax_outbox_message (
     created_at     VARBINARY(255) NOT NULL,
     send_at        VARBINARY(255) NOT NULL,
     content_type   VARBINARY(255) NOT NULL,
-    body           BLOB NOT NULL,
+    data           BLOB NOT NULL,
     operation      INTEGER NOT NULL,
     destination    VARBINARY(255) NOT NULL,
 

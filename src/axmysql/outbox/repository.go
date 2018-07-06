@@ -2,18 +2,20 @@ package outbox
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
-	"github.com/jmalloc/ax/src/ax/marshaling"
 	"github.com/jmalloc/ax/src/ax/persistence"
+	"github.com/jmalloc/ax/src/axmysql/internal/envelopestore"
 	mysqlpersistence "github.com/jmalloc/ax/src/axmysql/persistence"
 )
 
 // Repository is a MySQL-backed implementation of Ax's outbox.Repository
 // interface.
 type Repository struct{}
+
+// messageTable is the name of the SQL table that stores outbox messages.
+const messageTable = "ax_outbox_message"
 
 // LoadOutbox loads the unsent outbound messages that were produced when the
 // message identified by id was first delivered.
@@ -43,16 +45,8 @@ func (Repository) LoadOutbox(
 
 	rows, err := db.QueryContext(
 		ctx,
-		`SELECT
-			message_id,
-			correlation_id,
-			created_at,
-			send_at,
-			content_type,
-			body,
-			operation,
-			destination
-		FROM ax_outbox_message
+		`SELECT `+envelopestore.Columns+`
+		FROM `+messageTable+`
 		WHERE causation_id = ?`,
 		id,
 	)
@@ -64,7 +58,7 @@ func (Repository) LoadOutbox(
 	var envelopes []endpoint.OutboundEnvelope
 
 	for rows.Next() {
-		env, err := scanOutboxMessage(rows, id)
+		env, err := envelopestore.Scan(rows)
 		if err != nil {
 			return nil, false, err
 		}
@@ -94,7 +88,7 @@ func (Repository) SaveOutbox(
 	}
 
 	for _, env := range envs {
-		if err := insertOutboxMessage(ctx, tx, env); err != nil {
+		if err := envelopestore.Insert(ctx, tx, messageTable, env); err != nil {
 			return err
 		}
 	}
@@ -110,90 +104,5 @@ func (Repository) MarkAsSent(
 ) error {
 	tx := mysqlpersistence.ExtractTx(ptx)
 
-	_, err := tx.ExecContext(
-		ctx,
-		`DELETE FROM ax_outbox_message WHERE message_id = ?`,
-		env.MessageID,
-	)
-
-	return err
-}
-
-func scanOutboxMessage(rows *sql.Rows, causationID ax.MessageID) (endpoint.OutboundEnvelope, error) {
-	env := endpoint.OutboundEnvelope{
-		Envelope: ax.Envelope{
-			CausationID: causationID,
-		},
-	}
-
-	var (
-		ct        string
-		body      []byte
-		createdAt string
-		sendAt    string
-	)
-
-	err := rows.Scan(
-		&env.MessageID,
-		&env.CorrelationID,
-		&createdAt,
-		&sendAt,
-		&ct,
-		&body,
-		&env.Operation,
-		&env.DestinationEndpoint,
-	)
-	if err != nil {
-		return endpoint.OutboundEnvelope{}, err
-	}
-
-	err = marshaling.UnmarshalTime(createdAt, &env.CreatedAt)
-	if err != nil {
-		return endpoint.OutboundEnvelope{}, err
-	}
-
-	err = marshaling.UnmarshalTime(sendAt, &env.SendAt)
-	if err != nil {
-		return endpoint.OutboundEnvelope{}, err
-	}
-
-	env.Message, err = ax.UnmarshalMessage(ct, body)
-
-	return env, err
-}
-
-func insertOutboxMessage(
-	ctx context.Context,
-	tx *sql.Tx,
-	env endpoint.OutboundEnvelope,
-) error {
-	ct, body, err := ax.MarshalMessage(env.Message)
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.ExecContext(
-		ctx,
-		`INSERT INTO ax_outbox_message SET
-			message_id = ?,
-			causation_id = ?,
-			correlation_id = ?,
-			created_at = ?,
-			send_at = ?,
-			content_type = ?,
-			body = ?,
-			operation = ?,
-			destination = ?`,
-		env.MessageID,
-		env.CausationID,
-		env.CorrelationID,
-		marshaling.MarshalTime(env.CreatedAt),
-		marshaling.MarshalTime(env.SendAt),
-		ct,
-		body,
-		env.Operation,
-		env.DestinationEndpoint,
-	)
-
-	return err
+	return envelopestore.Delete(ctx, tx, messageTable, env)
 }
