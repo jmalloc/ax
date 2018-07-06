@@ -20,10 +20,10 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // StartTransfer is a command that starts a new funds transfer.
 type StartTransfer struct {
-	TransferId           string   `protobuf:"bytes,1,opt,name=transfer_id,json=transferId" json:"transfer_id,omitempty"`
-	FromAccountId        string   `protobuf:"bytes,2,opt,name=from_account_id,json=fromAccountId" json:"from_account_id,omitempty"`
-	ToAccountId          string   `protobuf:"bytes,3,opt,name=to_account_id,json=toAccountId" json:"to_account_id,omitempty"`
-	AmountInCents        int32    `protobuf:"varint,4,opt,name=amount_in_cents,json=amountInCents" json:"amount_in_cents,omitempty"`
+	TransferId           string   `protobuf:"bytes,1,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
+	FromAccountId        string   `protobuf:"bytes,2,opt,name=from_account_id,json=fromAccountId,proto3" json:"from_account_id,omitempty"`
+	ToAccountId          string   `protobuf:"bytes,3,opt,name=to_account_id,json=toAccountId,proto3" json:"to_account_id,omitempty"`
+	AmountInCents        int32    `protobuf:"varint,4,opt,name=amount_in_cents,json=amountInCents,proto3" json:"amount_in_cents,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -83,10 +83,10 @@ func (m *StartTransfer) GetAmountInCents() int32 {
 
 // TransferStarted is an event that occurs when a funds transfer is started.
 type TransferStarted struct {
-	TransferId           string   `protobuf:"bytes,1,opt,name=transfer_id,json=transferId" json:"transfer_id,omitempty"`
-	FromAccountId        string   `protobuf:"bytes,2,opt,name=from_account_id,json=fromAccountId" json:"from_account_id,omitempty"`
-	ToAccountId          string   `protobuf:"bytes,3,opt,name=to_account_id,json=toAccountId" json:"to_account_id,omitempty"`
-	AmountInCents        int32    `protobuf:"varint,4,opt,name=amount_in_cents,json=amountInCents" json:"amount_in_cents,omitempty"`
+	TransferId           string   `protobuf:"bytes,1,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
+	FromAccountId        string   `protobuf:"bytes,2,opt,name=from_account_id,json=fromAccountId,proto3" json:"from_account_id,omitempty"`
+	ToAccountId          string   `protobuf:"bytes,3,opt,name=to_account_id,json=toAccountId,proto3" json:"to_account_id,omitempty"`
+	AmountInCents        int32    `protobuf:"varint,4,opt,name=amount_in_cents,json=amountInCents,proto3" json:"amount_in_cents,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -146,7 +146,7 @@ func (m *TransferStarted) GetAmountInCents() int32 {
 
 // MarkTransferApproved is a command that marks a transfer as approved.
 type MarkTransferApproved struct {
-	TransferId           string   `protobuf:"bytes,1,opt,name=transfer_id,json=transferId" json:"transfer_id,omitempty"`
+	TransferId           string   `protobuf:"bytes,1,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -185,7 +185,7 @@ func (m *MarkTransferApproved) GetTransferId() string {
 
 // TransferApproved is an event that occurs when a funds transfer is completed.
 type TransferApproved struct {
-	TransferId           string   `protobuf:"bytes,1,opt,name=transfer_id,json=transferId" json:"transfer_id,omitempty"`
+	TransferId           string   `protobuf:"bytes,1,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
