@@ -20,10 +20,10 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Account contains data for the account aggregate.
 type Account struct {
-	AccountId            string   `protobuf:"bytes,1,opt,name=account_id,json=accountId" json:"account_id,omitempty"`
-	IsOpen               bool     `protobuf:"varint,2,opt,name=is_open,json=isOpen" json:"is_open,omitempty"`
-	Name                 string   `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
-	BalanceInCents       int32    `protobuf:"varint,4,opt,name=balance_in_cents,json=balanceInCents" json:"balance_in_cents,omitempty"`
+	AccountId            string   `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	IsOpen               bool     `protobuf:"varint,2,opt,name=is_open,json=isOpen,proto3" json:"is_open,omitempty"`
+	Name                 string   `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	BalanceInCents       int32    `protobuf:"varint,4,opt,name=balance_in_cents,json=balanceInCents,proto3" json:"balance_in_cents,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -83,11 +83,11 @@ func (m *Account) GetBalanceInCents() int32 {
 
 // Transfer contains data for the transfer aggregate.
 type Transfer struct {
-	TransferId           string   `protobuf:"bytes,1,opt,name=transfer_id,json=transferId" json:"transfer_id,omitempty"`
-	FromAccountId        string   `protobuf:"bytes,2,opt,name=from_account_id,json=fromAccountId" json:"from_account_id,omitempty"`
-	ToAccountId          string   `protobuf:"bytes,3,opt,name=to_account_id,json=toAccountId" json:"to_account_id,omitempty"`
-	AmountInCents        int32    `protobuf:"varint,4,opt,name=amount_in_cents,json=amountInCents" json:"amount_in_cents,omitempty"`
-	IsApproved           bool     `protobuf:"varint,5,opt,name=is_approved,json=isApproved" json:"is_approved,omitempty"`
+	TransferId           string   `protobuf:"bytes,1,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
+	FromAccountId        string   `protobuf:"bytes,2,opt,name=from_account_id,json=fromAccountId,proto3" json:"from_account_id,omitempty"`
+	ToAccountId          string   `protobuf:"bytes,3,opt,name=to_account_id,json=toAccountId,proto3" json:"to_account_id,omitempty"`
+	AmountInCents        int32    `protobuf:"varint,4,opt,name=amount_in_cents,json=amountInCents,proto3" json:"amount_in_cents,omitempty"`
+	IsApproved           bool     `protobuf:"varint,5,opt,name=is_approved,json=isApproved,proto3" json:"is_approved,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`

@@ -19,11 +19,11 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 type Transfer struct {
-	TransferId           string   `protobuf:"bytes,1,opt,name=transfer_id,json=transferId" json:"transfer_id,omitempty"`
-	FromAccountId        string   `protobuf:"bytes,2,opt,name=from_account_id,json=fromAccountId" json:"from_account_id,omitempty"`
-	ToAccountId          string   `protobuf:"bytes,3,opt,name=to_account_id,json=toAccountId" json:"to_account_id,omitempty"`
-	AmountInCents        int32    `protobuf:"varint,4,opt,name=amount_in_cents,json=amountInCents" json:"amount_in_cents,omitempty"`
-	IsApproved           bool     `protobuf:"varint,5,opt,name=is_approved,json=isApproved" json:"is_approved,omitempty"`
+	TransferId           string   `protobuf:"bytes,1,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
+	FromAccountId        string   `protobuf:"bytes,2,opt,name=from_account_id,json=fromAccountId,proto3" json:"from_account_id,omitempty"`
+	ToAccountId          string   `protobuf:"bytes,3,opt,name=to_account_id,json=toAccountId,proto3" json:"to_account_id,omitempty"`
+	AmountInCents        int32    `protobuf:"varint,4,opt,name=amount_in_cents,json=amountInCents,proto3" json:"amount_in_cents,omitempty"`
+	IsApproved           bool     `protobuf:"varint,5,opt,name=is_approved,json=isApproved,proto3" json:"is_approved,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`

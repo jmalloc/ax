@@ -34,7 +34,11 @@ func ConsistsOfMessages(a []proto.Message, b ...proto.Message) bool {
 
 // EnvelopesEqual returns true if a and b are equivalent.
 func EnvelopesEqual(a, b ax.Envelope) bool {
-	if !a.Time.Equal(b.Time) {
+	if !a.CreatedAt.Equal(b.CreatedAt) {
+		return false
+	}
+
+	if !a.SendAt.Equal(b.SendAt) {
 		return false
 	}
 
@@ -44,7 +48,8 @@ func EnvelopesEqual(a, b ax.Envelope) bool {
 
 	// ensure the "difficult to compare" values are equal so the remainder of
 	// the struct can be compared using the equality operator.
-	a.Time = b.Time
+	a.CreatedAt = b.CreatedAt
+	a.SendAt = b.SendAt
 	a.Message = b.Message
 
 	return a == b

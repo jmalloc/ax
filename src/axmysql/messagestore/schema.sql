@@ -38,7 +38,8 @@ CREATE TABLE IF NOT EXISTS ax_messagestore_message (
     message_id     VARBINARY(255) NOT NULL,
     causation_id   VARBINARY(255) NOT NULL,
     correlation_id VARBINARY(255) NOT NULL,
-    time           VARBINARY(255) NOT NULL,
+    created_at     VARBINARY(255) NOT NULL,
+    send_at        VARBINARY(255) NOT NULL,
     content_type   VARBINARY(255) NOT NULL,
     data           BLOB NOT NULL,
 

@@ -1,4 +1,4 @@
-package outboxtests
+package delayedmessagetests
 
 import (
 	"context"
@@ -8,23 +8,24 @@ import (
 	"github.com/jmalloc/ax/src/axtest/testmessages"
 
 	"github.com/jmalloc/ax/src/ax"
+	"github.com/jmalloc/ax/src/ax/delayedmessage"
 	"github.com/jmalloc/ax/src/ax/endpoint"
-	"github.com/jmalloc/ax/src/ax/outbox"
 	"github.com/jmalloc/ax/src/ax/persistence"
 	g "github.com/onsi/ginkgo"
 	m "github.com/onsi/gomega"
 )
 
-// RepositorySuite returns a test suite for implementations of outbox.Repository.
+// RepositorySuite returns a test suite for implementations of
+// delayedmessage.Repository.
 func RepositorySuite(
 	getStore func() persistence.DataStore,
-	getRepo func() outbox.Repository,
+	getRepo func() delayedmessage.Repository,
 ) func() {
 	return func() {
 		var (
 			causationID, correlationID ax.MessageID
 			store                      persistence.DataStore
-			repo                       outbox.Repository
+			repo                       delayedmessage.Repository
 			ctx                        context.Context
 			cancel                     func()
 		)
@@ -45,16 +46,15 @@ func RepositorySuite(
 			cancel()
 		})
 
-		g.Describe("LoadOutbox", func() {
-			g.Context("when the outbox exists", func() {
+		g.Describe("LoadNextMessage", func() {
+			g.Context("when there are messages stored", func() {
 				var m1, m2 endpoint.OutboundEnvelope
-				var t1, t2, t3, t4 time.Time
+				var t1, t2, t3 time.Time
 
 				g.BeforeEach(func() {
 					t1 = time.Now()
-					t2 = time.Now()
-					t3 = time.Now()
-					t4 = time.Now()
+					t2 = t1.Add(1 * time.Second)
+					t3 = t2.Add(1 * time.Second)
 
 					m1 = endpoint.OutboundEnvelope{
 						Envelope: ax.Envelope{
@@ -76,8 +76,8 @@ func RepositorySuite(
 							MessageID:     ax.GenerateMessageID(),
 							CausationID:   causationID,
 							CorrelationID: correlationID,
-							CreatedAt:     t3,
-							SendAt:        t4,
+							CreatedAt:     t1,
+							SendAt:        t3,
 							Message: &testmessages.Event{
 								Value: "<bar>",
 							},
@@ -91,12 +91,12 @@ func RepositorySuite(
 					}
 					defer com.Rollback()
 
-					err = repo.SaveOutbox(
-						ctx,
-						tx,
-						causationID,
-						[]endpoint.OutboundEnvelope{m1, m2},
-					)
+					err = repo.SaveMessage(ctx, tx, m1)
+					if err != nil {
+						panic(err)
+					}
+
+					err = repo.SaveMessage(ctx, tx, m2)
 					if err != nil {
 						panic(err)
 					}
@@ -108,16 +108,16 @@ func RepositorySuite(
 				})
 
 				g.It("returns true", func() {
-					_, ok, err := repo.LoadOutbox(ctx, store, causationID)
+					_, ok, err := repo.LoadNextMessage(ctx, store)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					m.Expect(ok).To(m.BeTrue())
 				})
 
-				g.It("returns the messages in the outbox", func() {
-					envs, _, err := repo.LoadOutbox(ctx, store, causationID)
+				g.It("returns the next message", func() {
+					env, _, err := repo.LoadNextMessage(ctx, store)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					m.Expect(
-						axtest.ConsistsOfOutboundEnvelopes(envs, m1, m2),
+						axtest.OutboundEnvelopesEqual(env, m1),
 					).To(m.BeTrue())
 				})
 
@@ -126,99 +126,34 @@ func RepositorySuite(
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					defer com.Rollback()
 
-					err = repo.MarkAsSent(
-						ctx,
-						tx,
-						m1,
-					)
+					err = repo.MarkAsSent(ctx, tx, m1)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 
 					err = com.Commit()
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 
-					envs, _, err := repo.LoadOutbox(ctx, store, causationID)
+					env, _, err := repo.LoadNextMessage(ctx, store)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					m.Expect(
-						axtest.ConsistsOfOutboundEnvelopes(envs, m2),
+						axtest.OutboundEnvelopesEqual(env, m2),
 					).To(m.BeTrue())
 				})
 			})
 
-			g.Context("when the outbox exists but contains no messages", func() {
-				g.BeforeEach(func() {
-					tx, com, err := store.BeginTx(ctx)
-					if err != nil {
-						panic(err)
-					}
-					defer com.Rollback()
-
-					err = repo.SaveOutbox(
-						ctx,
-						tx,
-						causationID,
-						nil,
-					)
-					if err != nil {
-						panic(err)
-					}
-
-					err = com.Commit()
-					if err != nil {
-						panic(err)
-					}
-				})
-
-				g.It("returns true", func() {
-					_, ok, err := repo.LoadOutbox(ctx, store, causationID)
-					m.Expect(err).ShouldNot(m.HaveOccurred())
-					m.Expect(ok).To(m.BeTrue())
-				})
-			})
-
-			g.Context("when the outbox does not exist", func() {
+			g.Context("when there are no messages", func() {
 				g.It("returns false", func() {
-					_, ok, err := repo.LoadOutbox(ctx, store, causationID)
+					_, ok, err := repo.LoadNextMessage(ctx, store)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					m.Expect(ok).To(m.BeFalse())
 				})
 			})
 		})
 
-		g.Describe("SaveOutbox", func() {
-			g.It("returns an error if the outbox already exists", func() {
+		g.Describe("SaveMessage", func() {
+			g.It("does not return an error if the message already exists", func() {
 				tx, com, err := store.BeginTx(ctx)
 				m.Expect(err).ShouldNot(m.HaveOccurred())
 				defer com.Rollback()
-
-				err = repo.SaveOutbox(
-					ctx,
-					tx,
-					causationID,
-					nil,
-				)
-				m.Expect(err).ShouldNot(m.HaveOccurred())
-
-				err = repo.SaveOutbox(
-					ctx,
-					tx,
-					causationID,
-					nil,
-				)
-				m.Expect(err).Should(m.HaveOccurred())
-			})
-
-			g.It("does not add new messages to an existing outbox", func() {
-				tx, com, err := store.BeginTx(ctx)
-				m.Expect(err).ShouldNot(m.HaveOccurred())
-				defer com.Rollback()
-
-				err = repo.SaveOutbox(
-					ctx,
-					tx,
-					causationID,
-					nil,
-				)
-				m.Expect(err).ShouldNot(m.HaveOccurred())
 
 				env := endpoint.OutboundEnvelope{
 					Envelope: ax.Envelope{
@@ -233,21 +168,11 @@ func RepositorySuite(
 					DestinationEndpoint: "<dest>",
 				}
 
-				err = repo.SaveOutbox(
-					ctx,
-					tx,
-					causationID,
-					[]endpoint.OutboundEnvelope{env},
-				)
-				m.Expect(err).Should(m.HaveOccurred())
-
-				err = com.Commit()
+				err = repo.SaveMessage(ctx, tx, env)
 				m.Expect(err).ShouldNot(m.HaveOccurred())
 
-				envs, ok, err := repo.LoadOutbox(ctx, store, causationID)
+				err = repo.SaveMessage(ctx, tx, env)
 				m.Expect(err).ShouldNot(m.HaveOccurred())
-				m.Expect(envs).To(m.BeEmpty())
-				m.Expect(ok).To(m.BeTrue())
 			})
 		})
 
@@ -270,12 +195,7 @@ func RepositorySuite(
 					DestinationEndpoint: "<dest>",
 				}
 
-				err = repo.SaveOutbox(
-					ctx,
-					tx,
-					causationID,
-					[]endpoint.OutboundEnvelope{env},
-				)
+				err = repo.SaveMessage(ctx, tx, env)
 				m.Expect(err).ShouldNot(m.HaveOccurred())
 
 				err = com.Commit()

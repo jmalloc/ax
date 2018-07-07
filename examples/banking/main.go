@@ -14,6 +14,7 @@ import (
 	"github.com/jmalloc/ax/examples/banking/projections"
 	"github.com/jmalloc/ax/examples/banking/workflows"
 	"github.com/jmalloc/ax/src/ax"
+	"github.com/jmalloc/ax/src/ax/delayedmessage"
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/observability"
 	"github.com/jmalloc/ax/src/ax/outbox"
@@ -90,6 +91,22 @@ func main() {
 
 	ds := axmysql.NewDataStore(db)
 
+	// the router is the point within the outbound pipeline that is shared between
+	// the delayed message sender and the endpoint itself.
+	router := &routing.Router{
+		Routes: etable,
+		Next:   &endpoint.TransportStage{},
+	}
+
+	dms := &delayedmessage.Sender{
+		DataStore:  ds,
+		Repository: axmysql.DelayedMessageRepository,
+		Out: &observability.OutboundHook{
+			Observers: observers,
+			Next:      router,
+		},
+	}
+
 	ep := &endpoint.Endpoint{
 		Name: "ax.examples.banking",
 		Transport: &axrmq.Transport{
@@ -109,9 +126,9 @@ func main() {
 		},
 		Out: &observability.OutboundHook{
 			Observers: observers,
-			Next: &routing.Router{
-				Routes: etable,
-				Next:   &endpoint.TransportStage{},
+			Next: &delayedmessage.Interceptor{
+				Repository: axmysql.DelayedMessageRepository,
+				Next:       router,
 			},
 		},
 	}
@@ -160,6 +177,10 @@ func main() {
 
 			g.Go(func() error {
 				return ep.StartReceiving(ctx)
+			})
+
+			g.Go(func() error {
+				return dms.Run(ctx)
 			})
 
 			g.Go(func() error {

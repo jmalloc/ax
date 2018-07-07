@@ -3,9 +3,9 @@ package messagestore
 import (
 	"context"
 	"database/sql"
-	"time"
 
 	"github.com/jmalloc/ax/src/ax"
+	"github.com/jmalloc/ax/src/ax/marshaling"
 	"github.com/jmalloc/ax/src/axmysql/internal/sqlutil"
 )
 
@@ -156,7 +156,8 @@ func insertMessage(
 			message_id = ?,
 			causation_id = ?,
 			correlation_id = ?,
-			time = ?,
+			created_at = ?,
+			send_at = ?,
 			content_type = ?,
 			data = ?`,
 		g,
@@ -166,7 +167,8 @@ func insertMessage(
 		env.MessageID,
 		env.CausationID,
 		env.CorrelationID,
-		env.Time.Format(time.RFC3339Nano),
+		marshaling.MarshalTime(env.CreatedAt),
+		marshaling.MarshalTime(env.SendAt),
 		contentType,
 		data,
 	)

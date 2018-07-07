@@ -20,8 +20,8 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // OpenAccount is a command that opens a new bank account.
 type OpenAccount struct {
-	AccountId            string   `protobuf:"bytes,1,opt,name=account_id,json=accountId" json:"account_id,omitempty"`
-	Name                 string   `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	AccountId            string   `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	Name                 string   `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -67,8 +67,8 @@ func (m *OpenAccount) GetName() string {
 
 // AccountOpened is an event that occurs when a new account is opened.
 type AccountOpened struct {
-	AccountId            string   `protobuf:"bytes,1,opt,name=account_id,json=accountId" json:"account_id,omitempty"`
-	Name                 string   `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	AccountId            string   `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	Name                 string   `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -114,9 +114,9 @@ func (m *AccountOpened) GetName() string {
 
 // CreditAccount is a command that credits funds to an account.
 type CreditAccount struct {
-	AccountId            string   `protobuf:"bytes,1,opt,name=account_id,json=accountId" json:"account_id,omitempty"`
-	AmountInCents        int32    `protobuf:"varint,2,opt,name=amount_in_cents,json=amountInCents" json:"amount_in_cents,omitempty"`
-	TransferId           string   `protobuf:"bytes,3,opt,name=transfer_id,json=transferId" json:"transfer_id,omitempty"`
+	AccountId            string   `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	AmountInCents        int32    `protobuf:"varint,2,opt,name=amount_in_cents,json=amountInCents,proto3" json:"amount_in_cents,omitempty"`
+	TransferId           string   `protobuf:"bytes,3,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -170,9 +170,9 @@ func (m *CreditAccount) GetTransferId() string {
 // AccountCredited is an event that occurs when funds are credited to an
 // account.
 type AccountCredited struct {
-	AccountId            string   `protobuf:"bytes,1,opt,name=account_id,json=accountId" json:"account_id,omitempty"`
-	AmountInCents        int32    `protobuf:"varint,2,opt,name=amount_in_cents,json=amountInCents" json:"amount_in_cents,omitempty"`
-	TransferId           string   `protobuf:"bytes,3,opt,name=transfer_id,json=transferId" json:"transfer_id,omitempty"`
+	AccountId            string   `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	AmountInCents        int32    `protobuf:"varint,2,opt,name=amount_in_cents,json=amountInCents,proto3" json:"amount_in_cents,omitempty"`
+	TransferId           string   `protobuf:"bytes,3,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -225,9 +225,9 @@ func (m *AccountCredited) GetTransferId() string {
 
 // DebitAccount is a command that debits funds from an account.
 type DebitAccount struct {
-	AccountId            string   `protobuf:"bytes,1,opt,name=account_id,json=accountId" json:"account_id,omitempty"`
-	AmountInCents        int32    `protobuf:"varint,2,opt,name=amount_in_cents,json=amountInCents" json:"amount_in_cents,omitempty"`
-	TransferId           string   `protobuf:"bytes,3,opt,name=transfer_id,json=transferId" json:"transfer_id,omitempty"`
+	AccountId            string   `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	AmountInCents        int32    `protobuf:"varint,2,opt,name=amount_in_cents,json=amountInCents,proto3" json:"amount_in_cents,omitempty"`
+	TransferId           string   `protobuf:"bytes,3,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -281,9 +281,9 @@ func (m *DebitAccount) GetTransferId() string {
 // AccountDebited is an event that occurs when funds are debited from an
 // account.
 type AccountDebited struct {
-	AccountId            string   `protobuf:"bytes,1,opt,name=account_id,json=accountId" json:"account_id,omitempty"`
-	AmountInCents        int32    `protobuf:"varint,2,opt,name=amount_in_cents,json=amountInCents" json:"amount_in_cents,omitempty"`
-	TransferId           string   `protobuf:"bytes,3,opt,name=transfer_id,json=transferId" json:"transfer_id,omitempty"`
+	AccountId            string   `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	AmountInCents        int32    `protobuf:"varint,2,opt,name=amount_in_cents,json=amountInCents,proto3" json:"amount_in_cents,omitempty"`
+	TransferId           string   `protobuf:"bytes,3,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
