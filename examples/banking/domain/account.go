@@ -5,12 +5,12 @@ import (
 
 	"github.com/jmalloc/ax/examples/banking/format"
 	"github.com/jmalloc/ax/examples/banking/messages"
-	"github.com/jmalloc/ax/src/ax/aggregate"
+	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/ident"
 )
 
 // OpenAccount opens a new account.
-func (a *Account) OpenAccount(m *messages.OpenAccount, rec aggregate.Recorder) {
+func (a *Account) OpenAccount(m *messages.OpenAccount, rec ax.EventRecorder) {
 	if !a.IsOpen {
 		rec(&messages.AccountOpened{
 			AccountId: m.AccountId,
@@ -20,7 +20,7 @@ func (a *Account) OpenAccount(m *messages.OpenAccount, rec aggregate.Recorder) {
 }
 
 // CreditAccount credits funds to the account.
-func (a *Account) CreditAccount(m *messages.CreditAccount, rec aggregate.Recorder) {
+func (a *Account) CreditAccount(m *messages.CreditAccount, rec ax.EventRecorder) {
 	rec(&messages.AccountCredited{
 		AccountId:     m.AccountId,
 		AmountInCents: m.AmountInCents,
@@ -29,7 +29,7 @@ func (a *Account) CreditAccount(m *messages.CreditAccount, rec aggregate.Recorde
 }
 
 // DebitAccount debits funds from the account.
-func (a *Account) DebitAccount(m *messages.DebitAccount, rec aggregate.Recorder) {
+func (a *Account) DebitAccount(m *messages.DebitAccount, rec ax.EventRecorder) {
 	rec(&messages.AccountDebited{
 		AccountId:     m.AccountId,
 		AmountInCents: m.AmountInCents,
@@ -64,9 +64,3 @@ func (a *Account) InstanceDescription() string {
 		format.Amount(a.BalanceInCents),
 	)
 }
-
-// AccountAggregate is a saga that implements the Account aggregate.
-var AccountAggregate = aggregate.New(
-	&Account{},
-	aggregate.IdentifyByField("AccountId"),
-)

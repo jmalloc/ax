@@ -13,6 +13,29 @@ type MessageID struct {
 	ident.ID
 }
 
+// GenerateMessageID generates a new unique identifier for a message.
+func GenerateMessageID() MessageID {
+	var id MessageID
+	id.GenerateUUID()
+	return id
+}
+
+// ParseMessageID parses s into a message ID and returns it. It returns an error
+// if s is empty.
+func ParseMessageID(s string) (MessageID, error) {
+	var id MessageID
+	err := id.Parse(s)
+	return id, err
+}
+
+// MustParseMessageID parses s into a message ID and returns it. It panics if s
+// is empty.
+func MustParseMessageID(s string) MessageID {
+	var id MessageID
+	id.MustParse(s)
+	return id
+}
+
 // Message is a unit of communication.
 type Message interface {
 	proto.Message

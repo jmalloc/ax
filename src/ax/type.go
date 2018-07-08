@@ -52,6 +52,20 @@ func TypeByName(n string) (mt MessageType, ok bool) {
 	}, true
 }
 
+// TypeByGoType returns the message type for the given Go type.
+//
+// It panics if t does not implement Message.
+//
+// Note that messages are only added to the registry when their respective Go
+// package is imported.
+func TypeByGoType(t reflect.Type) (mt MessageType) {
+	v := reflect.Zero(t).Interface()
+
+	return TypeOf(
+		v.(Message),
+	)
+}
+
 // ToSet returns a MessageTypeSet containing mt as its only member.
 func (mt MessageType) ToSet() MessageTypeSet {
 	return MessageTypeSet{
@@ -131,6 +145,20 @@ func TypesOf(m ...Message) MessageTypeSet {
 	return MessageTypeSet{members}
 }
 
+// TypesByGoType returns a set containing the message types of the Go types in
+// t.
+//
+// It panics if any of the types do not implement Message.
+func TypesByGoType(t ...reflect.Type) MessageTypeSet {
+	members := make(map[MessageType]struct{}, len(t))
+
+	for _, v := range t {
+		members[TypeByGoType(v)] = struct{}{}
+	}
+
+	return MessageTypeSet{members}
+}
+
 // Members returns the message types in the set.
 func (s MessageTypeSet) Members() []MessageType {
 	types := make([]MessageType, 0, len(s.members))
@@ -172,13 +200,16 @@ func (s MessageTypeSet) Add(mt MessageType) MessageTypeSet {
 
 // Union returns the set union of s and o.
 func (s MessageTypeSet) Union(o MessageTypeSet) MessageTypeSet {
-	if o.Len() == 0 {
+	ol := o.Len()
+	sl := s.Len()
+
+	if ol == 0 {
 		return s
-	} else if s.Len() == 0 {
+	} else if sl == 0 {
 		return o
 	}
 
-	members := make(map[MessageType]struct{}, len(s.members)+len(o.members))
+	members := make(map[MessageType]struct{}, ol+sl)
 
 	for mt := range s.members {
 		members[mt] = struct{}{}
@@ -186,6 +217,37 @@ func (s MessageTypeSet) Union(o MessageTypeSet) MessageTypeSet {
 
 	for mt := range o.members {
 		members[mt] = struct{}{}
+	}
+
+	return MessageTypeSet{members}
+}
+
+// Intersection returns the set intersection of s and o.
+func (s MessageTypeSet) Intersection(o MessageTypeSet) MessageTypeSet {
+	ol := o.Len()
+	sl := s.Len()
+
+	if ol == 0 {
+		return o
+	} else if sl == 0 {
+		return s
+	}
+
+	// always iterate over the smaller of the two maps
+	if ol < sl {
+		return intersection(o, s)
+	}
+
+	return intersection(s, o)
+}
+
+func intersection(a, b MessageTypeSet) MessageTypeSet {
+	members := make(map[MessageType]struct{}, len(a.members))
+
+	for mt := range a.members {
+		if _, ok := b.members[mt]; ok {
+			members[mt] = struct{}{}
+		}
 	}
 
 	return MessageTypeSet{members}

@@ -24,3 +24,27 @@ type ErrorIfNotFound struct{}
 func (ErrorIfNotFound) HandleNotFound(_ context.Context, _ ax.Sender, _ ax.Envelope) error {
 	return errors.New("could not find a saga instance to handle message")
 }
+
+// CompletableByData is an embeddable struct that implements a
+// Saga.IsInstanceComplete() method that forwards the completion check on to a
+// CompletableData value.
+type CompletableByData struct{}
+
+// IsInstanceComplete returns true if i.Data implements CompletableData and
+// i.Data.IsInstanceComplete() returns true.
+func (CompletableByData) IsInstanceComplete(_ context.Context, i Instance) (bool, error) {
+	if cd, ok := i.Data.(CompletableData); ok {
+		return cd.IsInstanceComplete(), nil
+	}
+
+	return false, nil
+}
+
+// InstancesNeverComplete is an embeddable struct that implements a
+// Saga.IsInstanceComplete() method that always returns false.
+type InstancesNeverComplete struct{}
+
+// IsInstanceComplete always returns false.
+func (InstancesNeverComplete) IsInstanceComplete(_ context.Context, i Instance) (bool, error) {
+	return false, nil
+}

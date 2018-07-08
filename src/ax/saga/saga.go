@@ -48,6 +48,9 @@ type Saga interface {
 	// HandleNotFound handles a message that is intended for a saga instance
 	// that could not be found.
 	HandleNotFound(context.Context, ax.Sender, ax.Envelope) error
+
+	// IsInstanceComplete returns true if the given instance is complete.
+	IsInstanceComplete(ctx context.Context, i Instance) (bool, error)
 }
 
 // EventedSaga is a saga that only mutates its data when an event occurs.

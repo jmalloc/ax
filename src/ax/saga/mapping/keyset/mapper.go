@@ -17,6 +17,7 @@ import (
 // The saga must implement the keyset.Saga interface to use key set mapping.
 type Mapper struct {
 	Repository Repository
+	Resolver   Resolver
 }
 
 // MapMessageToInstance returns the ID of the saga instance that is the target
@@ -29,9 +30,7 @@ func (m *Mapper) MapMessageToInstance(
 	tx persistence.Tx,
 	env ax.Envelope,
 ) (saga.InstanceID, bool, error) {
-	s := sg.(Saga)
-
-	k, ok, err := s.MappingKeyForMessage(ctx, env)
+	k, ok, err := m.Resolver.MappingKeyForMessage(ctx, env)
 	if !ok || err != nil {
 		return saga.InstanceID{}, false, err
 	}
@@ -41,20 +40,19 @@ func (m *Mapper) MapMessageToInstance(
 		return id, true, err
 	}
 
-	id, err = s.GenerateInstanceID(ctx, env)
+	id, err = m.Resolver.GenerateInstanceID(ctx, env)
 	return id, true, err
 }
 
-// UpdateMapping notifies the mapper that a message has been handled by
-// an instance. Giving it the opportunity to update mapping data to reflect
-// the changes, if necessary.
+// UpdateMapping notifies the mapper that an instance has been modified,
+// allowing it to update it's mapping information, if necessary.
 func (m *Mapper) UpdateMapping(
 	ctx context.Context,
 	sg saga.Saga,
 	tx persistence.Tx,
 	i saga.Instance,
 ) error {
-	ks, err := sg.(Saga).MappingKeysForInstance(ctx, i)
+	ks, err := m.Resolver.MappingKeysForInstance(ctx, i)
 	if err != nil {
 		return err
 	}
@@ -65,4 +63,15 @@ func (m *Mapper) UpdateMapping(
 	}
 
 	return m.Repository.SaveKeys(ctx, tx, sg.PersistenceKey(), ks, i.InstanceID)
+}
+
+// DeleteMapping notifies the mapper that an instance has been completed,
+// allowing it to remove it's mapping information, if necessary.
+func (m *Mapper) DeleteMapping(
+	ctx context.Context,
+	sg saga.Saga,
+	tx persistence.Tx,
+	i saga.Instance,
+) error {
+	return m.Repository.DeleteKeys(ctx, tx, sg.PersistenceKey(), i.InstanceID)
 }

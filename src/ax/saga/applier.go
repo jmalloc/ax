@@ -19,16 +19,24 @@ type Applier struct {
 //
 // If ctx contains a message envelope, m is sent as a child of the message in
 // that envelope.
-func (s *Applier) ExecuteCommand(ctx context.Context, m ax.Command) (ax.Envelope, error) {
-	return s.Next.ExecuteCommand(ctx, m)
+func (s *Applier) ExecuteCommand(
+	ctx context.Context,
+	m ax.Command,
+	opts ...ax.ExecuteOption,
+) (ax.Envelope, error) {
+	return s.Next.ExecuteCommand(ctx, m, opts...)
 }
 
 // PublishEvent sends an event message.
 //
 // If ctx contains a message envelope, m is sent as a child of the message in
 // that envelope.
-func (s *Applier) PublishEvent(ctx context.Context, m ax.Event) (ax.Envelope, error) {
-	env, err := s.Next.PublishEvent(ctx, m)
+func (s *Applier) PublishEvent(
+	ctx context.Context,
+	m ax.Event,
+	opts ...ax.PublishOption,
+) (ax.Envelope, error) {
+	env, err := s.Next.PublishEvent(ctx, m, opts...)
 	if err != nil {
 		return ax.Envelope{}, err
 	}

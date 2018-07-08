@@ -8,7 +8,7 @@ import (
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/persistence"
 	mysqlpersistence "github.com/jmalloc/ax/src/axmysql/persistence"
-	"github.com/jmalloc/ax/src/internal/visitor"
+	"github.com/jmalloc/ax/src/internal/typeswitch"
 )
 
 // ReadModel is an interface for application defined read-model projectors.
@@ -18,9 +18,10 @@ import (
 // read-model in a MySQL database.
 //
 // For each event type to be applied to the read-model, the projector must
-// implement an "apply" method that adheres to the following signature:
+// implement an "apply" method that adheres to one of the following signatures:
 //
 //     func (ctx context.Context, tx *sql.Tx, ev *<T>)
+//     func (ctx context.Context, tx *sql.Tx, ev *<T>, env ax.Envelope)
 //
 // Where T is a struct type that implements ax.Event.
 //
@@ -29,8 +30,9 @@ import (
 // messages in the stream that do not have an associated applier method are
 // ignored.
 //
-// The names of applier methods are not meaningful to the projection system. By
-// convention, event appliers are prefixed with the word "When", such as:
+// The names of handler methods are meaningful. Each handler method's name must
+// begin with "When". By convention these prefixes are followed by the message
+// name, such as:
 //
 //     func (*BankAccount) WhenAccountCredited(*messages.AccountCredited)
 type ReadModel interface {
@@ -46,7 +48,7 @@ type ReadModel interface {
 type ReadModelProjector struct {
 	ReadModel  ReadModel
 	EventTypes ax.MessageTypeSet
-	Apply      func(ReadModel, context.Context, *sql.Tx, ax.Event) error
+	Apply      typeswitch.Switch
 }
 
 // NewReadModelProjector returns a new projector that applies events to a
@@ -56,20 +58,26 @@ func NewReadModelProjector(rm ReadModel) *ReadModelProjector {
 		ReadModel: rm,
 	}
 
-	eventTypes := visitor.MakeAcceptor(
-		&p.Apply,
-		reflect.TypeOf((*ax.Event)(nil)).Elem(),
-		reflect.TypeOf(rm),
+	sw, _, err := typeswitch.New(
+		[]reflect.Type{
+			reflect.TypeOf(rm),
+			reflect.TypeOf((*ax.Event)(nil)).Elem(),
+			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
+			reflect.TypeOf((*context.Context)(nil)).Elem(),
+			reflect.TypeOf((*sql.Tx)(nil)),
+		},
+		[]reflect.Type{
+			reflect.TypeOf((*error)(nil)).Elem(),
+		},
+		readModelApplySignature,
+		readModelApplyWithEnvelopeSignature,
 	)
-
-	// TODO: make use of https://github.com/jmalloc/ax/issues/74
-	for _, t := range eventTypes {
-		p.EventTypes = p.EventTypes.Add(
-			ax.TypeOf(
-				reflect.Zero(t).Interface().(ax.Message),
-			),
-		)
+	if err != nil {
+		panic(err)
 	}
+
+	p.Apply = sw
+	p.EventTypes = ax.TypesByGoType(sw.Types()...)
 
 	return p
 }
@@ -100,10 +108,44 @@ func (p ReadModelProjector) ApplyMessage(ctx context.Context, env ax.Envelope) e
 	ptx, _ := persistence.GetTx(ctx)
 	tx := mysqlpersistence.ExtractTx(ptx)
 
-	return p.Apply(
+	out := p.Apply.Dispatch(
 		p.ReadModel,
+		env.Message.(ax.Event),
+		env,
 		ctx,
 		tx,
-		env.Message.(ax.Event),
 	)
+
+	if err := out[0]; err != nil {
+		return err.(error)
+	}
+
+	return nil
 }
+
+var (
+	readModelApplySignature = &typeswitch.Signature{
+		In: []reflect.Type{
+			reflect.TypeOf((*ReadModel)(nil)).Elem(),
+			reflect.TypeOf((*context.Context)(nil)).Elem(),
+			reflect.TypeOf((*sql.Tx)(nil)),
+			reflect.TypeOf((*ax.Event)(nil)).Elem(),
+		},
+		Out: []reflect.Type{
+			reflect.TypeOf((*error)(nil)).Elem(),
+		},
+	}
+
+	readModelApplyWithEnvelopeSignature = &typeswitch.Signature{
+		In: []reflect.Type{
+			reflect.TypeOf((*ReadModel)(nil)).Elem(),
+			reflect.TypeOf((*context.Context)(nil)).Elem(),
+			reflect.TypeOf((*sql.Tx)(nil)),
+			reflect.TypeOf((*ax.Event)(nil)).Elem(),
+			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
+		},
+		Out: []reflect.Type{
+			reflect.TypeOf((*error)(nil)).Elem(),
+		},
+	}
+)

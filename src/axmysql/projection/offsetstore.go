@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/jmalloc/ax/src/ax/persistence"
+	"github.com/jmalloc/ax/src/axmysql/internal/sqlutil"
 	mysqlpersistence "github.com/jmalloc/ax/src/axmysql/persistence"
 )
 
@@ -46,59 +47,103 @@ func (OffsetStore) LoadOffset(
 	return offset, nil
 }
 
-// SaveOffset stores the next offset at which a consumer should resume
-// reading from the stream.
+// IncrementOffset increments the offset at which a consumer should resume
+// reading from the stream by one.
 //
 // pk is the projector's persitence key. c is the offset that is currently
 // stored, as returned by LoadOffset(). If c is not the offset that is
-// currently stored, a non-nil error is returned. o is the new offset to store.
-func (OffsetStore) SaveOffset(
+// currently stored, the increment fails and a non-nil error is returned.
+func (s OffsetStore) IncrementOffset(
 	ctx context.Context,
 	ptx persistence.Tx,
 	pk string,
-	c, o uint64,
+	c uint64,
 ) error {
 	tx := mysqlpersistence.ExtractTx(ptx)
 
-	if c == 0 {
-		_, err := tx.ExecContext(
-			ctx,
-			`INSERT INTO ax_projection_offset SET
-				persistence_key = ?,
-				next_offset = ?`,
-			pk,
-			o,
-		)
+	var (
+		ok  bool
+		err error
+	)
 
+	if c == 0 {
+		ok, err = s.insertOffset(ctx, tx, pk)
+	} else {
+		ok, err = s.updateOffset(ctx, tx, pk, c)
+	}
+
+	if ok || err != nil {
 		return err
 	}
 
-	res, err := tx.ExecContext(
-		ctx,
-		`UPDATE ax_projection_offset SET
-			next_offset = ?
-		WHERE persistence_key = ?
-		AND next_offset = ?`,
-		o,
+	// TODO: use OCC error https://github.com/jmalloc/ax/issues/93
+	return fmt.Errorf(
+		"can not increment projection offset for persistence key %s, offset %d is not the current offset",
 		pk,
 		c,
 	)
-	if err != nil {
-		return err
+}
+
+// insertOffset inserts an entry for the saga pk with the offset set to 1.
+// It returns false if an entry already exists.
+func (OffsetStore) insertOffset(
+	ctx context.Context,
+	tx *sql.Tx,
+	pk string,
+) (bool, error) {
+	_, err := tx.ExecContext(
+		ctx,
+		`INSERT INTO ax_projection_offset SET
+			persistence_key = ?,
+			next_offset = 1`,
+		pk,
+	)
+
+	if sqlutil.IsDuplicateEntry(err) {
+		return false, nil
 	}
 
-	n, err := res.RowsAffected()
-	if err != nil {
-		return err
+	return true, err
+}
+
+// updateOffset increments the entry for the saga pk.
+// It returns false if c is not the currently stored offset.
+func (OffsetStore) updateOffset(
+	ctx context.Context,
+	tx *sql.Tx,
+	pk string,
+	c uint64,
+) (bool, error) {
+	var current uint64
+
+	err := tx.QueryRowContext(
+		ctx,
+		`SELECT
+			next_offset
+		FROM ax_projection_offset
+		WHERE persistence_key = ?
+		FOR UPDATE`,
+		pk,
+	).Scan(
+		&current,
+	)
+
+	if err == sql.ErrNoRows {
+		return false, nil
+	} else if err != nil {
+		return false, err
 	}
 
-	if n == 0 {
-		return fmt.Errorf(
-			"can not store offset for %s projection, offset %d is not the currently stored offset",
-			pk,
-			c,
-		)
+	if c != current {
+		return false, nil
 	}
 
-	return err
+	return true, sqlutil.ExecSingleRow(
+		ctx,
+		tx,
+		`UPDATE ax_projection_offset SET
+			next_offset = next_offset + 1
+		WHERE persistence_key = ?`,
+		pk,
+	)
 }

@@ -24,12 +24,24 @@ type SnapshotRepository interface {
 	// SaveSagaSnapshot saves a snapshot to the store.
 	//
 	// The implementation may return an error if a snapshot for this instance
-	// already exists, but belongs to a different saga, as identified by pk, the
-	// saga's persistence key.
+	// belongs to a different saga, as identified by pk, the saga's persistence
+	// key.
 	SaveSagaSnapshot(
 		ctx context.Context,
 		tx persistence.Tx,
 		pk string,
 		i saga.Instance,
+	) error
+
+	// DeleteSagaSnapshots deletes any snapshots associated with a saga instance.
+	//
+	// The implementation may return an error if snapshots for this instance
+	// belongs to a different saga, as identified by pk, the saga's persistence
+	// key.
+	DeleteSagaSnapshots(
+		ctx context.Context,
+		tx persistence.Tx,
+		pk string,
+		id saga.InstanceID,
 	) error
 }

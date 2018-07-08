@@ -40,13 +40,25 @@ type Envelope struct {
 	// that context.
 	CorrelationID MessageID
 
-	// Time is the time at which the message was created.
+	// CreatedAt is the time at which the message was created. This typically
+	// correlates to the time at which the message was passed to a Sender.
 	//
-	// Time is populated via the regular Go system clock, and as such there are
+	// It is populated via the regular Go system clock, and as such there are
 	// almost no guarantees about the accuracy of the time. It must not be
-	// assumed that messages will arrive or even be delivered in any
-	// chronological order.
-	Time time.Time
+	// assumed that messages will arrive in any chronological order.
+	//
+	// Depending on the application this field may not be appropriate for use as an
+	// "occurred" time. Care must be taken to choose appropriately between
+	// CreatedAt and SendAt for each use case.
+	CreatedAt time.Time
+
+	// SendAt is the time at which the message should be sent by the endpoint,
+	// which may be after the CreatedAt time.
+	//
+	// Depending on the application this field may not be appropriate for use as an
+	// "occurred" time. Care must be taken to choose appropriately between
+	// CreatedAt and SendAt for each use case.
+	SendAt time.Time
 
 	// Message is the application-defined message encapsulated by the envelope.
 	Message Message
@@ -57,14 +69,17 @@ type Envelope struct {
 // It generates a UUID-based message ID and configures the envelope such that m
 // is at the root of a new tree of messages.
 func NewEnvelope(m Message) Envelope {
-	env := Envelope{
-		Time:    time.Now(),
-		Message: m,
-	}
+	id := GenerateMessageID()
+	t := time.Now()
 
-	env.MessageID.GenerateUUID()
-	env.CausationID = env.MessageID
-	env.CorrelationID = env.MessageID
+	env := Envelope{
+		MessageID:     id,
+		CausationID:   id,
+		CorrelationID: id,
+		CreatedAt:     t,
+		SendAt:        t,
+		Message:       m,
+	}
 
 	return env
 }
@@ -74,14 +89,16 @@ func NewEnvelope(m Message) Envelope {
 // It generates a UUID-based message ID and configures the envelope such that
 // m is a child of e.Message within an existing tree of messages.
 func (e Envelope) NewChild(m Message) Envelope {
+	t := time.Now()
+
 	env := Envelope{
+		MessageID:     GenerateMessageID(),
 		CorrelationID: e.CorrelationID,
 		CausationID:   e.MessageID,
-		Time:          time.Now(),
+		CreatedAt:     t,
+		SendAt:        t,
 		Message:       m,
 	}
-
-	env.MessageID.GenerateUUID()
 
 	return env
 }

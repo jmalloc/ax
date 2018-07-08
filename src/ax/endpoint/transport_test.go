@@ -3,6 +3,8 @@ package endpoint_test
 import (
 	"context"
 
+	"github.com/jmalloc/ax/src/ax"
+
 	. "github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/axtest/mocks"
 	. "github.com/onsi/ginkgo"
@@ -23,8 +25,11 @@ var _ = Describe("TransportStage", func() {
 
 			stage.Initialize(ctx, &Endpoint{Transport: tr})
 
-			env := OutboundEnvelope{}
-			env.MessageID.GenerateUUID()
+			env := OutboundEnvelope{
+				Envelope: ax.Envelope{
+					MessageID: ax.GenerateMessageID(),
+				},
+			}
 			stage.Accept(ctx, env)
 
 			Expect(tr.SendCalls()).To(HaveLen(1))

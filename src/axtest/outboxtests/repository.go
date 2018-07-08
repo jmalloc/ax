@@ -37,11 +37,8 @@ func RepositorySuite(
 			ctx, fn = context.WithTimeout(context.Background(), 15*time.Second)
 			cancel = fn // defeat go vet warning about unused cancel func
 
-			causationID = ax.MessageID{}
-			causationID.GenerateUUID()
-
-			correlationID = ax.MessageID{}
-			correlationID.GenerateUUID()
+			causationID = ax.GenerateMessageID()
+			correlationID = ax.GenerateMessageID()
 		})
 
 		g.AfterEach(func() {
@@ -51,17 +48,21 @@ func RepositorySuite(
 		g.Describe("LoadOutbox", func() {
 			g.Context("when the outbox exists", func() {
 				var m1, m2 endpoint.OutboundEnvelope
-				var t1, t2 time.Time
+				var t1, t2, t3, t4 time.Time
 
 				g.BeforeEach(func() {
 					t1 = time.Now()
 					t2 = time.Now()
+					t3 = time.Now()
+					t4 = time.Now()
 
 					m1 = endpoint.OutboundEnvelope{
 						Envelope: ax.Envelope{
+							MessageID:     ax.GenerateMessageID(),
 							CausationID:   causationID,
 							CorrelationID: correlationID,
-							Time:          t1,
+							CreatedAt:     t1,
+							SendAt:        t2,
 							Message: &testmessages.Command{
 								Value: "<foo>",
 							},
@@ -69,20 +70,20 @@ func RepositorySuite(
 						Operation:           endpoint.OpSendUnicast,
 						DestinationEndpoint: "<dest>",
 					}
-					m1.MessageID.GenerateUUID()
 
 					m2 = endpoint.OutboundEnvelope{
 						Envelope: ax.Envelope{
+							MessageID:     ax.GenerateMessageID(),
 							CausationID:   causationID,
 							CorrelationID: correlationID,
-							Time:          t2,
+							CreatedAt:     t3,
+							SendAt:        t4,
 							Message: &testmessages.Event{
 								Value: "<bar>",
 							},
 						},
 						Operation: endpoint.OpSendMulticast,
 					}
-					m2.MessageID.GenerateUUID()
 
 					tx, com, err := store.BeginTx(ctx)
 					if err != nil {
@@ -221,15 +222,16 @@ func RepositorySuite(
 
 				env := endpoint.OutboundEnvelope{
 					Envelope: ax.Envelope{
+						MessageID:     ax.GenerateMessageID(),
 						CausationID:   causationID,
 						CorrelationID: correlationID,
-						Time:          time.Now(),
+						CreatedAt:     time.Now(),
+						SendAt:        time.Now(),
 						Message:       &testmessages.Message{},
 					},
 					Operation:           endpoint.OpSendUnicast,
 					DestinationEndpoint: "<dest>",
 				}
-				env.MessageID.GenerateUUID()
 
 				err = repo.SaveOutbox(
 					ctx,
@@ -257,15 +259,16 @@ func RepositorySuite(
 
 				env := endpoint.OutboundEnvelope{
 					Envelope: ax.Envelope{
+						MessageID:     ax.GenerateMessageID(),
 						CausationID:   causationID,
 						CorrelationID: correlationID,
-						Time:          time.Now(),
+						CreatedAt:     time.Now(),
+						SendAt:        time.Now(),
 						Message:       &testmessages.Message{},
 					},
 					Operation:           endpoint.OpSendUnicast,
 					DestinationEndpoint: "<dest>",
 				}
-				env.MessageID.GenerateUUID()
 
 				err = repo.SaveOutbox(
 					ctx,

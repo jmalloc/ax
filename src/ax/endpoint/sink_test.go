@@ -3,14 +3,19 @@ package endpoint_test
 import (
 	"context"
 
+	"github.com/jmalloc/ax/src/ax"
+
 	. "github.com/jmalloc/ax/src/ax/endpoint"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("BufferedSink", func() {
-	env := OutboundEnvelope{}
-	env.MessageID.GenerateUUID()
+	env := OutboundEnvelope{
+		Envelope: ax.Envelope{
+			MessageID: ax.GenerateMessageID(),
+		},
+	}
 
 	sink := &BufferedSink{}
 

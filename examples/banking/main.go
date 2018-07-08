@@ -12,7 +12,9 @@ import (
 	"github.com/jmalloc/ax/examples/banking/domain"
 	"github.com/jmalloc/ax/examples/banking/messages"
 	"github.com/jmalloc/ax/examples/banking/projections"
+	"github.com/jmalloc/ax/examples/banking/workflows"
 	"github.com/jmalloc/ax/src/ax"
+	"github.com/jmalloc/ax/src/ax/delayedmessage"
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/observability"
 	"github.com/jmalloc/ax/src/ax/outbox"
@@ -54,29 +56,23 @@ func main() {
 		SnapshotFrequency: 3,
 	}
 
-	directMapper := &direct.Mapper{}
-
-	ksMapper := &keyset.Mapper{
-		Repository: axmysql.SagaKeySetRepository,
-	}
-
 	htable, err := routing.NewHandlerTable(
-		// event sourced saga ...
+		// aggregates ...
 		&saga.MessageHandler{
-			Saga:      domain.AccountAggregate,
-			Mapper:    directMapper,
+			Saga:      saga.NewAggregate(&domain.Account{}),
+			Mapper:    direct.ByField("AccountId"),
 			Persister: esPersister,
 		},
 		&saga.MessageHandler{
-			Saga:      domain.TransferAggregate,
-			Mapper:    directMapper,
+			Saga:      saga.NewAggregate(&domain.Transfer{}),
+			Mapper:    direct.ByField("TransferId"),
 			Persister: esPersister,
 		},
 
-		// crud sagas ...
+		// workflows ...
 		&saga.MessageHandler{
-			Saga:      domain.TransferWorkflowSaga,
-			Mapper:    ksMapper,
+			Saga:      saga.NewWorkflow(&workflows.Transfer{}),
+			Mapper:    keyset.ByField(axmysql.SagaKeySetRepository, "TransferId"),
 			Persister: crudPersister,
 		},
 	)
@@ -94,6 +90,22 @@ func main() {
 	}
 
 	ds := axmysql.NewDataStore(db)
+
+	// the router is the point within the outbound pipeline that is shared between
+	// the delayed message sender and the endpoint itself.
+	router := &routing.Router{
+		Routes: etable,
+		Next:   &endpoint.TransportStage{},
+	}
+
+	dms := &delayedmessage.Sender{
+		DataStore:  ds,
+		Repository: axmysql.DelayedMessageRepository,
+		Out: &observability.OutboundHook{
+			Observers: observers,
+			Next:      router,
+		},
+	}
 
 	ep := &endpoint.Endpoint{
 		Name: "ax.examples.banking",
@@ -114,9 +126,9 @@ func main() {
 		},
 		Out: &observability.OutboundHook{
 			Observers: observers,
-			Next: &routing.Router{
-				Routes: etable,
-				Next:   &endpoint.TransportStage{},
+			Next: &delayedmessage.Interceptor{
+				Repository: axmysql.DelayedMessageRepository,
+				Next:       router,
 			},
 		},
 	}
@@ -165,6 +177,10 @@ func main() {
 
 			g.Go(func() error {
 				return ep.StartReceiving(ctx)
+			})
+
+			g.Go(func() error {
+				return dms.Run(ctx)
 			})
 
 			g.Go(func() error {

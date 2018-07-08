@@ -53,12 +53,25 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 	}
 
 	// otherwise, forward the message to the saga for handling.
-	if err := h.forward(ctx, w, env); err != nil {
+	err = h.forward(ctx, w, env)
+	if err != nil {
+		return err
+	}
+
+	// check if the instance is complete.
+	isComplete, err := h.Saga.IsInstanceComplete(ctx, w.Instance())
+	if err != nil {
 		return err
 	}
 
 	// then persist the changes.
-	if err := h.save(ctx, tx, w); err != nil {
+	if isComplete {
+		err = h.complete(ctx, tx, w)
+	} else {
+		err = h.save(ctx, tx, w)
+	}
+
+	if err != nil {
 		return err
 	}
 
@@ -104,6 +117,15 @@ func (h *MessageHandler) save(ctx context.Context, tx persistence.Tx, w UnitOfWo
 	}
 
 	return h.Mapper.UpdateMapping(ctx, h.Saga, tx, w.Instance())
+}
+
+// complete saves a completed saga instance.
+func (h *MessageHandler) complete(ctx context.Context, tx persistence.Tx, w UnitOfWork) error {
+	if err := w.SaveAndComplete(ctx); err != nil {
+		return err
+	}
+
+	return h.Mapper.DeleteMapping(ctx, h.Saga, tx, w.Instance())
 }
 
 // isTrigger returns true if env contains a message type that can trigger a new

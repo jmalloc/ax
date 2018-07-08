@@ -36,6 +36,13 @@ type UnitOfWork interface {
 	// It returns true if any changes have occurred.
 	Save(ctx context.Context) (bool, error)
 
+	// SaveAndComplete persists changes to a completed instance.
+	//
+	// The precise behavior is implementation defined. Typically meta-data about
+	// the instance is discarded. The implementation may completely remove any
+	// record of the instance.
+	SaveAndComplete(ctx context.Context) error
+
 	// Close is called when the unit-of-work has ended, regardless of whether
 	// Save() has been called.
 	Close()

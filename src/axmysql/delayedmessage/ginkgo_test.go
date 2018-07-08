@@ -1,4 +1,4 @@
-package aggregate_test
+package delayedmessage_test
 
 import (
 	"reflect"

@@ -5,12 +5,12 @@ import (
 
 	"github.com/jmalloc/ax/examples/banking/format"
 	"github.com/jmalloc/ax/examples/banking/messages"
-	"github.com/jmalloc/ax/src/ax/aggregate"
+	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/ident"
 )
 
 // Start begins a new funds transfer between two accounts.
-func (t *Transfer) Start(m *messages.StartTransfer, rec aggregate.Recorder) {
+func (t *Transfer) Start(m *messages.StartTransfer, rec ax.EventRecorder) {
 	if t.TransferId != "" {
 		return
 	}
@@ -24,8 +24,8 @@ func (t *Transfer) Start(m *messages.StartTransfer, rec aggregate.Recorder) {
 }
 
 // MarkApproved marks the transfer as approved.
-func (t *Transfer) MarkApproved(m *messages.MarkTransferApproved, rec aggregate.Recorder) {
-	if t.IsComplete {
+func (t *Transfer) MarkApproved(m *messages.MarkTransferApproved, rec ax.EventRecorder) {
+	if t.IsApproved {
 		return
 	}
 
@@ -44,7 +44,7 @@ func (t *Transfer) WhenStarted(m *messages.TransferStarted) {
 
 // WhenApproved updates the transfer to reflect the occurance of m.
 func (t *Transfer) WhenApproved(m *messages.TransferApproved) {
-	t.IsComplete = true
+	t.IsApproved = true
 }
 
 // InstanceDescription returns a human-readable description of the aggregate
@@ -58,9 +58,3 @@ func (t *Transfer) InstanceDescription() string {
 		ident.Format(t.ToAccountId),
 	)
 }
-
-// TransferAggregate is a saga that implements the Account aggregate.
-var TransferAggregate = aggregate.New(
-	&Transfer{},
-	aggregate.IdentifyByField("TransferId"),
-)

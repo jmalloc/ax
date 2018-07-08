@@ -23,7 +23,6 @@ var _ = Describe("MessageType", func() {
 	})
 
 	Describe("TypeByName", func() {
-
 		It("returns a message type with the correct name", func() {
 			mt, ok := TypeByName("axtest.testmessages.Message")
 			Expect(ok).To(BeTrue())
@@ -44,6 +43,19 @@ var _ = Describe("MessageType", func() {
 		It("returns false if the message name is registered, but the message type is not of ax.Message", func() {
 			_, ok := TypeByName("axtest.testmessages.NonAxMessage")
 			Expect(ok).To(BeFalse())
+		})
+	})
+
+	Describe("TypeByGoType", func() {
+		It("returns the correct message type", func() {
+			mt := TypeByGoType(reflect.TypeOf(&testmessages.Message{}))
+			Expect(mt).To(Equal(TypeOf(&testmessages.Message{})))
+		})
+
+		It("panics if the type is not a message", func() {
+			Expect(func() {
+				TypeByGoType(reflect.TypeOf(&testmessages.NonAxMessage{}))
+			}).To(Panic())
 		})
 	})
 
@@ -204,6 +216,42 @@ var _ = Describe("MessageTypeSet", func() {
 		})
 	})
 
+	Describe("TypesByGoType", func() {
+		It("returns a set containing the message types of the arguments", func() {
+			Expect(
+				TypesByGoType(
+					reflect.TypeOf(&testmessages.Message{}),
+					reflect.TypeOf(&testmessages.Command{}),
+				).Members(),
+			).To(ConsistOf(
+				message,
+				command,
+			))
+		})
+
+		It("deduplicates repeated types", func() {
+			Expect(
+				TypesByGoType(
+					reflect.TypeOf(&testmessages.Message{}),
+					reflect.TypeOf(&testmessages.Message{}),
+				).Len(),
+			).To(Equal(1))
+		})
+
+		It("returns an empty set when called with no arguments", func() {
+			Expect(TypesByGoType().Len()).To(Equal(0))
+		})
+
+		It("panics if any of the types if not a message", func() {
+			Expect(func() {
+				TypesByGoType(
+					reflect.TypeOf(&testmessages.Message{}),
+					reflect.TypeOf(&testmessages.NonAxMessage{}),
+				)
+			}).To(Panic())
+		})
+	})
+
 	Describe("Has", func() {
 		set := TypesOf(&testmessages.Message{})
 
@@ -239,7 +287,7 @@ var _ = Describe("MessageTypeSet", func() {
 		})
 	})
 
-	Describe("Add", func() {
+	Describe("Union", func() {
 		setA := TypesOf(
 			&testmessages.Message{},
 			&testmessages.Command{},
@@ -273,6 +321,43 @@ var _ = Describe("MessageTypeSet", func() {
 
 		It("returns the RHS if the LHS is empty", func() {
 			Expect(NewMessageTypeSet().Union(setA)).To(Equal(setA))
+		})
+	})
+
+	Describe("Intersection", func() {
+		setA := TypesOf(
+			&testmessages.Message{},
+			&testmessages.Command{},
+		)
+
+		setB := TypesOf(
+			&testmessages.Command{},
+			&testmessages.Event{},
+		)
+
+		It("returns the intersection of two sets", func() {
+			set := setA.Intersection(setB)
+
+			Expect(set.Members()).To(ConsistOf(
+				command,
+			))
+		})
+
+		It("does not modify the original sets", func() {
+			setA.Intersection(setB)
+
+			Expect(setA.Members()).To(ConsistOf(message, command))
+			Expect(setB.Members()).To(ConsistOf(command, event))
+		})
+
+		It("returns the LHS if it is empty", func() {
+			lhs := NewMessageTypeSet()
+			Expect(lhs.Intersection(setA)).To(Equal(lhs))
+		})
+
+		It("returns the RHS if it is empty", func() {
+			rhs := NewMessageTypeSet()
+			Expect(setA.Intersection(rhs)).To(Equal(rhs))
 		})
 	})
 })
