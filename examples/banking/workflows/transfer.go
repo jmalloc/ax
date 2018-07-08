@@ -9,13 +9,13 @@ import (
 )
 
 // StartWhenTransferStarted responds to m.
-func (w *Transfer) StartWhenTransferStarted(m *messages.TransferStarted, x ax.CommandExecutor) {
+func (w *Transfer) StartWhenTransferStarted(m *messages.TransferStarted, exec ax.CommandExecutor) {
 	w.TransferId = m.TransferId
 	w.FromAccountId = m.FromAccountId
 	w.ToAccountId = m.ToAccountId
 	w.AmountInCents = m.AmountInCents
 
-	x(&messages.DebitAccount{
+	exec(&messages.DebitAccount{
 		AccountId:     w.FromAccountId,
 		AmountInCents: w.AmountInCents,
 		TransferId:    w.TransferId,
@@ -23,8 +23,8 @@ func (w *Transfer) StartWhenTransferStarted(m *messages.TransferStarted, x ax.Co
 }
 
 // WhenAccountDebited responds to m.
-func (w *Transfer) WhenAccountDebited(m *messages.AccountDebited, x ax.CommandExecutor) {
-	x(&messages.CreditAccount{
+func (w *Transfer) WhenAccountDebited(m *messages.AccountDebited, exec ax.CommandExecutor) {
+	exec(&messages.CreditAccount{
 		AccountId:     w.ToAccountId,
 		AmountInCents: w.AmountInCents,
 		TransferId:    w.TransferId,
@@ -32,10 +32,10 @@ func (w *Transfer) WhenAccountDebited(m *messages.AccountDebited, x ax.CommandEx
 }
 
 // WhenAccountCredited responds to m.
-func (w *Transfer) WhenAccountCredited(m *messages.AccountCredited, x ax.CommandExecutor) {
+func (w *Transfer) WhenAccountCredited(m *messages.AccountCredited, exec ax.CommandExecutor) {
 	w.IsApproved = true
 
-	x(&messages.MarkTransferApproved{
+	exec(&messages.MarkTransferApproved{
 		TransferId: w.TransferId,
 	})
 }
