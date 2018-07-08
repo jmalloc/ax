@@ -35,3 +35,9 @@ type SendOption interface {
 	ExecuteOption
 	PublishOption
 }
+
+// EventRecorder is a function that records the occurrence of events.
+type EventRecorder func(Event)
+
+// CommandExecutor is a function that queues a command to be executed.
+type CommandExecutor func(Command, ...ExecuteOption)
