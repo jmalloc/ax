@@ -98,6 +98,8 @@ func declareFlagForField(fs *pflag.FlagSet, p interface{}, n, u string) bool {
 		fs.Float64Var(ptr, n, *ptr, u)
 	case *string:
 		fs.StringVar(ptr, n, *ptr, u)
+	case *[]byte:
+		fs.BytesHexVar(ptr, n, *ptr, u)
 	case *bool:
 		fs.BoolVar(ptr, n, *ptr, u)
 	case *time.Duration:
