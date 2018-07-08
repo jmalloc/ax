@@ -9,41 +9,35 @@ import (
 )
 
 // StartWhenTransferStarted responds to m.
-func (w *Transfer) StartWhenTransferStarted(m *messages.TransferStarted) []ax.Command {
+func (w *Transfer) StartWhenTransferStarted(m *messages.TransferStarted, exec ax.CommandExecutor) {
 	w.TransferId = m.TransferId
 	w.FromAccountId = m.FromAccountId
 	w.ToAccountId = m.ToAccountId
 	w.AmountInCents = m.AmountInCents
 
-	return []ax.Command{
-		&messages.DebitAccount{
-			AccountId:     w.FromAccountId,
-			AmountInCents: w.AmountInCents,
-			TransferId:    w.TransferId,
-		},
-	}
+	exec(&messages.DebitAccount{
+		AccountId:     w.FromAccountId,
+		AmountInCents: w.AmountInCents,
+		TransferId:    w.TransferId,
+	})
 }
 
 // WhenAccountDebited responds to m.
-func (w *Transfer) WhenAccountDebited(m *messages.AccountDebited) []ax.Command {
-	return []ax.Command{
-		&messages.CreditAccount{
-			AccountId:     w.ToAccountId,
-			AmountInCents: w.AmountInCents,
-			TransferId:    w.TransferId,
-		},
-	}
+func (w *Transfer) WhenAccountDebited(m *messages.AccountDebited, exec ax.CommandExecutor) {
+	exec(&messages.CreditAccount{
+		AccountId:     w.ToAccountId,
+		AmountInCents: w.AmountInCents,
+		TransferId:    w.TransferId,
+	})
 }
 
 // WhenAccountCredited responds to m.
-func (w *Transfer) WhenAccountCredited(m *messages.AccountCredited) []ax.Command {
+func (w *Transfer) WhenAccountCredited(m *messages.AccountCredited, exec ax.CommandExecutor) {
 	w.IsApproved = true
 
-	return []ax.Command{
-		&messages.MarkTransferApproved{
-			TransferId: w.TransferId,
-		},
-	}
+	exec(&messages.MarkTransferApproved{
+		TransferId: w.TransferId,
+	})
 }
 
 // IsInstanceComplete returns true if the transfer has completed processing.
