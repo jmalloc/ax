@@ -148,7 +148,12 @@ func parseOutboxMessage(
 	env.Operation = endpoint.Operation(outmsg.GetOperation())
 	env.DestinationEndpoint = outmsg.GetDestinationEndpoint()
 
-	env.Time, err = time.Parse(time.RFC3339Nano, outmsg.GetTime())
+	if env.CreatedAt, err = time.Parse(time.RFC3339Nano, outmsg.GetCreatedAt()); err != nil {
+		return env, err
+	}
+
+	env.SendAt, err = time.Parse(time.RFC3339Nano, outmsg.GetSendAt())
+
 	return env, err
 }
 
@@ -164,7 +169,8 @@ func insertOutboxMessage(
 		Id:                  env.MessageID.Get(),
 		CausationId:         env.CausationID.Get(),
 		CorrelationId:       env.CorrelationID.Get(),
-		Time:                env.Time.Format(time.RFC3339Nano),
+		CreatedAt:           env.CreatedAt.Format(time.RFC3339Nano),
+		SendAt:              env.SendAt.Format(time.RFC3339Nano),
 		Operation:           int32(env.Operation),
 		DestinationEndpoint: env.DestinationEndpoint,
 	}

@@ -11,8 +11,9 @@ message OutboxMessage{
     string id = 1;
     string causation_id = 2;
     string correlation_id = 3;
-    string time = 4;
-    google.protobuf.Any message = 5;
-    int32 operation = 6;
-    string destination_endpoint = 7;
+    string created_at = 4;
+    string send_at = 5;
+    google.protobuf.Any message = 6;
+    int32 operation = 7;
+    string destination_endpoint = 8;
 } 
