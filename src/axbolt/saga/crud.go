@@ -138,6 +138,56 @@ func (r CRUDRepository) SaveSagaInstance(
 	return r.updateInstance(bkt, sgi)
 }
 
+// DeleteSagaInstance deletes a saga instance.
+//
+// It returns an error if i.Revision is not the current revision of the
+// instance as it exists within the store, or a problem occurs with the
+// underlying data store.
+//
+// It returns an error if the instance belongs to a different saga, as
+// identified by pk, the saga's persistence key.
+//
+// It panics if the repository is not able to enlist in tx because it uses a
+// different underlying storage system.
+func (r CRUDRepository) DeleteSagaInstance(
+	ctx context.Context,
+	ptx persistence.Tx,
+	pk string,
+	i saga.Instance,
+) error {
+	tx := boltpersistence.ExtractTx(ptx)
+
+	bkt := tx.Bucket([]byte("ax_saga"))
+	if bkt == nil {
+		return nil
+	}
+
+	bkt = bkt.Bucket([]byte("ax_saga_instance"))
+	if bkt == nil {
+		return nil
+	}
+
+	pb := bkt.Get([]byte(i.InstanceID.Get()))
+	if pb != nil {
+		return nil
+	}
+
+	var s SagaInstance
+	if err := proto.Unmarshal(pb, &s); err != nil {
+		return err
+	}
+
+	if i.Revision != saga.Revision(s.GetRevision()) {
+		return fmt.Errorf(
+			"can not delete saga instance %s, revision %d is not the current revision",
+			i.InstanceID,
+			i.Revision,
+		)
+	}
+
+	return bkt.Delete([]byte(i.InstanceID.Get()))
+}
+
 // insertInstance inserts a new saga instance.
 func (CRUDRepository) insertInstance(
 	bkt *bolt.Bucket,
@@ -195,6 +245,7 @@ func (CRUDRepository) updateInstance(
 		)
 	}
 
+	new.Revision++
 	new.InsertTime = old.InsertTime
 	new.UpdateTime = time.Now().Format(time.RFC3339Nano)
 

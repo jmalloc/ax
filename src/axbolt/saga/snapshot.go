@@ -15,7 +15,7 @@ import (
 	boltpersistence "github.com/jmalloc/ax/src/axbolt/persistence"
 )
 
-// SnapshotRepository is a MySQL-backed implementation of Ax's
+// SnapshotRepository is a Bolt-backed implementation of Ax's
 // eventsourcing.SnapshotRepository interface.
 type SnapshotRepository struct{}
 
@@ -46,8 +46,6 @@ func (SnapshotRepository) LoadSagaSnapshot(
 		return saga.Instance{}, false, nil
 	}
 
-	// to-do: investigate if it's safe
-	// to rely on bolt item ordering
 	k, pb := bkt.Cursor().Last()
 	if k != nil && pb == nil {
 		return saga.Instance{}, false, nil
@@ -121,6 +119,11 @@ func (SnapshotRepository) SaveSagaSnapshot(
 		return err
 	}
 
+	bkt, err = bkt.CreateBucketIfNotExists([]byte(i.InstanceID.Get()))
+	if err != nil {
+		return err
+	}
+
 	pb, err := proto.Marshal(sn)
 	if err != nil {
 		return err
@@ -129,4 +132,29 @@ func (SnapshotRepository) SaveSagaSnapshot(
 	k := make([]byte, 8)
 	binary.PutVarint(k, int64(sn.GetRevision()))
 	return bkt.Put(k, pb)
+}
+
+// DeleteSagaSnapshots deletes any snapshots associated with a saga instance.
+//
+// This implementation does not verify the saga's persistence key. It locates a
+// child bucket indexed with id as a key and deletes it
+func (SnapshotRepository) DeleteSagaSnapshots(
+	ctx context.Context,
+	ptx persistence.Tx,
+	pk string,
+	id saga.InstanceID,
+) error {
+	tx := boltpersistence.ExtractTx(ptx)
+
+	bkt := tx.Bucket([]byte("ax_saga"))
+	if bkt == nil {
+		return nil
+	}
+
+	bkt = bkt.Bucket([]byte("ax_saga_snapshot"))
+	if bkt == nil {
+		return nil
+	}
+
+	return bkt.DeleteBucket([]byte(id.Get()))
 }

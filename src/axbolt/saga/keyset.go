@@ -99,3 +99,41 @@ func (KeySetRepository) SaveKeys(
 
 	return nil
 }
+
+// DeleteKeys removes any mapping keys associated with a saga instance.
+//
+// pk is the saga's persistence key.
+func (r KeySetRepository) DeleteKeys(
+	ctx context.Context,
+	ptx persistence.Tx,
+	pk string,
+	id saga.InstanceID,
+) error {
+	tx := boltpersistence.ExtractTx(ptx)
+
+	bkt := tx.Bucket([]byte("ax_saga"))
+	if bkt == nil {
+		return nil
+	}
+
+	bkt = bkt.Bucket([]byte("ax_saga_keyset"))
+	if bkt == nil {
+		return nil
+	}
+
+	bkt = bkt.Bucket([]byte(pk))
+	if bkt == nil {
+		return nil
+	}
+
+	c := bkt.Cursor()
+	if k, v := c.First(); k != nil && v != nil {
+		for k, _ = c.Last(); k != nil; k, _ = c.Prev() {
+			if err := c.Delete(); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
