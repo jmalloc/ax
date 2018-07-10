@@ -30,8 +30,8 @@ type Workflow struct {
 // For each event type to be handled, the aggregate must implement a "handler"
 // method that adheres to one of the following signatures:
 //
-//     func (ev *<T>) []ax.Command
-//     func (ev *<T>, env ax.Envelope) []ax.Command
+//     func (ev *<T>, ax.CommandExecutor)
+//     func (ev *<T>, env ax.Envelope, ax.CommandExecutor)
 //
 // Where T is a struct type that implements ax.Event.
 //
@@ -45,8 +45,8 @@ type Workflow struct {
 // must begin with "StartWhen". Other handler methods must begin with "When". By
 // convention these prefixes are followed by the message name, such as:
 //
-//     func (*BankTransferWorkflow) StartWhenTransferStarted(*messages.TransferStarted)
-//     func (*BankTransferWorkflow) WhenAccountDebited(*messages.AccountDebited)
+//     func (*BankTransferWorkflow) StartWhenTransferStarted(*messages.TransferStarted, ax.CommandExecutor)
+//     func (*BankTransferWorkflow) WhenAccountDebited(*messages.AccountDebited, ax.CommandExecutor)
 func NewWorkflow(p Data) *Workflow {
 	w := &Workflow{
 		Prototype: p,
@@ -58,10 +58,9 @@ func NewWorkflow(p Data) *Workflow {
 			reflect.TypeOf(p),
 			reflect.TypeOf((*ax.Event)(nil)).Elem(),
 			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
+			reflect.TypeOf((*ax.CommandExecutor)(nil)).Elem(),
 		},
-		[]reflect.Type{
-			reflect.TypeOf(([]ax.Command)(nil)),
-		},
+		nil,
 		workflowStartWhenSignature,
 		workflowStartWhenWithEnvelopeSignature,
 		workflowWhenSignature,
@@ -119,17 +118,25 @@ func (w *Workflow) NewData() Data {
 
 // HandleMessage handles a message for a particular saga instance.
 func (w *Workflow) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope, i Instance) error {
-	out := w.Handle.Dispatch(
+	type command struct {
+		Command ax.Command
+		Options []ax.ExecuteOption
+	}
+
+	var cmds []command
+
+	w.Handle.Dispatch(
 		i.Data,
 		env.Message.(ax.Event),
 		env,
+		func(m ax.Command, opts ...ax.ExecuteOption) {
+			cmds = append(cmds, command{m, opts})
+		},
 	)
 
-	if cmds := out[0]; cmds != nil {
-		for _, m := range cmds.([]ax.Command) {
-			if _, err := s.ExecuteCommand(ctx, m); err != nil {
-				return err
-			}
+	for _, c := range cmds {
+		if _, err := s.ExecuteCommand(ctx, c.Command, c.Options...); err != nil {
+			return err
 		}
 	}
 
@@ -142,9 +149,7 @@ var (
 		In: []reflect.Type{
 			reflect.TypeOf((*Data)(nil)).Elem(),
 			reflect.TypeOf((*ax.Event)(nil)).Elem(),
-		},
-		Out: []reflect.Type{
-			reflect.TypeOf(([]ax.Command)(nil)),
+			reflect.TypeOf((*ax.CommandExecutor)(nil)).Elem(),
 		},
 	}
 
@@ -154,9 +159,7 @@ var (
 			reflect.TypeOf((*Data)(nil)).Elem(),
 			reflect.TypeOf((*ax.Event)(nil)).Elem(),
 			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
-		},
-		Out: []reflect.Type{
-			reflect.TypeOf(([]ax.Command)(nil)),
+			reflect.TypeOf((*ax.CommandExecutor)(nil)).Elem(),
 		},
 	}
 
@@ -165,9 +168,7 @@ var (
 		In: []reflect.Type{
 			reflect.TypeOf((*Data)(nil)).Elem(),
 			reflect.TypeOf((*ax.Event)(nil)).Elem(),
-		},
-		Out: []reflect.Type{
-			reflect.TypeOf(([]ax.Command)(nil)),
+			reflect.TypeOf((*ax.CommandExecutor)(nil)).Elem(),
 		},
 	}
 
@@ -177,9 +178,7 @@ var (
 			reflect.TypeOf((*Data)(nil)).Elem(),
 			reflect.TypeOf((*ax.Event)(nil)).Elem(),
 			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
-		},
-		Out: []reflect.Type{
-			reflect.TypeOf(([]ax.Command)(nil)),
+			reflect.TypeOf((*ax.CommandExecutor)(nil)).Elem(),
 		},
 	}
 )
