@@ -20,7 +20,7 @@ type CRUDRepository struct{}
 
 // LoadSagaInstance fetches a saga instance by its ID.
 //
-// It returns an false if the instance does not exist. It returns an error
+// It returns false if the instance does not exist. It returns an error
 // if a problem occurs with the underlying data store.
 //
 // It returns an error if the instance is found, but belongs to a different
@@ -35,12 +35,10 @@ func (r CRUDRepository) LoadSagaInstance(
 	id saga.InstanceID,
 ) (saga.Instance, bool, error) {
 	var (
-		i   saga.Instance
 		err error
+		s   SagaInstance
 	)
-
 	tx := boltpersistence.ExtractTx(ptx)
-
 	bkt := tx.Bucket([]byte("ax_saga"))
 	if bkt == nil {
 		return saga.Instance{}, false, nil
@@ -52,32 +50,30 @@ func (r CRUDRepository) LoadSagaInstance(
 	}
 
 	pb := bkt.Get([]byte(id.Get()))
-	if pb != nil {
+	if pb == nil {
 		return saga.Instance{}, false, nil
 	}
 
-	var sgi SagaInstance
-	if err = proto.Unmarshal(pb, &sgi); err != nil {
+	if err = proto.Unmarshal(pb, &s); err != nil {
 		return saga.Instance{}, false, err
 	}
 
-	i.Revision = saga.Revision(sgi.GetRevision())
-	if err = i.InstanceID.Parse(sgi.GetInstanceId()); err != nil {
-		return saga.Instance{}, false, err
+	i := saga.Instance{
+		InstanceID: id,
+		Revision:   saga.Revision(s.GetRevision()),
 	}
-
 	var x ptypes.DynamicAny
-	if err = ptypes.UnmarshalAny(sgi.Data, &x); err != nil {
+	if err = ptypes.UnmarshalAny(s.Data, &x); err != nil {
 		return saga.Instance{}, false, err
 	}
 	i.Data, _ = x.Message.(saga.Data)
 
-	if sgi.PersistenceKey != pk {
+	if s.PersistenceKey != pk {
 		return i, false, fmt.Errorf(
 			"can not load saga instance %s for saga %s, it belongs to %s",
 			i.InstanceID,
 			pk,
-			sgi.PersistenceKey,
+			s.GetPersistenceKey(),
 		)
 	}
 
@@ -106,12 +102,12 @@ func (r CRUDRepository) SaveSagaInstance(
 		bkt *bolt.Bucket
 	)
 	tx := boltpersistence.ExtractTx(ptx)
-	sgi := &SagaInstance{
+	s := &SagaInstance{
 		InstanceId:     i.InstanceID.Get(),
 		Revision:       int64(i.Revision),
 		PersistenceKey: pk,
 	}
-	sgi.Data, err = ptypes.MarshalAny(i.Data)
+	s.Data, err = ptypes.MarshalAny(i.Data)
 	if err != nil {
 		return err
 	}
@@ -126,16 +122,11 @@ func (r CRUDRepository) SaveSagaInstance(
 		return err
 	}
 
-	bkt = bkt.Bucket([]byte("ax_saga_instance"))
-	if bkt == nil {
-		return err
-	}
-
 	if i.Revision == 0 {
-		return r.insertInstance(bkt, sgi)
+		return r.insertInstance(bkt, s)
 	}
 
-	return r.updateInstance(bkt, sgi)
+	return r.updateInstance(bkt, s)
 }
 
 // DeleteSagaInstance deletes a saga instance.
@@ -156,7 +147,6 @@ func (r CRUDRepository) DeleteSagaInstance(
 	i saga.Instance,
 ) error {
 	tx := boltpersistence.ExtractTx(ptx)
-
 	bkt := tx.Bucket([]byte("ax_saga"))
 	if bkt == nil {
 		return nil
