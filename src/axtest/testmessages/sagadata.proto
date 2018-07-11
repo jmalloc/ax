@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package axtest.testmessages;
+option go_package = "testmessages";
+
+// Data is a protocol buffers message that implements saga.Data.
+message Data {
+    string value = 1;
+}
