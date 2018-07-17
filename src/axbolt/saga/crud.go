@@ -122,11 +122,37 @@ func (r CRUDRepository) SaveSagaInstance(
 		return err
 	}
 
-	if i.Revision == 0 {
-		return r.insertInstance(bkt, s)
+	if pb := bkt.Get([]byte(s.GetInstanceId())); pb != nil {
+		var prev SagaInstance
+		if err := proto.Unmarshal(pb, &prev); err != nil {
+			return err
+		}
+
+		if i.Revision != saga.Revision(prev.GetRevision()) {
+			return fmt.Errorf(
+				"can not update saga instance %s, revision %d is not the current revision",
+				i.InstanceID,
+				i.Revision,
+			)
+		}
+		if pk != prev.GetPersistenceKey() {
+			return fmt.Errorf(
+				"can not save saga instance %s for saga %s, it belongs to %s",
+				i.InstanceID,
+				pk,
+				prev.GetPersistenceKey(),
+			)
+		}
+
+		r.updateInstance(bkt, s, &prev)
 	}
 
-	return r.updateInstance(bkt, s)
+	if i.Revision > 0 {
+		// todo:
+		// return an error or save even with non-zero revision?
+	}
+
+	return r.insertInstance(bkt, s)
 }
 
 // DeleteSagaInstance deletes a saga instance.
@@ -184,13 +210,6 @@ func (CRUDRepository) insertInstance(
 	new *SagaInstance,
 ) error {
 
-	if bkt.Get([]byte(new.GetInstanceId())) != nil {
-		return fmt.Errorf(
-			"error inserting new saga: instance %s already exists",
-			new.GetInstanceId(),
-		)
-	}
-
 	new.InsertTime = time.Now().Format(time.RFC3339Nano)
 	new.UpdateTime = new.InsertTime
 
@@ -207,36 +226,11 @@ func (CRUDRepository) insertInstance(
 func (CRUDRepository) updateInstance(
 	bkt *bolt.Bucket,
 	new *SagaInstance,
+	existing *SagaInstance,
 ) error {
-	pbold := bkt.Get([]byte(new.GetInstanceId()))
-	if pbold == nil {
-		return fmt.Errorf(
-			"error updating saga instance %s: not found",
-			new.GetInstanceId(),
-		)
-	}
-	var old SagaInstance
-	if err := proto.Unmarshal(pbold, &old); err != nil {
-		return err
-	}
-	if new.GetRevision() != old.GetRevision() {
-		return fmt.Errorf(
-			"can not update saga instance %s, revision %d is not the current revision",
-			new.GetInstanceId(),
-			new.GetRevision(),
-		)
-	}
-	if new.GetPersistenceKey() != old.GetPersistenceKey() {
-		return fmt.Errorf(
-			"can not save saga instance %s for saga %s, it belongs to %s",
-			new.GetInstanceId(),
-			new.GetPersistenceKey(),
-			old.GetPersistenceKey(),
-		)
-	}
 
 	new.Revision++
-	new.InsertTime = old.InsertTime
+	new.InsertTime = existing.InsertTime
 	new.UpdateTime = time.Now().Format(time.RFC3339Nano)
 
 	pb, err := proto.Marshal(new)
