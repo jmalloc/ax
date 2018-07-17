@@ -224,8 +224,8 @@ func CRUDRepositorySuite(
 					com.Rollback()
 				})
 
-				g.It("returns nil", func() {
-					i := saga.Instance{
+				g.It("returns nil (succeeds)", func() {
+					i1 := saga.Instance{
 						InstanceID: saga.GenerateInstanceID(),
 						Revision:   saga.Revision(0),
 						Data: &testmessages.Data{
@@ -236,16 +236,36 @@ func CRUDRepositorySuite(
 						ctx,
 						tx,
 						pk,
-						i,
+						i1,
 					)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
+
+					i2, ok, err := repo.LoadSagaInstance(
+						ctx,
+						tx,
+						pk,
+						i1.InstanceID,
+					)
+
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+					m.Expect(ok).To(m.BeTrue())
+					m.Expect(i1.InstanceID).Should(m.Equal(i2.InstanceID))
+					m.Expect(i1.Revision).Should(m.Equal(i2.Revision))
+					m.Expect(proto.Equal(i1.Data, i2.Data)).Should(m.BeTrue())
 				})
 			})
 
 			g.Context("when the instance exists (update)", func() {
+				g.Context("when the revision is not current for the existing saga instance", func() {
 
+				})
+				g.Context("when the instance exists, but belongs to a different saga", func() {
+
+				})
 			})
+		})
 
+		g.Describe("DeleteSagaInstance", func() {
 			g.Context("when the revision is not current for the existing saga instance", func() {
 
 			})
