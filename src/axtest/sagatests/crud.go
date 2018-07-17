@@ -225,7 +225,7 @@ func CRUDRepositorySuite(
 				})
 
 				g.It("returns nil (succeeds)", func() {
-					i1 := saga.Instance{
+					r0 := saga.Instance{
 						InstanceID: saga.GenerateInstanceID(),
 						Revision:   saga.Revision(0),
 						Data: &testmessages.Data{
@@ -236,7 +236,7 @@ func CRUDRepositorySuite(
 						ctx,
 						tx,
 						pk,
-						i1,
+						r0,
 					)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 
@@ -244,19 +244,89 @@ func CRUDRepositorySuite(
 						ctx,
 						tx,
 						pk,
-						i1.InstanceID,
+						r0.InstanceID,
 					)
 
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					m.Expect(ok).To(m.BeTrue())
-					m.Expect(i1.InstanceID).Should(m.Equal(i2.InstanceID))
-					m.Expect(i1.Revision).Should(m.Equal(i2.Revision))
-					m.Expect(proto.Equal(i1.Data, i2.Data)).Should(m.BeTrue())
+					m.Expect(r0.InstanceID).Should(m.Equal(i2.InstanceID))
+					m.Expect(r0.Revision).Should(m.Equal(i2.Revision))
+					m.Expect(proto.Equal(r0.Data, i2.Data)).Should(m.BeTrue())
 				})
 			})
 
 			g.Context("when the instance exists (update)", func() {
 				g.Context("when the revision is not current for the existing saga instance", func() {
+					var (
+						r0  saga.Instance
+						pk  string
+						tx  persistence.Tx
+						com persistence.Committer
+					)
+
+					g.BeforeEach(func() {
+						var err error
+						pk = "<test>"
+						r0 = saga.Instance{
+							InstanceID: saga.GenerateInstanceID(),
+							Revision:   saga.Revision(0),
+							Data: &testmessages.Data{
+								Value: "<foo>",
+							},
+						}
+
+						tx, com, err = store.BeginTx(ctx)
+						if err != nil {
+							panic(err)
+						}
+
+						err = repo.SaveSagaInstance(
+							ctx,
+							tx,
+							pk,
+							r0,
+						)
+						if err != nil {
+							panic(err)
+						}
+
+						err = com.Commit()
+						if err != nil {
+							panic(err)
+						}
+
+						tx, com, err = store.BeginTx(ctx)
+						if err != nil {
+							panic(err)
+						}
+					})
+
+					g.AfterEach(func() {
+						com.Rollback()
+					})
+
+					g.It("returns nil (succeeds)", func() {
+						err := repo.SaveSagaInstance(
+							ctx,
+							tx,
+							pk,
+							r0,
+						)
+						m.Expect(err).ShouldNot(m.HaveOccurred())
+
+						r1, ok, err := repo.LoadSagaInstance(
+							ctx,
+							tx,
+							pk,
+							r0.InstanceID,
+						)
+
+						m.Expect(err).ShouldNot(m.HaveOccurred())
+						m.Expect(ok).To(m.BeTrue())
+						m.Expect(r1.InstanceID).Should(m.Equal(r0.InstanceID))
+						m.Expect(r1.Revision).Should(m.BeNumerically("==", r0.Revision+1))
+						m.Expect(proto.Equal(r1.Data, r0.Data)).Should(m.BeTrue())
+					})
 
 				})
 				g.Context("when the instance exists, but belongs to a different saga", func() {
