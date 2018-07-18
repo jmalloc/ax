@@ -196,6 +196,15 @@ func (r CRUDRepository) DeleteSagaInstance(
 		)
 	}
 
+	if pk != s.GetPersistenceKey() {
+		return fmt.Errorf(
+			"can not save saga instance %s for saga %s, it belongs to %s",
+			i.InstanceID,
+			pk,
+			s.GetPersistenceKey(),
+		)
+	}
+
 	return bkt.Delete([]byte(i.InstanceID.Get()))
 }
 

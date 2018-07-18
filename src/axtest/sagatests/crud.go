@@ -368,11 +368,34 @@ func CRUDRepositorySuite(
 			})
 
 			g.Context("when the revision is not current for the existing saga instance", func() {
-
+				g.It("returns an error", func() {
+					r1 := saga.Instance{
+						InstanceID: r0.InstanceID,
+						Revision:   saga.Revision(1),
+						Data: &testmessages.Data{
+							Value: "<foo>",
+						},
+					}
+					err := repo.DeleteSagaInstance(
+						ctx,
+						tx,
+						pk,
+						r1,
+					)
+					m.Expect(err).Should(m.HaveOccurred())
+				})
 			})
 
 			g.Context("when the instance exists, but belongs to a different saga", func() {
-
+				g.It("returns an error", func() {
+					err := repo.DeleteSagaInstance(
+						ctx,
+						tx,
+						"<unknown>",
+						r0,
+					)
+					m.Expect(err).Should(m.HaveOccurred())
+				})
 			})
 		})
 	}
