@@ -147,11 +147,6 @@ func (r CRUDRepository) SaveSagaInstance(
 		r.updateInstance(bkt, s, &prev)
 	}
 
-	if i.Revision > 0 {
-		// todo:
-		// return an error or save even with non-zero revision?
-	}
-
 	return r.insertInstance(bkt, s)
 }
 
@@ -184,7 +179,7 @@ func (r CRUDRepository) DeleteSagaInstance(
 	}
 
 	pb := bkt.Get([]byte(i.InstanceID.Get()))
-	if pb != nil {
+	if pb == nil {
 		return nil
 	}
 
