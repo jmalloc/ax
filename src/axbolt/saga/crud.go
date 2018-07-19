@@ -102,12 +102,12 @@ func (r CRUDRepository) SaveSagaInstance(
 		bkt *bolt.Bucket
 	)
 	tx := boltpersistence.ExtractTx(ptx)
-	s := &SagaInstance{
+	new := &SagaInstance{
 		InstanceId:     i.InstanceID.Get(),
 		Revision:       int64(i.Revision),
 		PersistenceKey: pk,
 	}
-	s.Data, err = ptypes.MarshalAny(i.Data)
+	new.Data, err = ptypes.MarshalAny(i.Data)
 	if err != nil {
 		return err
 	}
@@ -122,13 +122,13 @@ func (r CRUDRepository) SaveSagaInstance(
 		return err
 	}
 
-	if pb := bkt.Get([]byte(s.GetInstanceId())); pb != nil {
+	if pb := bkt.Get([]byte(new.GetInstanceId())); pb != nil {
 		var prev SagaInstance
 		if err := proto.Unmarshal(pb, &prev); err != nil {
 			return err
 		}
 
-		if i.Revision != saga.Revision(prev.GetRevision()) {
+		if new.GetRevision() != prev.GetRevision() {
 			return fmt.Errorf(
 				"can not update saga instance %s, revision %d is not the current revision",
 				i.InstanceID,
@@ -144,10 +144,10 @@ func (r CRUDRepository) SaveSagaInstance(
 			)
 		}
 
-		r.updateInstance(bkt, s, &prev)
+		r.updateInstance(bkt, new, &prev)
 	}
 
-	return r.insertInstance(bkt, s)
+	return r.insertInstance(bkt, new)
 }
 
 // DeleteSagaInstance deletes a saga instance.
@@ -214,6 +214,7 @@ func (CRUDRepository) insertInstance(
 	new *SagaInstance,
 ) error {
 
+	new.Revision = 1
 	new.InsertTime = time.Now().Format(time.RFC3339Nano)
 	new.UpdateTime = new.InsertTime
 
@@ -229,12 +230,11 @@ func (CRUDRepository) insertInstance(
 // It returns an error if i.Revision is not the current revision.
 func (CRUDRepository) updateInstance(
 	bkt *bolt.Bucket,
-	new *SagaInstance,
-	existing *SagaInstance,
+	new, prev *SagaInstance,
 ) error {
 
-	new.Revision++
-	new.InsertTime = existing.InsertTime
+	new.Revision = prev.Revision + 1
+	new.InsertTime = prev.InsertTime
 	new.UpdateTime = time.Now().Format(time.RFC3339Nano)
 
 	pb, err := proto.Marshal(new)
