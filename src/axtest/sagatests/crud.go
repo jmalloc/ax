@@ -2,6 +2,7 @@ package sagatests
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -15,9 +16,9 @@ import (
 	m "github.com/onsi/gomega"
 )
 
-// InsertRev0Saga is a helper function that inserts a test SagaInstance
+// InsertRev1Saga is a helper function that inserts a test SagaInstance
 // with revision 0 into the underlying database of the store.
-func InsertRev0Saga(
+func InsertRev1Saga(
 	ctx context.Context,
 	store persistence.DataStore,
 	repo crud.Repository,
@@ -31,7 +32,6 @@ func InsertRev0Saga(
 
 	i := saga.Instance{
 		InstanceID: saga.GenerateInstanceID(),
-		Revision:   saga.Revision(0),
 		Data: &testmessages.Data{
 			Value: "<foo>",
 		},
@@ -52,10 +52,29 @@ func InsertRev0Saga(
 		panic(err)
 	}
 
+	r1, ok, err := repo.LoadSagaInstance(
+		ctx,
+		tx,
+		pk,
+		i.InstanceID,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	if !ok {
+		panic(
+			fmt.Sprintf(
+				"saga instance %s could not be found",
+				i.InstanceID,
+			),
+		)
+	}
+
 	if err = com.Commit(); err != nil {
 		panic(err)
 	}
-	return i
+	return r1
 }
 
 // CRUDRepositorySuite returns a test suite for implementations of crud.Repository.
@@ -87,7 +106,7 @@ func CRUDRepositorySuite(
 		g.Describe("LoadSagaInstance", func() {
 			g.Context("when the instance exists", func() {
 				var (
-					r0  saga.Instance
+					r1  saga.Instance
 					pk  string
 					tx  persistence.Tx
 					com persistence.Committer
@@ -95,7 +114,7 @@ func CRUDRepositorySuite(
 				g.BeforeEach(func() {
 					var err error
 					pk = "<test>"
-					r0 = InsertRev0Saga(ctx, store, repo, pk)
+					r1 = InsertRev1Saga(ctx, store, repo, pk)
 
 					tx, com, err = store.BeginTx(ctx)
 					if err != nil {
@@ -111,7 +130,7 @@ func CRUDRepositorySuite(
 						ctx,
 						tx,
 						pk,
-						r0.InstanceID,
+						r1.InstanceID,
 					)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					m.Expect(ok).To(m.BeTrue())
@@ -122,12 +141,12 @@ func CRUDRepositorySuite(
 						ctx,
 						tx,
 						pk,
-						r0.InstanceID,
+						r1.InstanceID,
 					)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
-					m.Expect(i.InstanceID).Should(m.Equal(r0.InstanceID))
-					m.Expect(i.Revision).Should(m.Equal(r0.Revision))
-					m.Expect(proto.Equal(i.Data, r0.Data)).Should(m.BeTrue())
+					m.Expect(i.InstanceID).Should(m.Equal(r1.InstanceID))
+					m.Expect(i.Revision).Should(m.BeNumerically("==", saga.Revision(1)))
+					m.Expect(proto.Equal(i.Data, r1.Data)).Should(m.BeTrue())
 				})
 			})
 
@@ -164,7 +183,7 @@ func CRUDRepositorySuite(
 
 			g.Context("instance is found, but belongs to a different saga", func() {
 				var (
-					r0  saga.Instance
+					r1  saga.Instance
 					pk  string
 					tx  persistence.Tx
 					com persistence.Committer
@@ -172,7 +191,7 @@ func CRUDRepositorySuite(
 				g.BeforeEach(func() {
 					var err error
 					pk = "<test>"
-					r0 = InsertRev0Saga(ctx, store, repo, pk)
+					r1 = InsertRev1Saga(ctx, store, repo, pk)
 
 					tx, com, err = store.BeginTx(ctx)
 					if err != nil {
@@ -188,7 +207,7 @@ func CRUDRepositorySuite(
 						ctx,
 						tx,
 						"<unknown>",
-						r0.InstanceID,
+						r1.InstanceID,
 					)
 					m.Expect(err).Should(m.HaveOccurred())
 				})
@@ -231,7 +250,7 @@ func CRUDRepositorySuite(
 					)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 
-					i2, ok, err := repo.LoadSagaInstance(
+					r1, ok, err := repo.LoadSagaInstance(
 						ctx,
 						tx,
 						pk,
@@ -240,15 +259,15 @@ func CRUDRepositorySuite(
 
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					m.Expect(ok).To(m.BeTrue())
-					m.Expect(r0.InstanceID).Should(m.Equal(i2.InstanceID))
-					m.Expect(r0.Revision).Should(m.Equal(i2.Revision))
-					m.Expect(proto.Equal(r0.Data, i2.Data)).Should(m.BeTrue())
+					m.Expect(r0.InstanceID).Should(m.Equal(r1.InstanceID))
+					m.Expect(r1.Revision).Should(m.BeNumerically("==", saga.Revision(1)))
+					m.Expect(proto.Equal(r0.Data, r1.Data)).Should(m.BeTrue())
 				})
 			})
 
 			g.Context("when the instance exists (update)", func() {
 				var (
-					r0  saga.Instance
+					r1  saga.Instance
 					pk  string
 					tx  persistence.Tx
 					com persistence.Committer
@@ -256,7 +275,7 @@ func CRUDRepositorySuite(
 				g.BeforeEach(func() {
 					var err error
 					pk = "<test>"
-					r0 = InsertRev0Saga(ctx, store, repo, pk)
+					r1 = InsertRev1Saga(ctx, store, repo, pk)
 
 					tx, com, err = store.BeginTx(ctx)
 					if err != nil {
@@ -273,29 +292,29 @@ func CRUDRepositorySuite(
 						ctx,
 						tx,
 						pk,
-						r0,
+						r1,
 					)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 
-					r1, ok, err := repo.LoadSagaInstance(
+					r2, ok, err := repo.LoadSagaInstance(
 						ctx,
 						tx,
 						pk,
-						r0.InstanceID,
+						r1.InstanceID,
 					)
 
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					m.Expect(ok).To(m.BeTrue())
-					m.Expect(r1.InstanceID).Should(m.Equal(r0.InstanceID))
-					m.Expect(r1.Revision).Should(m.BeNumerically("==", r0.Revision+1))
-					m.Expect(proto.Equal(r1.Data, r0.Data)).Should(m.BeTrue())
+					m.Expect(r2.InstanceID).Should(m.Equal(r1.InstanceID))
+					m.Expect(r2.Revision).Should(m.BeNumerically("==", r1.Revision+1))
+					m.Expect(proto.Equal(r1.Data, r2.Data)).Should(m.BeTrue())
 				})
 
 				g.Context("when the revision is not current for the existing saga instance", func() {
 					g.It("returns an error", func() {
-						r1 := saga.Instance{
-							InstanceID: r0.InstanceID,
-							Revision:   saga.Revision(1),
+						r0 := saga.Instance{
+							InstanceID: r1.InstanceID,
+							Revision:   saga.Revision(0),
 							Data: &testmessages.Data{
 								Value: "<foo>",
 							},
@@ -304,7 +323,7 @@ func CRUDRepositorySuite(
 							ctx,
 							tx,
 							pk,
-							r1,
+							r0,
 						)
 						m.Expect(err).Should(m.HaveOccurred())
 					})
@@ -315,7 +334,7 @@ func CRUDRepositorySuite(
 							ctx,
 							tx,
 							"<unknown>",
-							r0,
+							r1,
 						)
 						m.Expect(err).Should(m.HaveOccurred())
 					})
@@ -327,13 +346,13 @@ func CRUDRepositorySuite(
 			var (
 				tx  persistence.Tx
 				com persistence.Committer
-				r0  saga.Instance
+				r1  saga.Instance
 				pk  string
 			)
 			g.BeforeEach(func() {
 				var err error
 				pk = "<test>"
-				r0 = InsertRev0Saga(ctx, store, repo, pk)
+				r1 = InsertRev1Saga(ctx, store, repo, pk)
 
 				tx, com, err = store.BeginTx(ctx)
 				if err != nil {
@@ -353,7 +372,7 @@ func CRUDRepositorySuite(
 					ctx,
 					tx,
 					pk,
-					r0,
+					r1,
 				)
 				m.Expect(err).ShouldNot(m.HaveOccurred())
 
@@ -361,7 +380,7 @@ func CRUDRepositorySuite(
 					ctx,
 					tx,
 					pk,
-					r0.InstanceID,
+					r1.InstanceID,
 				)
 				m.Expect(ok).Should(m.BeFalse())
 				m.Expect(err).ShouldNot(m.HaveOccurred())
@@ -370,8 +389,8 @@ func CRUDRepositorySuite(
 			g.Context("when the revision is not current for the existing saga instance", func() {
 				g.It("returns an error", func() {
 					r1 := saga.Instance{
-						InstanceID: r0.InstanceID,
-						Revision:   saga.Revision(1),
+						InstanceID: r1.InstanceID,
+						Revision:   saga.Revision(0),
 						Data: &testmessages.Data{
 							Value: "<foo>",
 						},
@@ -392,7 +411,7 @@ func CRUDRepositorySuite(
 						ctx,
 						tx,
 						"<unknown>",
-						r0,
+						r1,
 					)
 					m.Expect(err).Should(m.HaveOccurred())
 				})
