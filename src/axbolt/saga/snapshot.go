@@ -30,13 +30,7 @@ func (SnapshotRepository) LoadSagaSnapshot(
 	id saga.InstanceID,
 ) (saga.Instance, bool, error) {
 	tx := boltpersistence.ExtractTx(ptx)
-
-	bkt := tx.Bucket([]byte("ax_saga"))
-	if bkt == nil {
-		return saga.Instance{}, false, nil
-	}
-
-	bkt = bkt.Bucket([]byte("ax_saga_snapshot"))
+	bkt := tx.Bucket([]byte("ax_saga_snapshot"))
 	if bkt == nil {
 		return saga.Instance{}, false, nil
 	}
@@ -109,12 +103,7 @@ func (SnapshotRepository) SaveSagaSnapshot(
 		return err
 	}
 
-	bkt, err = tx.CreateBucketIfNotExists([]byte("ax_saga"))
-	if err != nil {
-		return err
-	}
-
-	bkt, err = bkt.CreateBucketIfNotExists([]byte("ax_saga_snapshot"))
+	bkt, err = tx.CreateBucketIfNotExists([]byte("ax_saga_snapshot"))
 	if err != nil {
 		return err
 	}
@@ -146,12 +135,7 @@ func (SnapshotRepository) DeleteSagaSnapshots(
 ) error {
 	tx := boltpersistence.ExtractTx(ptx)
 
-	bkt := tx.Bucket([]byte("ax_saga"))
-	if bkt == nil {
-		return nil
-	}
-
-	bkt = bkt.Bucket([]byte("ax_saga_snapshot"))
+	bkt := tx.Bucket([]byte("ax_saga_snapshot"))
 	if bkt == nil {
 		return nil
 	}
