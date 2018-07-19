@@ -144,7 +144,7 @@ func (r CRUDRepository) SaveSagaInstance(
 			)
 		}
 
-		r.updateInstance(bkt, new, &prev)
+		return r.updateInstance(bkt, new, &prev)
 	}
 
 	return r.insertInstance(bkt, new)

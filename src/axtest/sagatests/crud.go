@@ -306,8 +306,6 @@ func CRUDRepositorySuite(
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					m.Expect(ok).To(m.BeTrue())
 					m.Expect(r2.InstanceID).Should(m.Equal(r1.InstanceID))
-					// to-do: the following assertion is failing in bolt implementation,
-					// investigate why
 					m.Expect(r2.Revision).Should(m.BeNumerically("==", r1.Revision+1))
 					m.Expect(proto.Equal(r1.Data, r2.Data)).Should(m.BeTrue())
 				})
