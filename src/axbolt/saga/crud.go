@@ -39,12 +39,7 @@ func (r CRUDRepository) LoadSagaInstance(
 		s   SagaInstance
 	)
 	tx := boltpersistence.ExtractTx(ptx)
-	bkt := tx.Bucket([]byte("ax_saga"))
-	if bkt == nil {
-		return saga.Instance{}, false, nil
-	}
-
-	bkt = bkt.Bucket([]byte("ax_saga_instance"))
+	bkt := tx.Bucket([]byte("ax_saga_instance"))
 	if bkt == nil {
 		return saga.Instance{}, false, nil
 	}
@@ -112,12 +107,7 @@ func (r CRUDRepository) SaveSagaInstance(
 		return err
 	}
 
-	bkt, err = tx.CreateBucketIfNotExists([]byte("ax_saga"))
-	if err != nil {
-		return err
-	}
-
-	bkt, err = bkt.CreateBucketIfNotExists([]byte("ax_saga_instance"))
+	bkt, err = tx.CreateBucketIfNotExists([]byte("ax_saga_instance"))
 	if err != nil {
 		return err
 	}
@@ -168,12 +158,8 @@ func (r CRUDRepository) DeleteSagaInstance(
 	i saga.Instance,
 ) error {
 	tx := boltpersistence.ExtractTx(ptx)
-	bkt := tx.Bucket([]byte("ax_saga"))
-	if bkt == nil {
-		return nil
-	}
 
-	bkt = bkt.Bucket([]byte("ax_saga_instance"))
+	bkt := tx.Bucket([]byte("ax_saga_instance"))
 	if bkt == nil {
 		return nil
 	}
