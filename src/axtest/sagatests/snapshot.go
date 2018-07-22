@@ -85,13 +85,16 @@ func SnapshotRepositorySuite(
 							Value: "<foo>",
 						},
 					}
-					i = InsertSagaSnapshot(
-						ctx,
-						store,
-						i,
-						repo,
-						pk,
-					)
+					for r := 0; r < 3; r++ {
+						i.Revision = saga.Revision(r)
+						i = InsertSagaSnapshot(
+							ctx,
+							store,
+							i,
+							repo,
+							pk,
+						)
+					}
 				})
 
 				g.It("returns true", func() {
