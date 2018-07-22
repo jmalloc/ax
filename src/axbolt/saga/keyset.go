@@ -3,14 +3,21 @@ package saga
 import (
 	"context"
 
+	bolt "github.com/coreos/bbolt"
+	"github.com/golang/protobuf/proto"
+
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/ax/saga"
 	boltpersistence "github.com/jmalloc/ax/src/axbolt/persistence"
 )
 
-// KeySetRepository is a MySQL-backed implementation of Ax's keyset.Repository
+// KeySetRepository is a Bolt-backed implementation of Ax's keyset.Repository
 // interface.
 type KeySetRepository struct{}
+
+// KeySetBktName is name of the Bolt root bucket where all saga keyset data is
+// stored.
+var KeySetBktName = []byte("ax_saga_keyset")
 
 // FindByKey returns the ID of a saga instance that has a specific key in
 // its key set.
@@ -23,32 +30,21 @@ func (KeySetRepository) FindByKey(
 	pk, mk string,
 ) (id saga.InstanceID, ok bool, err error) {
 	tx := boltpersistence.ExtractTx(ptx)
-
-	bkt := tx.Bucket([]byte("ax_saga"))
+	bkt := tx.Bucket(KeySetBktName)
 	if bkt == nil {
 		return
 	}
 
-	bkt = bkt.Bucket([]byte("ax_saga_keyset"))
-	if bkt == nil {
+	if bkt = bkt.Bucket([]byte(pk)); bkt == nil {
 		return
 	}
 
-	bkt = bkt.Bucket([]byte(pk))
-	if bkt == nil {
-		return
+	if s := bkt.Get([]byte(mk)); s != nil {
+		if err = id.Parse(string(s)); err != nil {
+			return
+		}
+		ok = true
 	}
-
-	raw := bkt.Get([]byte(mk))
-	if raw == nil {
-		return
-	}
-
-	err = id.Parse(string(raw))
-	if err != nil {
-		return
-	}
-	ok = true
 	return
 }
 
@@ -67,28 +63,30 @@ func (KeySetRepository) SaveKeys(
 	ks []string,
 	id saga.InstanceID,
 ) error {
+	var (
+		bkt *bolt.Bucket
+		pb  []byte
+		err error
+	)
 	tx := boltpersistence.ExtractTx(ptx)
+	if bkt, err = tx.CreateBucketIfNotExists(KeySetBktName); err != nil {
+		return err
+	}
 
-	bkt, err := tx.CreateBucketIfNotExists([]byte("ax_saga"))
-	if err != nil {
+	if pb, err = proto.Marshal(&SagaKeySet{
+		PersistenceKey: pk,
+		MappingKeys:    ks,
+	}); err != nil {
 		return err
 	}
-	bkt, err = bkt.CreateBucketIfNotExists([]byte("ax_saga_keyset"))
-	if err != nil {
+
+	if err = bkt.Put([]byte(id.Get()), pb); err != nil {
 		return err
 	}
+
 	bkt, err = bkt.CreateBucketIfNotExists([]byte(pk))
 	if err != nil {
 		return err
-	}
-
-	c := bkt.Cursor()
-	if k, v := c.First(); k != nil && v != nil {
-		for k, _ = c.Last(); k != nil; k, _ = c.Prev() {
-			if err = c.Delete(); err != nil {
-				return err
-			}
-		}
 	}
 
 	for _, k := range ks {
@@ -109,29 +107,36 @@ func (r KeySetRepository) DeleteKeys(
 	pk string,
 	id saga.InstanceID,
 ) error {
+	var (
+		bkt *bolt.Bucket
+		err error
+		pb  []byte
+		ks  SagaKeySet
+	)
 	tx := boltpersistence.ExtractTx(ptx)
-
-	bkt := tx.Bucket([]byte("ax_saga"))
-	if bkt == nil {
+	if bkt = tx.Bucket(KeySetBktName); bkt == nil {
 		return nil
 	}
 
-	bkt = bkt.Bucket([]byte("ax_saga_keyset"))
-	if bkt == nil {
+	if pb = bkt.Get([]byte(id.Get())); pb == nil {
 		return nil
 	}
 
-	bkt = bkt.Bucket([]byte(pk))
-	if bkt == nil {
+	if err = proto.Unmarshal(pb, &ks); err != nil {
+		return err
+	}
+
+	if err = bkt.Delete([]byte(id.Get())); err != nil {
+		return err
+	}
+
+	if bkt = bkt.Bucket([]byte(ks.GetPersistenceKey())); bkt == nil {
 		return nil
 	}
 
-	c := bkt.Cursor()
-	if k, v := c.First(); k != nil && v != nil {
-		for k, _ = c.Last(); k != nil; k, _ = c.Prev() {
-			if err := c.Delete(); err != nil {
-				return err
-			}
+	for _, k := range ks.GetMappingKeys() {
+		if err = bkt.Delete([]byte(k)); err != nil {
+			return err
 		}
 	}
 
