@@ -82,7 +82,7 @@ func (Repository) SaveOutbox(
 		return err
 	}
 
-	if bkt := bkt.Bucket([]byte(id.Get())); bkt != nil {
+	if b := bkt.Bucket([]byte(id.Get())); b != nil {
 		return ErrOutboxExists
 	}
 
