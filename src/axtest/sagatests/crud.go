@@ -23,13 +23,19 @@ func InsertRev1Saga(
 	store persistence.DataStore,
 	repo crud.Repository,
 	pk string,
-	i saga.Instance,
 ) saga.Instance {
 	var (
 		err error
 		tx  persistence.Tx
 		com persistence.Committer
 	)
+
+	i := saga.Instance{
+		InstanceID: saga.GenerateInstanceID(),
+		Data: &testmessages.Data{
+			Value: "<foo>",
+		},
+	}
 
 	tx, com, err = store.BeginTx(ctx)
 	if err != nil {
@@ -109,13 +115,7 @@ func CRUDRepositorySuite(
 				)
 				g.BeforeEach(func() {
 					var err error
-					i := saga.Instance{
-						InstanceID: saga.GenerateInstanceID(),
-						Data: &testmessages.Data{
-							Value: "<foo>",
-						},
-					}
-					r1 = InsertRev1Saga(ctx, store, repo, pk, i)
+					r1 = InsertRev1Saga(ctx, store, repo, pk)
 
 					tx, com, err = store.BeginTx(ctx)
 					if err != nil {
@@ -188,13 +188,7 @@ func CRUDRepositorySuite(
 				)
 				g.BeforeEach(func() {
 					var err error
-					i := saga.Instance{
-						InstanceID: saga.GenerateInstanceID(),
-						Data: &testmessages.Data{
-							Value: "<foo>",
-						},
-					}
-					r1 = InsertRev1Saga(ctx, store, repo, pk, i)
+					r1 = InsertRev1Saga(ctx, store, repo, pk)
 
 					tx, com, err = store.BeginTx(ctx)
 					if err != nil {
@@ -274,13 +268,7 @@ func CRUDRepositorySuite(
 				)
 				g.BeforeEach(func() {
 					var err error
-					i := saga.Instance{
-						InstanceID: saga.GenerateInstanceID(),
-						Data: &testmessages.Data{
-							Value: "<foo>",
-						},
-					}
-					r1 = InsertRev1Saga(ctx, store, repo, pk, i)
+					r1 = InsertRev1Saga(ctx, store, repo, pk)
 
 					tx, com, err = store.BeginTx(ctx)
 					if err != nil {
@@ -355,13 +343,7 @@ func CRUDRepositorySuite(
 			)
 			g.BeforeEach(func() {
 				var err error
-				i := saga.Instance{
-					InstanceID: saga.GenerateInstanceID(),
-					Data: &testmessages.Data{
-						Value: "<foo>",
-					},
-				}
-				r1 = InsertRev1Saga(ctx, store, repo, pk, i)
+				r1 = InsertRev1Saga(ctx, store, repo, pk)
 
 				tx, com, err = store.BeginTx(ctx)
 				if err != nil {
