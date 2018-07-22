@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jmalloc/ax/src/axbolt/internal/boltutil"
+
 	bolt "github.com/coreos/bbolt"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -39,8 +41,8 @@ func (r CRUDRepository) LoadSagaInstance(
 	id saga.InstanceID,
 ) (saga.Instance, bool, error) {
 	var (
-		err error
-		s   SagaInstance
+		x ptypes.DynamicAny
+		s SagaInstance
 	)
 	tx := boltpersistence.ExtractTx(ptx)
 	bkt := tx.Bucket(InstanceBktName)
@@ -48,21 +50,19 @@ func (r CRUDRepository) LoadSagaInstance(
 		return saga.Instance{}, false, nil
 	}
 
-	pb := bkt.Get([]byte(id.Get()))
-	if pb == nil {
-		return saga.Instance{}, false, nil
-	}
-
-	if err = proto.Unmarshal(pb, &s); err != nil {
-		return saga.Instance{}, false, err
+	if ok, err := boltutil.UnmarshalProto(
+		bkt,
+		[]byte(id.Get()),
+		&s,
+	); err != nil || !ok {
+		return saga.Instance{}, ok, err
 	}
 
 	i := saga.Instance{
 		InstanceID: id,
 		Revision:   saga.Revision(s.GetRevision()),
 	}
-	var x ptypes.DynamicAny
-	if err = ptypes.UnmarshalAny(s.Data, &x); err != nil {
+	if err := ptypes.UnmarshalAny(s.Data, &x); err != nil {
 		return saga.Instance{}, false, err
 	}
 	i.Data, _ = x.Message.(saga.Data)
@@ -76,7 +76,7 @@ func (r CRUDRepository) LoadSagaInstance(
 		)
 	}
 
-	return i, true, err
+	return i, true, nil
 }
 
 // SaveSagaInstance persists a saga instance.
