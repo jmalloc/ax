@@ -19,6 +19,10 @@ import (
 // eventsourcing.SnapshotRepository interface.
 type SnapshotRepository struct{}
 
+// SnapshotBktName is name of the Bolt root bucket where all saga snapshot data
+// is stored.
+var SnapshotBktName = []byte("ax_saga_snapshot")
+
 // LoadSagaSnapshot loads the latest available snapshot from the store.
 //
 // It returns an error if a snapshot of this instance is found, but belongs to

@@ -18,6 +18,10 @@ import (
 // interface.
 type CRUDRepository struct{}
 
+// InstanceBktName is the name of of the Bolt root bucket where all saga instance
+// data is stored.
+var InstanceBktName = []byte("ax_saga_instance")
+
 // LoadSagaInstance fetches a saga instance by its ID.
 //
 // It returns false if the instance does not exist. It returns an error
@@ -39,7 +43,7 @@ func (r CRUDRepository) LoadSagaInstance(
 		s   SagaInstance
 	)
 	tx := boltpersistence.ExtractTx(ptx)
-	bkt := tx.Bucket([]byte("ax_saga_instance"))
+	bkt := tx.Bucket(InstanceBktName)
 	if bkt == nil {
 		return saga.Instance{}, false, nil
 	}
@@ -107,7 +111,7 @@ func (r CRUDRepository) SaveSagaInstance(
 		return err
 	}
 
-	bkt, err = tx.CreateBucketIfNotExists([]byte("ax_saga_instance"))
+	bkt, err = tx.CreateBucketIfNotExists(InstanceBktName)
 	if err != nil {
 		return err
 	}
@@ -159,7 +163,7 @@ func (r CRUDRepository) DeleteSagaInstance(
 ) error {
 	tx := boltpersistence.ExtractTx(ptx)
 
-	bkt := tx.Bucket([]byte("ax_saga_instance"))
+	bkt := tx.Bucket(InstanceBktName)
 	if bkt == nil {
 		return nil
 	}
