@@ -3,8 +3,9 @@ package saga
 import (
 	"context"
 
+	"github.com/jmalloc/ax/src/axbolt/internal/boltutil"
+
 	bolt "github.com/coreos/bbolt"
-	"github.com/golang/protobuf/proto"
 
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/ax/saga"
@@ -65,7 +66,6 @@ func (KeySetRepository) SaveKeys(
 ) error {
 	var (
 		bkt *bolt.Bucket
-		pb  []byte
 		err error
 	)
 	tx := boltpersistence.ExtractTx(ptx)
@@ -73,14 +73,14 @@ func (KeySetRepository) SaveKeys(
 		return err
 	}
 
-	if pb, err = proto.Marshal(&SagaKeySet{
-		PersistenceKey: pk,
-		MappingKeys:    ks,
-	}); err != nil {
-		return err
-	}
-
-	if err = bkt.Put([]byte(id.Get()), pb); err != nil {
+	if err = boltutil.MarshalProto(
+		bkt,
+		[]byte(id.Get()),
+		&SagaKeySet{
+			PersistenceKey: pk,
+			MappingKeys:    ks,
+		},
+	); err != nil {
 		return err
 	}
 
@@ -110,7 +110,7 @@ func (r KeySetRepository) DeleteKeys(
 	var (
 		bkt *bolt.Bucket
 		err error
-		pb  []byte
+		ok  bool
 		ks  SagaKeySet
 	)
 	tx := boltpersistence.ExtractTx(ptx)
@@ -118,11 +118,11 @@ func (r KeySetRepository) DeleteKeys(
 		return nil
 	}
 
-	if pb = bkt.Get([]byte(id.Get())); pb == nil {
-		return nil
-	}
-
-	if err = proto.Unmarshal(pb, &ks); err != nil {
+	if ok, err = boltutil.UnmarshalProto(
+		bkt,
+		[]byte(id.Get()),
+		&ks,
+	); !ok || err != nil {
 		return err
 	}
 
