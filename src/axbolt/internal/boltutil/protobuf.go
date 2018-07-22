@@ -1,7 +1,7 @@
 package boltutil
 
 import (
-	"github.com/boltdb/bolt"
+	"github.com/coreos/bbolt"
 	"github.com/golang/protobuf/proto"
 )
 
