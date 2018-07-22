@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/jmalloc/ax/src/axbolt/internal/boltutil"
+
 	"github.com/golang/protobuf/ptypes"
 
 	"github.com/coreos/bbolt"
@@ -76,23 +78,22 @@ func (Repository) SaveOutbox(
 	envs []endpoint.OutboundEnvelope,
 ) error {
 	tx := boltpersistance.ExtractTx(ptx)
-	obBkt, err := tx.CreateBucketIfNotExists(OutboxBktName)
+	bkt, err := tx.CreateBucketIfNotExists(OutboxBktName)
 	if err != nil {
 		return err
 	}
 
-	var msgBkt *bolt.Bucket
-	if msgBkt = obBkt.Bucket([]byte(id.Get())); msgBkt != nil {
+	if bkt := bkt.Bucket([]byte(id.Get())); bkt != nil {
 		return ErrOutboxExists
 	}
 
-	msgBkt, err = obBkt.CreateBucket([]byte(id.Get()))
+	bkt, err = bkt.CreateBucket([]byte(id.Get()))
 	if err != nil {
 		return err
 	}
 
 	for _, env := range envs {
-		if err := insertOutboxMessage(msgBkt, env); err != nil {
+		if err := insertOutboxMessage(bkt, env); err != nil {
 			return err
 		}
 	}
@@ -107,16 +108,15 @@ func (Repository) MarkAsSent(
 	env endpoint.OutboundEnvelope,
 ) error {
 	tx := boltpersistance.ExtractTx(ptx)
-	obBkt := tx.Bucket(OutboxBktName)
-	if obBkt == nil {
+	bkt := tx.Bucket(OutboxBktName)
+	if bkt == nil {
 		return nil
 	}
-	msgBkt := obBkt.Bucket([]byte(env.CausationID.Get()))
-	if msgBkt == nil {
+	if bkt = bkt.Bucket([]byte(env.CausationID.Get())); bkt == nil {
 		return nil
 	}
 
-	return msgBkt.Delete([]byte(env.MessageID.Get()))
+	return bkt.Delete([]byte(env.MessageID.Get()))
 }
 
 func parseOutboxMessage(
@@ -165,11 +165,9 @@ func insertOutboxMessage(
 	bkt *bolt.Bucket,
 	env endpoint.OutboundEnvelope,
 ) error {
-	var (
-		err error
-		pb  []byte
-	)
-	outmsg := &OutboxMessage{
+	var err error
+
+	m := &OutboxMessage{
 		Id:                  env.MessageID.Get(),
 		CausationId:         env.CausationID.Get(),
 		CorrelationId:       env.CorrelationID.Get(),
@@ -179,15 +177,10 @@ func insertOutboxMessage(
 		DestinationEndpoint: env.DestinationEndpoint,
 	}
 
-	outmsg.Message, err = ptypes.MarshalAny(env.Message)
+	m.Message, err = ptypes.MarshalAny(env.Message)
 	if err != nil {
 		return err
 	}
 
-	pb, err = proto.Marshal(outmsg)
-	if err != nil {
-		return err
-	}
-
-	return bkt.Put([]byte(outmsg.Id), pb)
+	return boltutil.MarshalProto(bkt, []byte(m.GetId()), m)
 }
