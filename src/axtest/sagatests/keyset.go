@@ -184,6 +184,10 @@ func KeySetRepositorySuite(
 				)
 			})
 			g.It("returns nil", func() {
+				var (
+					err error
+					ok  bool
+				)
 				tx, com, err := store.BeginTx(ctx)
 				m.Expect(err).ShouldNot(m.HaveOccurred())
 				defer com.Rollback()
@@ -197,7 +201,7 @@ func KeySetRepositorySuite(
 				m.Expect(err).ShouldNot(m.HaveOccurred())
 
 				for _, k := range mk {
-					_, ok, err := repo.FindByKey(
+					_, ok, err = repo.FindByKey(
 						ctx,
 						tx,
 						pk,
