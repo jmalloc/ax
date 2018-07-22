@@ -8,7 +8,6 @@ import (
 	"github.com/jmalloc/ax/src/axbolt/internal/boltutil"
 
 	bolt "github.com/coreos/bbolt"
-	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 
 	"github.com/jmalloc/ax/src/ax/persistence"
@@ -97,8 +96,10 @@ func (r CRUDRepository) SaveSagaInstance(
 	i saga.Instance,
 ) error {
 	var (
-		err error
-		bkt *bolt.Bucket
+		err  error
+		ok   bool
+		bkt  *bolt.Bucket
+		prev SagaInstance
 	)
 	tx := boltpersistence.ExtractTx(ptx)
 	new := &SagaInstance{
@@ -116,12 +117,15 @@ func (r CRUDRepository) SaveSagaInstance(
 		return err
 	}
 
-	if pb := bkt.Get([]byte(new.GetInstanceId())); pb != nil {
-		var prev SagaInstance
-		if err := proto.Unmarshal(pb, &prev); err != nil {
-			return err
-		}
+	if ok, err = boltutil.UnmarshalProto(
+		bkt,
+		[]byte(new.GetInstanceId()),
+		&prev,
+	); err != nil {
+		return err
+	}
 
+	if ok {
 		if new.GetRevision() != prev.GetRevision() {
 			return fmt.Errorf(
 				"can not update saga instance %s, revision %d is not the current revision",
@@ -161,20 +165,22 @@ func (r CRUDRepository) DeleteSagaInstance(
 	pk string,
 	i saga.Instance,
 ) error {
+	var (
+		s   SagaInstance
+		err error
+		ok  bool
+	)
 	tx := boltpersistence.ExtractTx(ptx)
-
 	bkt := tx.Bucket(InstanceBktName)
 	if bkt == nil {
 		return nil
 	}
 
-	pb := bkt.Get([]byte(i.InstanceID.Get()))
-	if pb == nil {
-		return nil
-	}
-
-	var s SagaInstance
-	if err := proto.Unmarshal(pb, &s); err != nil {
+	if ok, err = boltutil.UnmarshalProto(
+		bkt,
+		[]byte(i.InstanceID.Get()),
+		&s,
+	); err != nil || !ok {
 		return err
 	}
 
@@ -208,12 +214,11 @@ func (CRUDRepository) insertInstance(
 	new.InsertTime = time.Now().Format(time.RFC3339Nano)
 	new.UpdateTime = new.InsertTime
 
-	pb, err := proto.Marshal(new)
-	if err != nil {
-		return err
-	}
-
-	return bkt.Put([]byte(new.GetInstanceId()), pb)
+	return boltutil.MarshalProto(
+		bkt,
+		[]byte(new.GetInstanceId()),
+		new,
+	)
 }
 
 // updateInstance updates an existing saga instance.
@@ -227,10 +232,9 @@ func (CRUDRepository) updateInstance(
 	new.InsertTime = prev.InsertTime
 	new.UpdateTime = time.Now().Format(time.RFC3339Nano)
 
-	pb, err := proto.Marshal(new)
-	if err != nil {
-		return err
-	}
-
-	return bkt.Put([]byte(new.GetInstanceId()), pb)
+	return boltutil.MarshalProto(
+		bkt,
+		[]byte(new.GetInstanceId()),
+		new,
+	)
 }
