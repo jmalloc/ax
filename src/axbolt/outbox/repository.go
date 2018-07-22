@@ -42,16 +42,15 @@ func (Repository) LoadOutbox(
 	}
 	defer tx.Rollback()
 
-	obBkt := tx.Bucket(OutboxBktName)
-	if obBkt == nil {
+	bkt := tx.Bucket(OutboxBktName)
+	if bkt == nil {
 		return nil, false, nil
 	}
 
-	msgBkt := obBkt.Bucket([]byte(id.Get()))
-	if msgBkt == nil {
+	if bkt = bkt.Bucket([]byte(id.Get())); bkt == nil {
 		return nil, false, nil
 	}
-	c := msgBkt.Cursor()
+	c := bkt.Cursor()
 
 	var envelopes []endpoint.OutboundEnvelope
 	for k, v := c.First(); k != nil; k, v = c.Next() {
@@ -120,7 +119,7 @@ func (Repository) MarkAsSent(
 }
 
 func parseOutboxMessage(
-	v []byte,
+	p []byte,
 	causationID ax.MessageID,
 ) (endpoint.OutboundEnvelope, error) {
 	var (
@@ -133,7 +132,7 @@ func parseOutboxMessage(
 		},
 	}
 
-	if err = proto.Unmarshal(v, &outmsg); err != nil {
+	if err = proto.Unmarshal(p, &outmsg); err != nil {
 		return env, err
 	}
 
