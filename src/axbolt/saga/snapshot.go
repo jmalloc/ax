@@ -126,7 +126,7 @@ func (SnapshotRepository) SaveSagaSnapshot(
 // DeleteSagaSnapshots deletes any snapshots associated with a saga instance.
 //
 // This implementation does not verify the saga's persistence key. It locates a
-// child bucket indexed with id as a key and deletes it
+// child bucket indexed with id as a key and deletes it.
 func (SnapshotRepository) DeleteSagaSnapshots(
 	ctx context.Context,
 	ptx persistence.Tx,
