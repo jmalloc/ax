@@ -22,6 +22,10 @@ import (
 // interface.
 type Repository struct{}
 
+// OutboxBktName is the name of of the Bolt root bucket where all
+// outbox-specific data is stored.
+var OutboxBktName = []byte("ax_outbox")
+
 // LoadOutbox loads the unsent outbound messages that were produced when the
 // message identified by id was first delivered.
 func (Repository) LoadOutbox(
@@ -36,7 +40,7 @@ func (Repository) LoadOutbox(
 	}
 	defer tx.Rollback()
 
-	obBkt := tx.Bucket([]byte("ax_outbox"))
+	obBkt := tx.Bucket(OutboxBktName)
 	if obBkt == nil {
 		return nil, false, nil
 	}
@@ -72,7 +76,7 @@ func (Repository) SaveOutbox(
 	envs []endpoint.OutboundEnvelope,
 ) error {
 	tx := boltpersistance.ExtractTx(ptx)
-	obBkt, err := tx.CreateBucketIfNotExists([]byte("ax_outbox"))
+	obBkt, err := tx.CreateBucketIfNotExists(OutboxBktName)
 	if err != nil {
 		return err
 	}
@@ -103,7 +107,7 @@ func (Repository) MarkAsSent(
 	env endpoint.OutboundEnvelope,
 ) error {
 	tx := boltpersistance.ExtractTx(ptx)
-	obBkt := tx.Bucket([]byte("ax_outbox"))
+	obBkt := tx.Bucket(OutboxBktName)
 	if obBkt == nil {
 		return nil
 	}
