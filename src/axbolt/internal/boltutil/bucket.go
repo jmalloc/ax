@@ -1,6 +1,6 @@
 package boltutil
 
-import "github.com/boltdb/bolt"
+import "github.com/coreos/bbolt"
 
 // Has returns true if b contains k.
 func Has(b *bolt.Bucket, k []byte) bool {
