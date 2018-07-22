@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jmalloc/ax/src/axbolt/internal/boltutil"
+
 	bolt "github.com/coreos/bbolt"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -117,14 +119,10 @@ func (SnapshotRepository) SaveSagaSnapshot(
 		return err
 	}
 
-	pb, err := proto.Marshal(sn)
-	if err != nil {
-		return err
-	}
-
 	k := make([]byte, 8)
 	binary.PutVarint(k, int64(sn.GetRevision()))
-	return bkt.Put(k, pb)
+
+	return boltutil.MarshalProto(bkt, k, sn)
 }
 
 // DeleteSagaSnapshots deletes any snapshots associated with a saga instance.
