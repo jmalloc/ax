@@ -76,7 +76,8 @@ func SnapshotRepositorySuite(
 		g.Describe("LoadSagaSnapshot", func() {
 			g.Context("when the latest snapshot exists", func() {
 				var (
-					i saga.Instance
+					i      saga.Instance
+					latest saga.Revision
 				)
 				g.BeforeEach(func() {
 					i = saga.Instance{
@@ -85,8 +86,9 @@ func SnapshotRepositorySuite(
 							Value: "<foo>",
 						},
 					}
-					for r := 0; r < 3; r++ {
-						i.Revision = saga.Revision(r)
+					latest = saga.Revision(3)
+					for r := latest; r > saga.Revision(0); r -= saga.Revision(1) {
+						i.Revision = r
 						i = InsertSagaSnapshot(
 							ctx,
 							store,
@@ -125,7 +127,7 @@ func SnapshotRepositorySuite(
 					)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					m.Expect(l.InstanceID).Should(m.Equal(i.InstanceID))
-					m.Expect(l.Revision).Should(m.BeNumerically("==", i.Revision))
+					m.Expect(l.Revision).Should(m.BeNumerically("==", latest))
 					m.Expect(proto.Equal(l.Data, i.Data)).Should(m.BeTrue())
 				})
 
