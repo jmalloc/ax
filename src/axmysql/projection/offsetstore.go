@@ -50,7 +50,7 @@ func (OffsetStore) LoadOffset(
 // IncrementOffset increments the offset at which a consumer should resume
 // reading from the stream by one.
 //
-// pk is the projector's persitence key. c is the offset that is currently
+// pk is the projector's persistence key. c is the offset that is currently
 // stored, as returned by LoadOffset(). If c is not the offset that is
 // currently stored, the increment fails and a non-nil error is returned.
 func (s OffsetStore) IncrementOffset(
