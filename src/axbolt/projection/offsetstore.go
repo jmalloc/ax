@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
+	bolt "github.com/coreos/bbolt"
 	"github.com/jmalloc/ax/src/ax/persistence"
 	boltpersistence "github.com/jmalloc/ax/src/axbolt/persistence"
 )
@@ -32,7 +33,7 @@ func (OffsetStore) LoadOffset(
 		return 0, err
 	}
 
-	if bkt := tx.Bucket(ProjectionOffsetBktName); bkt == nil {
+	if bkt := tx.Bucket(ProjectionOffsetBktName); bkt != nil {
 		if b := bkt.Get([]byte(pk)); b != nil {
 			return binary.BigEndian.Uint64(b), nil
 		}
@@ -53,10 +54,22 @@ func (s OffsetStore) IncrementOffset(
 	c uint64,
 ) error {
 
+	var (
+		bkt *bolt.Bucket
+		err error
+	)
 	tx := boltpersistence.ExtractTx(ptx)
-	bkt := tx.Bucket(ProjectionOffsetBktName)
+	if bkt, err = tx.CreateBucketIfNotExists(
+		ProjectionOffsetBktName,
+	); err != nil {
+		return err
+	}
 
-	if b := bkt.Get([]byte(pk)); c > 0 && b != nil {
+	if c != 0 {
+		b := bkt.Get([]byte(pk))
+		if b == nil {
+			return nil
+		}
 		offset := binary.BigEndian.Uint64(b)
 		if c != offset {
 			return fmt.Errorf(
@@ -66,6 +79,7 @@ func (s OffsetStore) IncrementOffset(
 			)
 		}
 	}
+
 	c++
 	b := make([]byte, 8)
 	binary.BigEndian.PutUint64(b, c)
