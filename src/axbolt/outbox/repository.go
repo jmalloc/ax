@@ -17,7 +17,7 @@ import (
 
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/persistence"
-	boltpersistance "github.com/jmalloc/ax/src/axbolt/persistence"
+	boltpersistence "github.com/jmalloc/ax/src/axbolt/persistence"
 )
 
 // Repository is a Bolt-backed implementation of Ax's outbox.Repository
@@ -35,7 +35,7 @@ func (Repository) LoadOutbox(
 	ds persistence.DataStore,
 	id ax.MessageID,
 ) ([]endpoint.OutboundEnvelope, bool, error) {
-	db := boltpersistance.ExtractDB(ds)
+	db := boltpersistence.ExtractDB(ds)
 	tx, err := db.Begin(false)
 	if err != nil {
 		return nil, false, err
@@ -76,7 +76,7 @@ func (Repository) SaveOutbox(
 	id ax.MessageID,
 	envs []endpoint.OutboundEnvelope,
 ) error {
-	tx := boltpersistance.ExtractTx(ptx)
+	tx := boltpersistence.ExtractTx(ptx)
 	bkt, err := tx.CreateBucketIfNotExists(OutboxBktName)
 	if err != nil {
 		return err
@@ -106,7 +106,7 @@ func (Repository) MarkAsSent(
 	ptx persistence.Tx,
 	env endpoint.OutboundEnvelope,
 ) error {
-	tx := boltpersistance.ExtractTx(ptx)
+	tx := boltpersistence.ExtractTx(ptx)
 	bkt := tx.Bucket(OutboxBktName)
 	if bkt == nil {
 		return nil
