@@ -32,6 +32,7 @@ func (OffsetStore) LoadOffset(
 	if err != nil {
 		return 0, err
 	}
+	defer tx.Rollback()
 
 	if bkt := tx.Bucket(ProjectionOffsetBktName); bkt != nil {
 		if b := bkt.Get([]byte(pk)); b != nil {
