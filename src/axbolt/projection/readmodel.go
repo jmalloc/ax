@@ -4,7 +4,7 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/boltdb/bolt"
+	bolt "github.com/coreos/bbolt"
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/persistence"
 	boltpersistence "github.com/jmalloc/ax/src/axbolt/persistence"
