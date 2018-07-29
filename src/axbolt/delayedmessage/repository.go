@@ -13,7 +13,7 @@ import (
 	boltpersistence "github.com/jmalloc/ax/src/axbolt/persistence"
 )
 
-// Repository is a MySQL-backed implementation of Ax's delayedmessage.Repository
+// Repository is a Bolt-backed implementation of Ax's delayedmessage.Repository
 // interface.
 type Repository struct{}
 
