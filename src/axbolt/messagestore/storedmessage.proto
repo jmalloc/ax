@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+import "google/protobuf/any.proto"; 
+
+package axbolt.outbox;
+option go_package = "messagestore";
+
+// StoredMessage is a container for holding stored message-specific data that is
+// serialized into the protobuf format before being persisted in a Bolt bucket
+message StoredMessage{
+    string id = 1;
+    string causation_id = 2;
+    string correlation_id = 3;
+    string created_at = 4;
+    string send_at = 5;
+    google.protobuf.Any message = 6;
+} 
