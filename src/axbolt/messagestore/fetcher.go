@@ -11,8 +11,8 @@ import (
 
 // Fetcher is an interface for fetching rows from the message store
 type Fetcher interface {
-	// FetchRows fetches the n rows beginning at the given offset.
-	FetchRows(
+	// FetchMessages fetches the n messages beginning at the given offset.
+	FetchMessages(
 		ctx context.Context,
 		offset,
 		n uint64,
@@ -25,8 +25,8 @@ type StreamFetcher struct {
 	Stream string
 }
 
-// FetchRows fetches the n rows beginning at the given offset.
-func (f *StreamFetcher) FetchRows(
+// FetchMessages fetches the n messages beginning at the given offset.
+func (f *StreamFetcher) FetchMessages(
 	ctx context.Context,
 	offset,
 	n uint64,
@@ -85,8 +85,8 @@ type GlobalFetcher struct {
 	DB *bolt.DB
 }
 
-// FetchRows fetches the n rows beginning at the given offset.
-func (f *GlobalFetcher) FetchRows(
+// FetchMessages fetches the n messages beginning at the given offset.
+func (f *GlobalFetcher) FetchMessages(
 	ctx context.Context,
 	offset, n uint64,
 ) (map[uint64]*StoredMessage, error) {
