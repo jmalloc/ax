@@ -62,7 +62,7 @@ func (f *StreamFetcher) FetchMessages(
 	if k == nil || !bytes.Equal(k, b[:]) {
 		return r, nil
 	}
-	// iterate over stream bucket and retrieve n number of messages from global
+	// iterate over a stream bucket and retrieve n number of messages from global
 	// bucket using v as a global offset, after that insert them into resultant map
 	// with k as a stream offset value. If a message for whatever reason doesn't
 	// exist in global offset bucket, it is skipped. The number of messages in the

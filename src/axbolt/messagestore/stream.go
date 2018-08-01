@@ -2,9 +2,9 @@ package messagestore
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
+	"github.com/golang/protobuf/ptypes"
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/marshaling"
 )
@@ -27,7 +27,6 @@ type Stream struct {
 	Limit        uint64
 	PollInterval time.Duration
 
-	rows *sql.Rows
 	msgs map[uint64]*StoredMessage
 }
 
@@ -80,48 +79,17 @@ func (s *Stream) TryNext(ctx context.Context) (bool, error) {
 
 // Get returns the message at the current offset in the stream.
 func (s *Stream) Get(ctx context.Context) (ax.Envelope, error) {
-	if s.rows == nil {
+	if s.msgs == nil {
 		panic("Next() must be called before Get()")
 	}
 
-	var (
-		env         ax.Envelope
-		contentType string
-		data        []byte
-		createdAt   string
-		sendAt      string
-	)
-
-	err := s.rows.Scan(
-		&env.MessageID,
-		&env.CausationID,
-		&env.CorrelationID,
-		&createdAt,
-		&sendAt,
-		&contentType,
-		&data,
-	)
-	if err != nil {
-		return ax.Envelope{}, err
-	}
-
-	err = marshaling.UnmarshalTime(createdAt, &env.CreatedAt)
-	if err != nil {
-		return ax.Envelope{}, err
-	}
-
-	err = marshaling.UnmarshalTime(sendAt, &env.SendAt)
-	if err != nil {
-		return ax.Envelope{}, err
-	}
-	env.Message, err = ax.UnmarshalMessage(contentType, data)
-
-	return env, err
+	m := s.msgs[s.NextOffset-1]
+	return parseMessage(m)
 }
 
 // Offset returns the offset of the message returned by Get().
 func (s *Stream) Offset() (uint64, error) {
-	if s.rows == nil {
+	if s.msgs == nil {
 		panic("Next() must be called before Offset()")
 	}
 
@@ -159,4 +127,29 @@ func (s *Stream) advance() bool {
 		return true
 	}
 	return false
+}
+
+// parseMessage parses a message into an ax.Envelope struct
+func parseMessage(m *StoredMessage) (ax.Envelope, error) {
+	var (
+		err error
+		env ax.Envelope
+	)
+	var x ptypes.DynamicAny
+	if err = ptypes.UnmarshalAny(m.Message, &x); err != nil {
+		return env, err
+	}
+	env.Message, _ = x.Message.(ax.Message)
+
+	if err = env.MessageID.Parse(m.GetId()); err != nil {
+		return env, err
+	}
+	if err = env.CorrelationID.Parse(m.GetCorrelationId()); err != nil {
+		return env, err
+	}
+	if err = marshaling.UnmarshalTime(m.GetCreatedAt(), &env.CreatedAt); err != nil {
+		return env, err
+	}
+	err = marshaling.UnmarshalTime(m.GetSendAt(), &env.SendAt)
+	return env, err
 }
