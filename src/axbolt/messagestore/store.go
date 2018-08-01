@@ -62,17 +62,10 @@ func (Store) OpenStream(
 	stream string,
 	offset uint64,
 ) (messagestore.Stream, bool, error) {
-	db := boltpersistence.ExtractDB(ds)
-
-	id, ok, err := lookupStreamID(ctx, db, stream)
-	if !ok || err != nil {
-		return nil, false, err
-	}
-
 	return &Stream{
 		Fetcher: &StreamFetcher{
-			DB:       db,
-			StreamID: id,
+			DB:     boltpersistence.ExtractDB(ds),
+			Stream: stream,
 		},
 		NextOffset: offset,
 	}, true, nil
@@ -88,7 +81,7 @@ func (Store) OpenGlobal(
 ) (messagestore.Stream, error) {
 	return &Stream{
 		Fetcher: &GlobalFetcher{
-			DB: mysqlpersistence.ExtractDB(ds),
+			DB: boltpersistence.ExtractDB(ds),
 		},
 		NextOffset: offset,
 	}, nil
