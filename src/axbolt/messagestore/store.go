@@ -48,6 +48,7 @@ func (Store) AppendMessages(
 		if err = insertStreamOffset(tx, stream, offset, global); err != nil {
 			return err
 		}
+		offset++
 	}
 	return nil
 }
