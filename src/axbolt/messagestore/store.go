@@ -3,6 +3,7 @@ package messagestore
 import (
 	"context"
 
+	bolt "github.com/coreos/bbolt"
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/messagestore"
 	"github.com/jmalloc/ax/src/ax/persistence"
@@ -63,13 +64,19 @@ func (Store) OpenStream(
 	stream string,
 	offset uint64,
 ) (messagestore.Stream, bool, error) {
+	db := boltpersistence.ExtractDB(ds)
+	ok, err := streamExists(db, stream)
+	if err != nil {
+		return nil, ok, err
+	}
+
 	return &Stream{
 		Fetcher: &StreamFetcher{
-			DB:     boltpersistence.ExtractDB(ds),
+			DB:     db,
 			Stream: stream,
 		},
 		NextOffset: offset,
-	}, true, nil
+	}, ok, nil
 }
 
 // OpenGlobal opens the entire store for reading as a single stream.
@@ -86,4 +93,22 @@ func (Store) OpenGlobal(
 		},
 		NextOffset: offset,
 	}, nil
+}
+
+// streamExists returns true if the stream exists in the store.
+// It returns an error if starting db transaction fails
+func streamExists(db *bolt.DB, s string) (bool, error) {
+	tx, err := db.Begin(false)
+	if err != nil {
+		return false, err
+	}
+	defer tx.Rollback()
+
+	bkt := tx.Bucket(StreamBktName)
+	if bkt == nil {
+		return false, err
+	}
+
+	bkt = bkt.Bucket([]byte(s))
+	return bkt != nil, nil
 }

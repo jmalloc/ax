@@ -24,6 +24,9 @@ func MessageStoreSuite(
 			msgStore                   messagestore.GloballyOrderedStore
 			ctx                        context.Context
 			cancel                     func()
+			m1, m2                     ax.Envelope
+			t1, t2, t3, t4             time.Time
+			s1, s2                     string
 		)
 
 		g.BeforeEach(func() {
@@ -35,6 +38,34 @@ func MessageStoreSuite(
 
 			causationID = ax.GenerateMessageID()
 			correlationID = ax.GenerateMessageID()
+
+			t1 = time.Now()
+			t2 = time.Now()
+			t3 = time.Now()
+			t4 = time.Now()
+			s1 = "<stream1>"
+			s2 = "<stream4>"
+
+			m1 = ax.Envelope{
+				MessageID:     ax.GenerateMessageID(),
+				CausationID:   causationID,
+				CorrelationID: correlationID,
+				CreatedAt:     t1,
+				SendAt:        t2,
+				Message: &testmessages.Command{
+					Value: "<foo>",
+				},
+			}
+			m2 = ax.Envelope{
+				MessageID:     ax.GenerateMessageID(),
+				CausationID:   causationID,
+				CorrelationID: correlationID,
+				CreatedAt:     t3,
+				SendAt:        t4,
+				Message: &testmessages.Event{
+					Value: "<bar>",
+				},
+			}
 		})
 
 		g.AfterEach(func() {
@@ -42,38 +73,6 @@ func MessageStoreSuite(
 		})
 
 		g.Describe("AppendMessages", func() {
-			var m1, m2 ax.Envelope
-			var t1, t2, t3, t4 time.Time
-			var s1, s2 string
-			g.BeforeEach(func() {
-				t1 = time.Now()
-				t2 = time.Now()
-				t3 = time.Now()
-				t4 = time.Now()
-				s1 = "<stream1>"
-				s2 = "<stream4>"
-
-				m1 = ax.Envelope{
-					MessageID:     ax.GenerateMessageID(),
-					CausationID:   causationID,
-					CorrelationID: correlationID,
-					CreatedAt:     t1,
-					SendAt:        t2,
-					Message: &testmessages.Command{
-						Value: "<foo>",
-					},
-				}
-				m2 = ax.Envelope{
-					MessageID:     ax.GenerateMessageID(),
-					CausationID:   causationID,
-					CorrelationID: correlationID,
-					CreatedAt:     t3,
-					SendAt:        t4,
-					Message: &testmessages.Event{
-						Value: "<bar>",
-					},
-				}
-			})
 			g.Context("when the offset is the next unused offset in the stream", func() {
 				g.It("returns no error", func() {
 					tx, com, err := store.BeginTx(ctx)
@@ -110,7 +109,7 @@ func MessageStoreSuite(
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					defer com.Rollback()
 
-					offset := uint64(100)
+					offset := uint64(999)
 					err = msgStore.AppendMessages(
 						ctx,
 						tx,
@@ -122,6 +121,61 @@ func MessageStoreSuite(
 
 					err = com.Commit()
 					m.Expect(err).ShouldNot(m.HaveOccurred())
+				})
+			})
+		})
+
+		g.Describe("OpenStream", func() {
+			g.BeforeEach(func() {
+				tx, com, err := store.BeginTx(ctx)
+				m.Expect(err).ShouldNot(m.HaveOccurred())
+				defer com.Rollback()
+
+				offset := uint64(0)
+
+				err = msgStore.AppendMessages(
+					ctx,
+					tx,
+					s1,
+					offset,
+					[]ax.Envelope{m1, m2},
+				)
+				m.Expect(err).ShouldNot(m.HaveOccurred())
+
+				err = msgStore.AppendMessages(
+					ctx,
+					tx,
+					s2,
+					offset,
+					[]ax.Envelope{m1, m2},
+				)
+				m.Expect(err).ShouldNot(m.HaveOccurred())
+
+				err = com.Commit()
+				m.Expect(err).ShouldNot(m.HaveOccurred())
+			})
+			g.Context("when stream exists", func() {
+				g.It("returns true", func() {
+					offset := uint64(0)
+					_, ok, err := msgStore.OpenStream(
+						ctx,
+						store,
+						s1,
+						offset,
+					)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+					m.Expect(ok).Should(m.BeTrue())
+				})
+				g.It("returns the stream", func() {
+					offset := uint64(0)
+					s, _, err := msgStore.OpenStream(
+						ctx,
+						store,
+						s1,
+						offset,
+					)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+					m.Expect(s).ShouldNot(m.BeNil())
 				})
 			})
 		})
