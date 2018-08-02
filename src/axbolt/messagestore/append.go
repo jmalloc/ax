@@ -86,7 +86,7 @@ func insertStreamOffset(
 		return err
 	}
 
-	if o := bl1.Get(offsetkey); offset != binary.BigEndian.Uint64(o) ||
+	if o := bl1.Get(offsetkey); (o != nil && binary.BigEndian.Uint64(o) != offset) ||
 		(o == nil && offset != 0) {
 		// TODO: use OCC error https://github.com/jmalloc/ax/issues/93
 		return fmt.Errorf(
