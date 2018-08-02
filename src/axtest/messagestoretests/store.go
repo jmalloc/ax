@@ -77,8 +77,10 @@ func MessageStoreSuite(
 			g.Context("when the offset is the next unused offset in the stream", func() {
 				g.It("returns no error", func() {
 					tx, com, err := store.BeginTx(ctx)
-					offset := uint64(0)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
 					defer com.Rollback()
+
+					offset := uint64(0)
 
 					err = msgStore.AppendMessages(
 						ctx,
@@ -105,8 +107,10 @@ func MessageStoreSuite(
 			g.Context("when the offset is not the next unused offset in the stream", func() {
 				g.It("returns an error", func() {
 					tx, com, err := store.BeginTx(ctx)
-					offset := uint64(100)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
 					defer com.Rollback()
+
+					offset := uint64(100)
 					err = msgStore.AppendMessages(
 						ctx,
 						tx,
@@ -115,6 +119,9 @@ func MessageStoreSuite(
 						[]ax.Envelope{m1, m2},
 					)
 					m.Expect(err).Should(m.HaveOccurred())
+
+					err = com.Commit()
+					m.Expect(err).ShouldNot(m.HaveOccurred())
 				})
 			})
 		})
