@@ -69,7 +69,6 @@ func (s *Stream) TryNext(ctx context.Context) (bool, error) {
 			return true, nil
 		}
 	}
-
 	if err := s.fetchMessages(ctx); err != nil {
 		return false, err
 	}
@@ -83,7 +82,7 @@ func (s *Stream) Get(ctx context.Context) (ax.Envelope, error) {
 		panic("Next() must be called before Get()")
 	}
 
-	m := s.msgs[s.NextOffset-1]
+	m := s.msgs[s.NextOffset]
 	return parseMessage(m)
 }
 
@@ -92,7 +91,6 @@ func (s *Stream) Offset() (uint64, error) {
 	if s.msgs == nil {
 		panic("Next() must be called before Offset()")
 	}
-
 	return s.NextOffset - 1, nil
 }
 
@@ -113,7 +111,6 @@ func (s *Stream) fetchMessages(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
 	s.msgs = msgs
 	return nil
 }
@@ -142,6 +139,9 @@ func parseMessage(m *StoredMessage) (ax.Envelope, error) {
 	env.Message, _ = x.Message.(ax.Message)
 
 	if err = env.MessageID.Parse(m.GetId()); err != nil {
+		return env, err
+	}
+	if err = env.CausationID.Parse(m.GetCausationId()); err != nil {
 		return env, err
 	}
 	if err = env.CorrelationID.Parse(m.GetCorrelationId()); err != nil {

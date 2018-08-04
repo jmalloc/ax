@@ -34,14 +34,52 @@ func (f *StreamFetcher) FetchMessages(
 	offset,
 	n uint64,
 ) (map[uint64]*StoredMessage, error) {
+	type res struct {
+		msgs map[uint64]*StoredMessage
+		err  error
+	}
+	resNotify := make(chan res)
 	tx, err := f.DB.Begin(false)
-	r := map[uint64]*StoredMessage{}
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback()
 
-	bkt := tx.Bucket(MessageBktName)
+	go func() {
+		msgs, err := f.fetch(ctx, tx, offset, n)
+		resNotify <- res{
+			msgs: msgs,
+			err:  err,
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		_ = tx.Rollback()
+		return nil, ctx.Err()
+	case r := <-resNotify:
+		return r.msgs, r.err
+	}
+}
+
+// fetch iterates over a stream bucket and retrieve n number of messages from global
+// bucket using v as a global offset, after that insert them into resultant map
+// with k as a stream offset value. If a message for whatever reason doesn't
+// exist in global offset bucket, it is skipped. The number of messages in the
+// bucket can be less than n.
+func (f StreamFetcher) fetch(
+	ctx context.Context,
+	tx *bolt.Tx,
+	offset,
+	n uint64,
+) (map[uint64]*StoredMessage, error) {
+	// check if context is already cancelled
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
+	r := map[uint64]*StoredMessage{}
+	bkt := tx.Bucket(StreamBktName)
 	if bkt == nil {
 		return r, nil
 	}
@@ -55,25 +93,24 @@ func (f *StreamFetcher) FetchMessages(
 	if gbkt == nil {
 		return r, nil
 	}
+	if gbkt = gbkt.Bucket(msgbkt); gbkt == nil {
+		return r, nil
+	}
 
 	c := bkt.Cursor()
 	b := [8]byte{}
 
 	binary.BigEndian.PutUint64(b[:], offset)
 	k, v := c.Seek(b[:])
-	// no exact match, return an empty map
-	if k == nil || !bytes.Equal(k, b[:]) {
+	// no exact match or value greater than offset, return an empty map
+	if k == nil || bytes.Compare(k, b[:]) == -1 {
 		return r, nil
 	}
-	// iterate over a stream bucket and retrieve n number of messages from global
-	// bucket using v as a global offset, after that insert them into resultant map
-	// with k as a stream offset value. If a message for whatever reason doesn't
-	// exist in global offset bucket, it is skipped. The number of messages in the
-	// bucket can be less than n.
+
 	for i := uint64(0); i < n && k != nil && v != nil; k, v = c.Next() {
 		if m := gbkt.Get(v); m != nil {
 			var msg StoredMessage
-			if err = proto.Unmarshal(m, &msg); err != nil {
+			if err := proto.Unmarshal(m, &msg); err != nil {
 				return nil, err
 			}
 			r[binary.BigEndian.Uint64(k)] = &msg
@@ -99,13 +136,17 @@ func (f *GlobalFetcher) FetchMessages(
 	}
 	defer tx.Rollback()
 
-	bkt, err := tx.CreateBucketIfNotExists(MessageBktName)
-	if err != nil {
-		return nil, err
+	r := map[uint64]*StoredMessage{}
+
+	bkt := tx.Bucket(MessageBktName)
+	if bkt == nil {
+		return r, nil
+	}
+	if bkt = bkt.Bucket(msgbkt); bkt == nil {
+		return r, nil
 	}
 
 	c := bkt.Cursor()
-	r := map[uint64]*StoredMessage{}
 	b := [8]byte{}
 
 	binary.BigEndian.PutUint64(b[:], offset)

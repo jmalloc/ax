@@ -7,6 +7,7 @@ import (
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/messagestore"
 	"github.com/jmalloc/ax/src/ax/persistence"
+	"github.com/jmalloc/ax/src/axtest"
 	"github.com/jmalloc/ax/src/axtest/testmessages"
 	g "github.com/onsi/ginkgo"
 	m "github.com/onsi/gomega"
@@ -44,7 +45,7 @@ func MessageStoreSuite(
 			t3 = time.Now()
 			t4 = time.Now()
 			s1 = "<stream1>"
-			s2 = "<stream4>"
+			s2 = "<stream2>"
 
 			m1 = ax.Envelope{
 				MessageID:     ax.GenerateMessageID(),
@@ -176,6 +177,122 @@ func MessageStoreSuite(
 					)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					m.Expect(s).ShouldNot(m.BeNil())
+				})
+			})
+			g.Context("Stream.Next", func() {
+				g.Context("when next message is available", func() {
+					g.It("advances the stream and returns nil", func() {
+						offset := uint64(0)
+						s, ok, err := msgStore.OpenStream(
+							ctx,
+							store,
+							s1,
+							offset,
+						)
+						m.Expect(err).ShouldNot(m.HaveOccurred())
+						m.Expect(ok).Should(m.BeTrue())
+
+						err = s.Next(ctx)
+						m.Expect(err).ShouldNot(m.HaveOccurred())
+					})
+				})
+				g.Context("when context is cancelled", func() {
+					g.It("returns context.Canceled error", func() {
+						offset := uint64(0)
+						s, ok, err := msgStore.OpenStream(
+							ctx,
+							store,
+							s1,
+							offset,
+						)
+						m.Expect(err).ShouldNot(m.HaveOccurred())
+						m.Expect(ok).Should(m.BeTrue())
+
+						cancel()
+
+						err = s.Next(ctx)
+						m.Expect(err).Should(m.MatchError(context.Canceled))
+					})
+				})
+				g.Context("when next message is unavailable", func() {
+					g.It("blocks indefinitely", func() {
+						offset := uint64(0)
+						errNotify := make(chan error)
+						s, ok, err := msgStore.OpenStream(
+							ctx,
+							store,
+							s1,
+							offset,
+						)
+						m.Expect(err).ShouldNot(m.HaveOccurred())
+						m.Expect(ok).Should(m.BeTrue())
+
+						go func() {
+							for {
+								errNotify <- s.Next(ctx)
+							}
+						}()
+						// m1
+						m.Eventually(errNotify).Should(m.Receive(m.Succeed()))
+						// m2
+						m.Eventually(errNotify).Should(m.Receive(m.Succeed()))
+						// no other messages
+						m.Consistently(errNotify).ShouldNot(m.Receive())
+					})
+				})
+			})
+			g.Context("Stream.Offset", func() {
+				g.It("returns the current offset of the stream", func() {
+					offset := uint64(0)
+					s, ok, err := msgStore.OpenStream(
+						ctx,
+						store,
+						s1,
+						offset,
+					)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+					m.Expect(ok).Should(m.BeTrue())
+
+					err = s.Next(ctx)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+
+					o, err := s.Offset()
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+					m.Expect(o).Should(m.BeNumerically("==", 0))
+
+					err = s.Next(ctx)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+
+					o, err = s.Offset()
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+					m.Expect(o).Should(m.BeNumerically("==", 1))
+				})
+			})
+			g.Context("Stream.Get", func() {
+				g.It("returns the message at the current offset of the stream", func() {
+					offset := uint64(0)
+					s, ok, err := msgStore.OpenStream(
+						ctx,
+						store,
+						s1,
+						offset,
+					)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+					m.Expect(ok).Should(m.BeTrue())
+
+					err = s.Next(ctx)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+
+					env, err := s.Get(ctx)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+					m.Expect(axtest.EnvelopesEqual(env, m1)).Should(m.BeTrue())
+
+					err = s.Next(ctx)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+
+					env, err = s.Get(ctx)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+					m.Expect(axtest.EnvelopesEqual(env, m2)).Should(m.BeTrue())
 				})
 			})
 		})
