@@ -14,7 +14,7 @@ func NewDataStore(db *protavo.DB) persistence.DataStore {
 	return &protavopersistence.DataStore{DB: db}
 }
 
-// GetDB returns the SQL database contained in ctx.
+// GetDB returns the Protavo database contained in ctx.
 //
 // It panics if ctx does not contain a Protavo-specific SQL database.
 func GetDB(ctx context.Context) *protavo.DB {
@@ -22,7 +22,7 @@ func GetDB(ctx context.Context) *protavo.DB {
 	return protavopersistence.ExtractDB(ds)
 }
 
-// GetTx returns the SQL transaction contained in ctx.
+// GetTx returns the Protavo transaction contained in ctx.
 //
 // It panics if ctx does not contain a Protavo-specific SQL transaction.
 func GetTx(ctx context.Context) driver.WriteTx {
