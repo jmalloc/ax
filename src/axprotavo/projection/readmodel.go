@@ -64,7 +64,7 @@ func NewReadModelProjector(rm ReadModel) *ReadModelProjector {
 			reflect.TypeOf((*ax.Event)(nil)).Elem(),
 			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
 			reflect.TypeOf((*context.Context)(nil)).Elem(),
-			reflect.TypeOf((driver.WriteTx)(nil)),
+			reflect.TypeOf((*driver.WriteTx)(nil)).Elem(),
 		},
 		[]reflect.Type{
 			reflect.TypeOf((*error)(nil)).Elem(),
@@ -128,7 +128,7 @@ var (
 		In: []reflect.Type{
 			reflect.TypeOf((*ReadModel)(nil)).Elem(),
 			reflect.TypeOf((*context.Context)(nil)).Elem(),
-			reflect.TypeOf((driver.WriteTx)(nil)),
+			reflect.TypeOf((*driver.WriteTx)(nil)).Elem(),
 			reflect.TypeOf((*ax.Event)(nil)).Elem(),
 		},
 		Out: []reflect.Type{
@@ -140,7 +140,7 @@ var (
 		In: []reflect.Type{
 			reflect.TypeOf((*ReadModel)(nil)).Elem(),
 			reflect.TypeOf((*context.Context)(nil)).Elem(),
-			reflect.TypeOf((driver.WriteTx)(nil)),
+			reflect.TypeOf((*driver.WriteTx)(nil)).Elem(),
 			reflect.TypeOf((*ax.Event)(nil)).Elem(),
 			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
 		},
