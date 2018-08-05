@@ -17,10 +17,10 @@ const (
 	BktPathSeparator = "/"
 )
 
-// GetBucket retrieves a Bolt DB bucket with a name of the last string of ss.
+// GetBkt retrieves a Bolt DB bucket with a name of the last string of ss.
 // All preceding strings in ss represent names the parent buckets of the last
 // string (bucket name). If any bucket in ss is nonexistant, nil is returned.
-func GetBucket(tx *bolt.Tx, ss ...string) *bolt.Bucket {
+func GetBkt(tx *bolt.Tx, ss ...string) *bolt.Bucket {
 	var (
 		b *bolt.Bucket
 	)
@@ -45,14 +45,14 @@ func GetBucket(tx *bolt.Tx, ss ...string) *bolt.Bucket {
 // any bucket in the path is nonexistant, nil is returned.
 func GetBktWithPath(tx *bolt.Tx, path string) *bolt.Bucket {
 	ss := strings.Split(path, BktPathSeparator)
-	return GetBucket(tx, ss...)
+	return GetBkt(tx, ss...)
 }
 
 // Get retrieves a value from the bucket which is the last in ss and it has a
 // key key. If any bucket in ss is nonexistant nil is returned. If key does not
 // exist in the last bucket of ss, nil is returned.
 func Get(tx *bolt.Tx, key string, ss ...string) []byte {
-	bkt := GetBucket(tx, ss...)
+	bkt := GetBkt(tx, ss...)
 	if bkt == nil {
 		return nil
 	}

@@ -109,6 +109,6 @@ func streamExists(db *bolt.DB, s string) (bool, error) {
 	}
 	defer tx.Rollback()
 
-	bkt := boltutil.GetBucket(tx, StreamBktName, s)
+	bkt := boltutil.GetBkt(tx, StreamBktName, s)
 	return bkt != nil, nil
 }
