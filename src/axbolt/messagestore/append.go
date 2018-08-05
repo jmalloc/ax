@@ -25,16 +25,12 @@ func insertGlobalOffsetMessage(tx *bolt.Tx, env ax.Envelope) (uint64, error) {
 		offset uint64
 		b      [8]byte
 	)
-	bl0, err := tx.CreateBucketIfNotExists(MessageBktName)
-	if err != nil {
-		return 0, err
-	}
 
-	if o := bl0.Get(offsetkey); o != nil {
+	if o := boltutil.Get(tx, OffsetKey, GlobalStreamBktName); o != nil {
 		offset = binary.BigEndian.Uint64(o)
 	}
 
-	bl1, err := bl0.CreateBucketIfNotExists(msgbkt)
+	bkt, err := boltutil.MakeBktWithPath(tx, GlobalStreamMsgBktPath)
 	if err != nil {
 		return 0, err
 	}
@@ -53,10 +49,12 @@ func insertGlobalOffsetMessage(tx *bolt.Tx, env ax.Envelope) (uint64, error) {
 
 	offset++
 	binary.BigEndian.PutUint64(b[:], offset)
-	if err = boltutil.MarshalProto(bl1, b[:], m); err != nil {
+	if err = boltutil.MarshalProto(bkt, b[:], m); err != nil {
 		return 0, err
 	}
-	return offset, bl0.Put(offsetkey, b[:])
+
+	return offset,
+		boltutil.Put(tx, OffsetKey, b[:], GlobalStreamBktName)
 }
 
 // insertStreamOffset inserts a message into the stream offset bucket. This
@@ -76,18 +74,10 @@ func insertStreamOffset(
 	var (
 		b1, b2 [8]byte
 	)
-	bl0, err := tx.CreateBucketIfNotExists(StreamBktName)
-	if err != nil {
-		return err
-	}
-
-	bl1, err := bl0.CreateBucketIfNotExists([]byte(stream))
-	if err != nil {
-		return err
-	}
-
-	if o := bl1.Get(offsetkey); (o != nil && binary.BigEndian.Uint64(o) != offset) ||
-		(o == nil && offset != 0) {
+	p := fmt.Sprintf("%s/%s", StreamBktName, stream)
+	o := boltutil.GetWithPath(tx, OffsetKey, p)
+	if o != nil && binary.BigEndian.Uint64(o) != offset ||
+		o == nil && offset != 0 {
 		// TODO: use OCC error https://github.com/jmalloc/ax/issues/93
 		return fmt.Errorf(
 			"can not append to stream %s, %d is not the next free offset",
@@ -96,16 +86,16 @@ func insertStreamOffset(
 		)
 	}
 
-	bl2, err := bl1.CreateBucketIfNotExists(msgbkt)
-	if err != nil {
-		return err
-	}
-
 	offset++
 	binary.BigEndian.PutUint64(b1[:], offset)
 	binary.BigEndian.PutUint64(b2[:], global)
-	if err := bl2.Put(b1[:], b2[:]); err != nil {
+
+	bkt, err := boltutil.MakeBktWithPath(tx, fmt.Sprintf("%s/msgs", p))
+	if err != nil {
 		return err
 	}
-	return bl1.Put(offsetkey, b1[:])
+	if err := bkt.Put(b1[:], b2[:]); err != nil {
+		return err
+	}
+	return boltutil.PutWithPath(tx, OffsetKey, b1[:], p)
 }

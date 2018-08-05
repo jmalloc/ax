@@ -7,23 +7,28 @@ import (
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/messagestore"
 	"github.com/jmalloc/ax/src/ax/persistence"
+	"github.com/jmalloc/ax/src/axbolt/internal/boltutil"
 	boltpersistence "github.com/jmalloc/ax/src/axbolt/persistence"
 )
 
-// StreamBktName is the name of the Bolt root bucket that contains message
-// offsets for each stream
-var StreamBktName = []byte("ax_messagestore_stream")
+const (
+	// StreamBktName is the name of the Bolt root bucket that contains message
+	// offsets for each stream
+	StreamBktName = "ax_messagestore_stream"
 
-// MessageBktName is the name of the Bolt root bucket that contains all messages
-// stored as a global stream
-var MessageBktName = []byte("ax_messagestore_message")
+	// GlobalStreamBktName is the name of the Bolt root bucket that contains all messages
+	// stored as a global stream
+	GlobalStreamBktName = "ax_messagestore_message"
 
-// offset key is the key inside stream buckets to retain the value of tha latesgt
-// offset used inside the stream bucket.
-var offsetkey = []byte("offset")
+	// GlobalStreamMsgBktPath is the path to the bucket that contains messages
+	// in the global stream
+	GlobalStreamMsgBktPath = GlobalStreamBktName + "/msgs"
 
-// msgbkt is the key inside the stream bucket to address a message subbucket.
-var msgbkt = []byte("msgs")
+	// OffsetKey is the key within stream buckets to hold the value of the latest
+	// stream offset. This value is incremented in case of successful message
+	// insertion.
+	OffsetKey = "offset"
+)
 
 // Store is a Bolt-backed implementation of Ax's
 // messagestore.GloballyOrderedStore interface.
@@ -104,11 +109,6 @@ func streamExists(db *bolt.DB, s string) (bool, error) {
 	}
 	defer tx.Rollback()
 
-	bkt := tx.Bucket(StreamBktName)
-	if bkt == nil {
-		return false, err
-	}
-
-	bkt = bkt.Bucket([]byte(s))
+	bkt := boltutil.GetBucket(tx, StreamBktName, s)
 	return bkt != nil, nil
 }

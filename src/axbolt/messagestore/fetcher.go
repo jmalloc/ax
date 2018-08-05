@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	fmt "fmt"
 
 	bolt "github.com/coreos/bbolt"
 	"github.com/golang/protobuf/proto"
+	"github.com/jmalloc/ax/src/axbolt/internal/boltutil"
 )
 
 // Fetcher is an interface for fetching rows from the message store
@@ -54,14 +56,13 @@ func (f *StreamFetcher) FetchMessages(
 
 	select {
 	case <-ctx.Done():
-		_ = tx.Rollback()
 		return nil, ctx.Err()
 	case r := <-resNotify:
 		return r.msgs, r.err
 	}
 }
 
-// fetch iterates over a stream bucket and retrieve n number of messages from global
+// fetch iterates over a stream bucket and retrieves n number of messages from global
 // bucket using v as a global offset, after that insert them into resultant map
 // with k as a stream offset value. If a message for whatever reason doesn't
 // exist in global offset bucket, it is skipped. The number of messages in the
@@ -78,22 +79,13 @@ func (f StreamFetcher) fetch(
 		return nil, ctx.Err()
 	default:
 	}
+
 	r := map[uint64]*StoredMessage{}
-	bkt := tx.Bucket(StreamBktName)
+	bkt := boltutil.GetBktWithPath(
+		tx,
+		fmt.Sprintf("%s/%s/msgs", StreamBktName, f.Stream),
+	)
 	if bkt == nil {
-		return r, nil
-	}
-	if bkt = bkt.Bucket([]byte(f.Stream)); bkt == nil {
-		return r, nil
-	}
-	if bkt = bkt.Bucket(msgbkt); bkt == nil {
-		return r, nil
-	}
-	gbkt := tx.Bucket(MessageBktName)
-	if gbkt == nil {
-		return r, nil
-	}
-	if gbkt = gbkt.Bucket(msgbkt); gbkt == nil {
 		return r, nil
 	}
 
@@ -108,7 +100,11 @@ func (f StreamFetcher) fetch(
 	}
 
 	for i := uint64(0); i < n && k != nil && v != nil; k, v = c.Next() {
-		if m := gbkt.Get(v); m != nil {
+		if m := boltutil.GetWithPath(
+			tx,
+			string(v),
+			GlobalStreamMsgBktPath,
+		); m != nil {
 			var msg StoredMessage
 			if err := proto.Unmarshal(m, &msg); err != nil {
 				return nil, err
@@ -130,19 +126,50 @@ func (f *GlobalFetcher) FetchMessages(
 	ctx context.Context,
 	offset, n uint64,
 ) (map[uint64]*StoredMessage, error) {
+	type res struct {
+		msgs map[uint64]*StoredMessage
+		err  error
+	}
+	resNotify := make(chan res)
 	tx, err := f.DB.Begin(false)
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback()
 
-	r := map[uint64]*StoredMessage{}
+	go func() {
+		msgs, err := f.fetch(ctx, tx, offset, n)
+		resNotify <- res{
+			msgs: msgs,
+			err:  err,
+		}
+	}()
 
-	bkt := tx.Bucket(MessageBktName)
-	if bkt == nil {
-		return r, nil
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case r := <-resNotify:
+		return r.msgs, r.err
 	}
-	if bkt = bkt.Bucket(msgbkt); bkt == nil {
+}
+
+// fetch iterates over the global offset bucket and retrieves n number of messages
+// starting from the message with key equal to the value of offset. The number
+// of messages in the bucket can be less than n.
+func (f *GlobalFetcher) fetch(
+	ctx context.Context,
+	tx *bolt.Tx,
+	offset,
+	n uint64,
+) (map[uint64]*StoredMessage, error) {
+	// check if context is already cancelled
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
+	r := map[uint64]*StoredMessage{}
+	bkt := boltutil.GetBktWithPath(tx, GlobalStreamMsgBktPath)
+	if bkt == nil {
 		return r, nil
 	}
 
@@ -151,16 +178,15 @@ func (f *GlobalFetcher) FetchMessages(
 
 	binary.BigEndian.PutUint64(b[:], offset)
 	k, v := c.Seek(b[:])
-	// no exact match, return an empty map
-	if k == nil || !bytes.Equal(k, b[:]) {
+
+	// no exact match or value greater than offset, return an empty map
+	if k == nil || bytes.Compare(k, b[:]) == -1 {
 		return r, nil
 	}
-	// iterate over the global offset bucket and retrieve n number of messages
-	// starting from the message with key equal to the value of offset. The number
-	// of messages in the bucket can be less than n.
+
 	for i := uint64(0); i < n && k != nil && v != nil; k, v = c.Next() {
 		var msg StoredMessage
-		if err = proto.Unmarshal(v, &msg); err != nil {
+		if err := proto.Unmarshal(v, &msg); err != nil {
 			return nil, err
 		}
 		r[binary.BigEndian.Uint64(k)] = &msg
