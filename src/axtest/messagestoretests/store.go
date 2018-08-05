@@ -196,7 +196,7 @@ func MessageStoreSuite(
 						m.Expect(err).ShouldNot(m.HaveOccurred())
 					})
 				})
-				g.Context("when context is cancelled", func() {
+				g.Context("when context is canceled", func() {
 					g.It("returns context.Canceled error", func() {
 						offset := uint64(0)
 						s, ok, err := msgStore.OpenStream(
@@ -352,7 +352,7 @@ func MessageStoreSuite(
 						m.Expect(err).ShouldNot(m.HaveOccurred())
 					})
 				})
-				g.Context("when context is cancelled", func() {
+				g.Context("when context is canceled", func() {
 					g.It("returns context.Canceled error", func() {
 						offset := uint64(0)
 						s, err := msgStore.OpenGlobal(

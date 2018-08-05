@@ -73,7 +73,7 @@ func (f StreamFetcher) fetch(
 	offset,
 	n uint64,
 ) (map[uint64]*StoredMessage, error) {
-	// check if context is already cancelled
+	// check if context is already canceled
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
@@ -161,7 +161,7 @@ func (f *GlobalFetcher) fetch(
 	offset,
 	n uint64,
 ) (map[uint64]*StoredMessage, error) {
-	// check if context is already cancelled
+	// check if context is already canceled
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
