@@ -3,7 +3,6 @@ package outbox
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/jmalloc/ax/src/axbolt/internal/boltutil"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/coreos/bbolt"
 
 	"github.com/jmalloc/ax/src/ax/endpoint"
+	"github.com/jmalloc/ax/src/ax/marshaling"
 
 	"github.com/golang/protobuf/proto"
 
@@ -24,9 +24,11 @@ import (
 // interface.
 type Repository struct{}
 
-// OutboxBktName is the name of of the Bolt root bucket where all
-// outbox-specific data is stored.
-var OutboxBktName = []byte("ax_outbox")
+const (
+	// OutboxBktName is the name of of the Bolt root bucket where all
+	// outbox-specific data is stored.
+	OutboxBktName = "ax_outbox"
+)
 
 // LoadOutbox loads the unsent outbound messages that were produced when the
 // message identified by id was first delivered.
@@ -42,14 +44,15 @@ func (Repository) LoadOutbox(
 	}
 	defer tx.Rollback()
 
-	bkt := tx.Bucket(OutboxBktName)
+	bkt := boltutil.GetBkt(
+		tx,
+		OutboxBktName,
+		id.Get(),
+	)
 	if bkt == nil {
 		return nil, false, nil
 	}
 
-	if bkt = bkt.Bucket([]byte(id.Get())); bkt == nil {
-		return nil, false, nil
-	}
 	c := bkt.Cursor()
 
 	var envelopes []endpoint.OutboundEnvelope
@@ -77,16 +80,20 @@ func (Repository) SaveOutbox(
 	envs []endpoint.OutboundEnvelope,
 ) error {
 	tx := boltpersistence.ExtractTx(ptx)
-	bkt, err := tx.CreateBucketIfNotExists(OutboxBktName)
-	if err != nil {
-		return err
-	}
 
-	if b := bkt.Bucket([]byte(id.Get())); b != nil {
+	if b := boltutil.GetBkt(
+		tx,
+		OutboxBktName,
+		id.Get(),
+	); b != nil {
 		return ErrOutboxExists
 	}
 
-	bkt, err = bkt.CreateBucket([]byte(id.Get()))
+	bkt, err := boltutil.MakeBkt(
+		tx,
+		OutboxBktName,
+		id.Get(),
+	)
 	if err != nil {
 		return err
 	}
@@ -107,14 +114,15 @@ func (Repository) MarkAsSent(
 	env endpoint.OutboundEnvelope,
 ) error {
 	tx := boltpersistence.ExtractTx(ptx)
-	bkt := tx.Bucket(OutboxBktName)
+
+	bkt := boltutil.GetBkt(
+		tx,
+		OutboxBktName,
+		env.CausationID.Get(),
+	)
 	if bkt == nil {
 		return nil
 	}
-	if bkt = bkt.Bucket([]byte(env.CausationID.Get())); bkt == nil {
-		return nil
-	}
-
 	return bkt.Delete([]byte(env.MessageID.Get()))
 }
 
@@ -151,12 +159,10 @@ func parseOutboxMessage(
 	env.Operation = endpoint.Operation(outmsg.GetOperation())
 	env.DestinationEndpoint = outmsg.GetDestinationEndpoint()
 
-	if env.CreatedAt, err = time.Parse(time.RFC3339Nano, outmsg.GetCreatedAt()); err != nil {
+	if err = marshaling.UnmarshalTime(outmsg.GetCreatedAt(), &env.CreatedAt); err != nil {
 		return env, err
 	}
-
-	env.SendAt, err = time.Parse(time.RFC3339Nano, outmsg.GetSendAt())
-
+	err = marshaling.UnmarshalTime(outmsg.GetSendAt(), &env.SendAt)
 	return env, err
 }
 
@@ -170,8 +176,8 @@ func insertOutboxMessage(
 		Id:                  env.MessageID.Get(),
 		CausationId:         env.CausationID.Get(),
 		CorrelationId:       env.CorrelationID.Get(),
-		CreatedAt:           env.CreatedAt.Format(time.RFC3339Nano),
-		SendAt:              env.SendAt.Format(time.RFC3339Nano),
+		CreatedAt:           marshaling.MarshalTime(env.CreatedAt),
+		SendAt:              marshaling.MarshalTime(env.SendAt),
 		Operation:           int32(env.Operation),
 		DestinationEndpoint: env.DestinationEndpoint,
 	}
