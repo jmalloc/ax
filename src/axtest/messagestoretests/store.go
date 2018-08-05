@@ -296,5 +296,157 @@ func MessageStoreSuite(
 				})
 			})
 		})
+
+		g.Describe("OpenGlobal", func() {
+			g.BeforeEach(func() {
+				tx, com, err := store.BeginTx(ctx)
+				m.Expect(err).ShouldNot(m.HaveOccurred())
+				defer com.Rollback()
+
+				offset := uint64(0)
+
+				err = msgStore.AppendMessages(
+					ctx,
+					tx,
+					s1,
+					offset,
+					[]ax.Envelope{m1, m2},
+				)
+				m.Expect(err).ShouldNot(m.HaveOccurred())
+
+				err = msgStore.AppendMessages(
+					ctx,
+					tx,
+					s2,
+					offset,
+					[]ax.Envelope{m1, m2},
+				)
+				m.Expect(err).ShouldNot(m.HaveOccurred())
+
+				err = com.Commit()
+				m.Expect(err).ShouldNot(m.HaveOccurred())
+			})
+			g.Context("when global stream exists", func() {
+				g.It("returns no error", func() {
+					offset := uint64(0)
+					_, err := msgStore.OpenGlobal(
+						ctx,
+						store,
+						offset,
+					)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+				})
+			})
+			g.Context("Stream.Next", func() {
+				g.Context("when next message is available", func() {
+					g.It("advances the stream and returns nil", func() {
+						offset := uint64(0)
+						s, err := msgStore.OpenGlobal(
+							ctx,
+							store,
+							offset,
+						)
+						m.Expect(err).ShouldNot(m.HaveOccurred())
+
+						err = s.Next(ctx)
+						m.Expect(err).ShouldNot(m.HaveOccurred())
+					})
+				})
+				g.Context("when context is cancelled", func() {
+					g.It("returns context.Canceled error", func() {
+						offset := uint64(0)
+						s, err := msgStore.OpenGlobal(
+							ctx,
+							store,
+							offset,
+						)
+						m.Expect(err).ShouldNot(m.HaveOccurred())
+
+						cancel()
+
+						err = s.Next(ctx)
+						m.Expect(err).Should(m.MatchError(context.Canceled))
+					})
+				})
+				g.Context("when next message is unavailable", func() {
+					g.It("blocks indefinitely", func() {
+						offset := uint64(0)
+						errNotify := make(chan error)
+						s, err := msgStore.OpenGlobal(
+							ctx,
+							store,
+							offset,
+						)
+						m.Expect(err).ShouldNot(m.HaveOccurred())
+
+						go func() {
+							for {
+								errNotify <- s.Next(ctx)
+							}
+						}()
+						// m1
+						m.Eventually(errNotify).Should(m.Receive(m.Succeed()))
+						// m2
+						m.Eventually(errNotify).Should(m.Receive(m.Succeed()))
+						// m3
+						m.Eventually(errNotify).Should(m.Receive(m.Succeed()))
+						// m4
+						m.Eventually(errNotify).Should(m.Receive(m.Succeed()))
+						// no other messages
+						m.Consistently(errNotify).ShouldNot(m.Receive())
+					})
+				})
+			})
+			g.Context("Stream.Offset", func() {
+				g.It("returns the current offset of the stream", func() {
+					offset := uint64(0)
+					s, err := msgStore.OpenGlobal(
+						ctx,
+						store,
+						offset,
+					)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+
+					err = s.Next(ctx)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+
+					o, err := s.Offset()
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+					m.Expect(o).Should(m.BeNumerically("==", 0))
+
+					err = s.Next(ctx)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+
+					o, err = s.Offset()
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+					m.Expect(o).Should(m.BeNumerically("==", 1))
+				})
+			})
+			g.Context("Stream.Get", func() {
+				g.It("returns the message at the current offset of the stream", func() {
+					offset := uint64(0)
+					s, err := msgStore.OpenGlobal(
+						ctx,
+						store,
+						offset,
+					)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+
+					err = s.Next(ctx)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+
+					env, err := s.Get(ctx)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+					m.Expect(axtest.EnvelopesEqual(env, m1)).Should(m.BeTrue())
+
+					err = s.Next(ctx)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+
+					env, err = s.Get(ctx)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+					m.Expect(axtest.EnvelopesEqual(env, m2)).Should(m.BeTrue())
+				})
+			})
+		})
 	}
 }
