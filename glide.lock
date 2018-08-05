@@ -1,5 +1,5 @@
-hash: 3331fbcfda7bd141ca8f5830a3d7b28b33e8ce4dbf4fad2188a08a72699f3f0a
-updated: 2018-08-05T13:17:43.987084821+10:00
+hash: b8b17d9154ff2728c7e3a8ce1bbe53bebee7a744687afd066abd77799f7ec0b9
+updated: 2018-06-07T15:13:52.788372913+10:00
 imports:
 - name: github.com/go-sql-driver/mysql
   version: d523deb1b23d913de5bdada721a6071e71283618
@@ -8,33 +8,15 @@ imports:
   subpackages:
   - jsonpb
   - proto
-  - ptypes
-  - ptypes/any
-  - ptypes/duration
   - ptypes/struct
-  - ptypes/timestamp
-- name: github.com/hpcloud/tail
-  version: a1dbeea552b7c8df4b542c66073e393de198a800
-  subpackages:
-  - ratelimiter
-  - util
-  - watch
-  - winfile
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
-- name: github.com/jmalloc/protavo
-  version: eb94d36b68647ba4d2ae7ff5a0b1e1db955aee0f
-  subpackages:
-  - src/protavo
-  - src/protavo/document
-  - src/protavo/driver
-  - src/protavo/filter
 - name: github.com/jmalloc/twelf
   version: 9f134de095cba6edc97910f8b38b313e354e6905
   subpackages:
   - src/twelf
 - name: github.com/onsi/ginkgo
-  version: 3774a09d95489ccaa16032e0770d08ea77ba6184
+  version: fa5fabab2a1bfbd924faf4c067d07ae414e2aedf
   subpackages:
   - config
   - extensions/table
@@ -55,7 +37,7 @@ imports:
   - reporters/stenographer/support/go-isatty
   - types
 - name: github.com/onsi/gomega
-  version: b6ea1ea48f981d0f615a154a45eabb9dd466556d
+  version: 62bff4df71bdbc266561a0caee19f0594b17c240
   subpackages:
   - format
   - internal/assertion
@@ -71,19 +53,19 @@ imports:
 - name: github.com/satori/go.uuid
   version: f58768cc1a7a7e77a3bd49e98cdd21419399b6a3
 - name: github.com/spf13/cobra
-  version: 7c4570c3ebeb8129a1f7456d0908a8b676b6f9f1
+  version: ef82de70bb3f60c65fb8eebacbb2d122ef517385
 - name: github.com/spf13/pflag
-  version: 3ebe029320b2676d667ae88da602a5f854788a8a
+  version: 583c0c0531f06d5278b7d917446061adc344b5cd
 - name: github.com/stoewer/go-strcase
   version: c8136b55823dc6af966d084a06056c5575f6400f
 - name: github.com/streadway/amqp
-  version: e5adc2ada8b8efff032bf61173a233d143e9318e
+  version: 8e4aba63da9fc5571e01c6a45dc809a58cbc5a68
 - name: go.uber.org/atomic
   version: 1ea20fb1cbb1cc08cbd0d913a96dead89aa18289
 - name: go.uber.org/multierr
-  version: ddea229ff1dff9e6fe8a6c0344ac73b09e81fce5
+  version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
 - name: golang.org/x/net
-  version: f4c29de78a2a91c00474a2e689954305c350adf9
+  version: b60f3a92103dfd93dfcb900ec77c6d0643510868
   subpackages:
   - context
   - html
@@ -94,11 +76,11 @@ imports:
   subpackages:
   - errgroup
 - name: golang.org/x/sys
-  version: 0ffbfd41fbef8ffcf9b62b0b0aa3a5873ed7a4fe
+  version: 2320a9c15898af1b1b24f99700d5c1e957f9d8cf
   subpackages:
   - unix
 - name: golang.org/x/text
-  version: 647d7ef61a1782c392d1d8e4a9586d9832ec20e5
+  version: 1cbadb444a806fd9430d14ad08967ed91da4fa0a
   subpackages:
   - encoding
   - encoding/charmap
@@ -110,21 +92,15 @@ imports:
   - encoding/simplifiedchinese
   - encoding/traditionalchinese
   - encoding/unicode
-  - internal/language
-  - internal/language/compact
   - internal/tag
   - internal/utf8internal
   - language
   - runes
   - transform
 - name: google.golang.org/appengine
-  version: 4216e58b9158e5f1c906f1aca75162a46a2ec88a
+  version: 962cbd1200af94a5a35ba8d512e9f91271b4d01a
   subpackages:
   - cloudsql
-- name: gopkg.in/fsnotify/fsnotify.v1
-  version: c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9
-- name: gopkg.in/tomb.v1
-  version: c131134a1947e9afd9cecfe11f4c6dff0732ae58
 - name: gopkg.in/yaml.v2
-  version: 5420a8b6744d3b0345ab293f6fcba19c978f1183
+  version: eb3733d160e74a9c7e442f435eb3bea458e1d19f
 testImports: []

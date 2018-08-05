@@ -1,7 +1,0 @@
-syntax = "proto3";
-
-package ax.protavo.projection;
-option go_package = "projection";
-
-message Empty {
-}

@@ -19,4 +19,3 @@ import:
 - package: golang.org/x/sync
   subpackages:
   - errgroup
-- package: github.com/jmalloc/protavo

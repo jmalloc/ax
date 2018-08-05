@@ -1,4 +1,4 @@
-REQ += $(shell find src -name "*.pb.go")
+REQ += $(shell find src -name "*.proto")
 REQ += src/axtest/mocks/endpoint.go
 REQ += src/axtest/mocks/routing.go
 REQ += src/axtest/mocks/persistence.go
