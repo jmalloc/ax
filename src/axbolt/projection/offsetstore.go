@@ -5,18 +5,20 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	bolt "github.com/coreos/bbolt"
 	"github.com/jmalloc/ax/src/ax/persistence"
+	"github.com/jmalloc/ax/src/axbolt/internal/boltutil"
 	boltpersistence "github.com/jmalloc/ax/src/axbolt/persistence"
+)
+
+const (
+	// ProjectionOffsetBktName is the name of the Bolt root bucket where
+	// projection offset data is stored.
+	ProjectionOffsetBktName = "ax_projection_offset"
 )
 
 // OffsetStore is a Bolt-backed implementation of Ax's projection.OffsetStore
 // interface.
 type OffsetStore struct{}
-
-// ProjectionOffsetBktName is the name of of the Bolt root bucket where
-// projection offset data is stored.
-var ProjectionOffsetBktName = []byte("ax_projection_offset")
 
 // LoadOffset returns the offset at which a consumer should resume
 // reading from the stream.
@@ -34,10 +36,8 @@ func (OffsetStore) LoadOffset(
 	}
 	defer tx.Rollback()
 
-	if bkt := tx.Bucket(ProjectionOffsetBktName); bkt != nil {
-		if b := bkt.Get([]byte(pk)); b != nil {
-			return binary.BigEndian.Uint64(b), nil
-		}
+	if b := boltutil.Get(tx, pk, ProjectionOffsetBktName); b != nil {
+		return binary.BigEndian.Uint64(b), nil
 	}
 	return 0, nil
 }
@@ -54,23 +54,14 @@ func (s OffsetStore) IncrementOffset(
 	pk string,
 	c uint64,
 ) error {
-
-	var (
-		bkt *bolt.Bucket
-		err error
-	)
 	tx := boltpersistence.ExtractTx(ptx)
-	if bkt, err = tx.CreateBucketIfNotExists(
-		ProjectionOffsetBktName,
-	); err != nil {
-		return err
-	}
 
 	if c != 0 {
-		b := bkt.Get([]byte(pk))
+		b := boltutil.Get(tx, pk, ProjectionOffsetBktName)
 		if b == nil {
 			return nil
 		}
+
 		offset := binary.BigEndian.Uint64(b)
 		if c != offset {
 			return fmt.Errorf(
@@ -81,9 +72,9 @@ func (s OffsetStore) IncrementOffset(
 		}
 	}
 
+	b := [8]byte{}
 	c++
-	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b, c)
-	return bkt.Put([]byte(pk), b)
+	binary.BigEndian.PutUint64(b[:], c)
+	return boltutil.Put(tx, pk, b[:], ProjectionOffsetBktName)
 	// TODO: use OCC error https://github.com/jmalloc/ax/issues/93
 }
