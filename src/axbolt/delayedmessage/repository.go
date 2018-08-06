@@ -8,6 +8,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
+	"github.com/jmalloc/ax/src/ax/marshaling"
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/axbolt/internal/boltutil"
 	boltpersistence "github.com/jmalloc/ax/src/axbolt/persistence"
@@ -17,18 +18,20 @@ import (
 // interface.
 type Repository struct{}
 
-// DelayedMessageBktName is the name of of the Bolt root bucket where delayed
-// messages are stored.
-var DelayedMessageBktName = []byte("ax_delayed_message")
+const (
+	// DelayedMessageBktName is the name of of the Bolt root bucket where delayed
+	// messages are stored.
+	DelayedMessageBktName = "ax_delayed_message"
 
-// BySendAtBktName is the name of the subbucket in DelayedMessageBktName where
-// delayed messages are stored and indexed by SendAt field in message's envelope
-var BySendAtBktName = []byte("by_send_at")
+	// BySendAtBktName is the name of the subbucket in DelayedMessageBktName where
+	// delayed messages are stored and indexed by SendAt field in message's envelope
+	BySendAtBktName = "by_send_at"
 
-// ByIDBktName is the name of the subbucket in DelayedMessageBktName where
-// delayed messages are stored and indexed by MessageID field in message's
-// envelope
-var ByIDBktName = []byte("by_id")
+	// ByIDBktName is the name of the subbucket in DelayedMessageBktName where
+	// delayed messages are stored and indexed by MessageID field in message's
+	// envelope
+	ByIDBktName = "by_id"
+)
 
 // LoadNextMessage loads the next that is scheduled to be sent.
 func (Repository) LoadNextMessage(
@@ -42,12 +45,12 @@ func (Repository) LoadNextMessage(
 	}
 	defer tx.Rollback()
 
-	bkt := tx.Bucket(DelayedMessageBktName)
+	bkt := boltutil.GetBkt(
+		tx,
+		DelayedMessageBktName,
+		BySendAtBktName,
+	)
 	if bkt == nil {
-		return endpoint.OutboundEnvelope{}, false, nil
-	}
-
-	if bkt = bkt.Bucket(BySendAtBktName); bkt == nil {
 		return endpoint.OutboundEnvelope{}, false, nil
 	}
 
@@ -70,20 +73,15 @@ func (Repository) SaveMessage(
 	ptx persistence.Tx,
 	env endpoint.OutboundEnvelope,
 ) error {
-
+	var err error
 	tx := boltpersistence.ExtractTx(ptx)
-	dmbkt, err := tx.CreateBucketIfNotExists(DelayedMessageBktName)
-	if err != nil {
-		return err
-	}
-
-	bkt, err := dmbkt.CreateBucketIfNotExists(ByIDBktName)
-	if err != nil {
-		return err
-	}
-
 	// return nil if this is a duplicate entry
-	if m := bkt.Get([]byte(env.MessageID.Get())); m != nil {
+	if m := boltutil.Get(
+		tx,
+		env.MessageID.Get(),
+		DelayedMessageBktName,
+		ByIDBktName,
+	); m != nil {
 		return nil
 	}
 
@@ -91,8 +89,8 @@ func (Repository) SaveMessage(
 		Id:                  env.MessageID.Get(),
 		CausationId:         env.CausationID.Get(),
 		CorrelationId:       env.CorrelationID.Get(),
-		CreatedAt:           env.CreatedAt.Format(time.RFC3339Nano),
-		SendAt:              env.SendAt.Format(time.RFC3339Nano),
+		CreatedAt:           marshaling.MarshalTime(env.CreatedAt),
+		SendAt:              marshaling.MarshalTime(env.SendAt),
 		Operation:           int32(env.Operation),
 		DestinationEndpoint: env.DestinationEndpoint,
 	}
@@ -100,14 +98,22 @@ func (Repository) SaveMessage(
 		return err
 	}
 
-	if err = bkt.Put(
-		[]byte(env.MessageID.Get()),
+	if err := boltutil.Put(
+		tx,
+		env.MessageID.Get(),
 		[]byte(m.SendAt),
+		DelayedMessageBktName,
+		ByIDBktName,
 	); err != nil {
 		return err
 	}
 
-	if bkt, err = dmbkt.CreateBucketIfNotExists(BySendAtBktName); err != nil {
+	bkt, err := boltutil.MakeBkt(
+		tx,
+		DelayedMessageBktName,
+		BySendAtBktName,
+	)
+	if err != nil {
 		return err
 	}
 
@@ -120,29 +126,34 @@ func (Repository) MarkAsSent(
 	ptx persistence.Tx,
 	env endpoint.OutboundEnvelope,
 ) error {
-
 	tx := boltpersistence.ExtractTx(ptx)
-	dmbkt := tx.Bucket(DelayedMessageBktName)
-	if dmbkt == nil {
-		return nil
-	}
-	bkt := dmbkt.Bucket(ByIDBktName)
-	if bkt == nil {
-		return nil
-	}
-	sa := bkt.Get([]byte(env.MessageID.Get()))
+	sa := boltutil.Get(
+		tx,
+		env.MessageID.Get(),
+		DelayedMessageBktName,
+		ByIDBktName,
+	)
 	if sa == nil {
 		return nil
 	}
+
 	// delete in 'by name' bucket
-	if err := bkt.Delete([]byte(env.MessageID.Get())); err != nil {
+	if err := boltutil.Delete(
+		tx,
+		env.MessageID.Get(),
+		DelayedMessageBktName,
+		ByIDBktName,
+	); err != nil {
 		return err
 	}
-	if bkt = dmbkt.Bucket(BySendAtBktName); bkt == nil {
-		return nil
-	}
+
 	// delete in 'by send at' bucket
-	return bkt.Delete(sa)
+	return boltutil.Delete(
+		tx,
+		string(sa),
+		DelayedMessageBktName,
+		BySendAtBktName,
+	)
 }
 
 func parseDelayedMessage(
