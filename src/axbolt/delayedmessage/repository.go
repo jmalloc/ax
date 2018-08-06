@@ -98,7 +98,7 @@ func (Repository) SaveMessage(
 		return err
 	}
 
-	if err := boltutil.Put(
+	if err = boltutil.Put(
 		tx,
 		env.MessageID.Get(),
 		[]byte(m.SendAt),
