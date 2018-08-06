@@ -19,15 +19,16 @@ import (
 type Repository struct{}
 
 const (
-	// DelayedMessageBktName is the name of of the Bolt root bucket where delayed
+	// DelayedMessageBktName is the name of the Bolt root bucket where delayed
 	// messages are stored.
 	DelayedMessageBktName = "ax_delayed_message"
 
-	// BySendAtBktName is the name of the subbucket in DelayedMessageBktName where
-	// delayed messages are stored and indexed by SendAt field in message's envelope
+	// BySendAtBktName is the name of a subbucket in DelayedMessageBktName where
+	// delayed messages are stored and indexed by SendAt field in message's
+	// envelope
 	BySendAtBktName = "by_send_at"
 
-	// ByIDBktName is the name of the subbucket in DelayedMessageBktName where
+	// ByIDBktName is the name of a subbucket in DelayedMessageBktName where
 	// delayed messages are stored and indexed by MessageID field in message's
 	// envelope
 	ByIDBktName = "by_id"
