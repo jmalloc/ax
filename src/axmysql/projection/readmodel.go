@@ -20,8 +20,8 @@ import (
 // For each event type to be applied to the read-model, the projector must
 // implement an "apply" method that adheres to one of the following signatures:
 //
-//     func (ctx context.Context, tx *sql.Tx, ev *<T>)
-//     func (ctx context.Context, tx *sql.Tx, ev *<T>, env ax.Envelope)
+//     func (ctx context.Context, tx *sql.Tx, ev *<T>) error
+//     func (ctx context.Context, tx *sql.Tx, ev *<T>, env ax.Envelope) error
 //
 // Where T is a struct type that implements ax.Event.
 //
