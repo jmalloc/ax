@@ -5,23 +5,28 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/golang/protobuf/proto"
+
 	"github.com/jmalloc/ax/src/axbolt/internal/boltutil"
 
 	bolt "github.com/coreos/bbolt"
 	"github.com/golang/protobuf/ptypes"
 
+	"github.com/jmalloc/ax/src/ax/marshaling"
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/ax/saga"
 	boltpersistence "github.com/jmalloc/ax/src/axbolt/persistence"
 )
 
+const (
+	// InstanceBktName is the name of the Bolt root bucket where all
+	// saga instance data is stored.
+	InstanceBktName = "ax_saga_instance"
+)
+
 // CRUDRepository is a Bolt-backed implementation of Ax's crud.Repository
 // interface.
 type CRUDRepository struct{}
-
-// InstanceBktName is the name of of the Bolt root bucket where all saga instance
-// data is stored.
-var InstanceBktName = []byte("ax_saga_instance")
 
 // LoadSagaInstance fetches a saga instance by its ID.
 //
@@ -44,17 +49,13 @@ func (r CRUDRepository) LoadSagaInstance(
 		s SagaInstance
 	)
 	tx := boltpersistence.ExtractTx(ptx)
-	bkt := tx.Bucket(InstanceBktName)
-	if bkt == nil {
+	b := boltutil.Get(tx, id.Get(), InstanceBktName)
+	if b == nil {
 		return saga.Instance{}, false, nil
 	}
 
-	if ok, err := boltutil.UnmarshalProto(
-		bkt,
-		[]byte(id.Get()),
-		&s,
-	); err != nil || !ok {
-		return saga.Instance{}, ok, err
+	if err := proto.Unmarshal(b, &s); err != nil {
+		return saga.Instance{}, false, err
 	}
 
 	i := saga.Instance{
@@ -98,7 +99,6 @@ func (r CRUDRepository) SaveSagaInstance(
 	var (
 		err  error
 		ok   bool
-		bkt  *bolt.Bucket
 		prev SagaInstance
 	)
 	tx := boltpersistence.ExtractTx(ptx)
@@ -112,15 +112,11 @@ func (r CRUDRepository) SaveSagaInstance(
 		return err
 	}
 
-	bkt, err = tx.CreateBucketIfNotExists(InstanceBktName)
-	if err != nil {
-		return err
-	}
-
-	if ok, err = boltutil.UnmarshalProto(
-		bkt,
-		[]byte(new.GetInstanceId()),
+	if ok, err = boltutil.GetProto(
+		tx,
+		i.InstanceID.Get(),
 		&prev,
+		InstanceBktName,
 	); err != nil {
 		return err
 	}
@@ -141,11 +137,9 @@ func (r CRUDRepository) SaveSagaInstance(
 				prev.GetPersistenceKey(),
 			)
 		}
-
-		return r.updateInstance(bkt, new, &prev)
+		return r.updateInstance(tx, new, &prev)
 	}
-
-	return r.insertInstance(bkt, new)
+	return r.insertInstance(tx, new)
 }
 
 // DeleteSagaInstance deletes a saga instance.
@@ -171,70 +165,72 @@ func (r CRUDRepository) DeleteSagaInstance(
 		ok  bool
 	)
 	tx := boltpersistence.ExtractTx(ptx)
-	bkt := tx.Bucket(InstanceBktName)
-	if bkt == nil {
-		return nil
-	}
-
-	if ok, err = boltutil.UnmarshalProto(
-		bkt,
-		[]byte(i.InstanceID.Get()),
+	if ok, err = boltutil.GetProto(
+		tx,
+		i.InstanceID.Get(),
 		&s,
-	); err != nil || !ok {
+		InstanceBktName,
+	); err != nil {
 		return err
 	}
 
-	if i.Revision != saga.Revision(s.GetRevision()) {
-		return fmt.Errorf(
-			"can not delete saga instance %s, revision %d is not the current revision",
-			i.InstanceID,
-			i.Revision,
-		)
+	if ok {
+		if i.Revision != saga.Revision(s.GetRevision()) {
+			return fmt.Errorf(
+				"can not delete saga instance %s, revision %d is not the current revision",
+				i.InstanceID,
+				i.Revision,
+			)
+		}
+
+		if pk != s.GetPersistenceKey() {
+			return fmt.Errorf(
+				"can not save saga instance %s for saga %s, it belongs to %s",
+				i.InstanceID,
+				pk,
+				s.GetPersistenceKey(),
+			)
+		}
+
+		return boltutil.Delete(tx, i.InstanceID.Get(), InstanceBktName)
 	}
 
-	if pk != s.GetPersistenceKey() {
-		return fmt.Errorf(
-			"can not save saga instance %s for saga %s, it belongs to %s",
-			i.InstanceID,
-			pk,
-			s.GetPersistenceKey(),
-		)
-	}
-
-	return bkt.Delete([]byte(i.InstanceID.Get()))
+	return nil
 }
 
 // insertInstance inserts a new saga instance.
 func (CRUDRepository) insertInstance(
-	bkt *bolt.Bucket,
+	tx *bolt.Tx,
 	new *SagaInstance,
 ) error {
 
 	new.Revision = 1
-	new.InsertTime = time.Now().Format(time.RFC3339Nano)
+	new.InsertTime = marshaling.MarshalTime(time.Now())
 	new.UpdateTime = new.InsertTime
 
-	return boltutil.MarshalProto(
-		bkt,
-		[]byte(new.GetInstanceId()),
+	return boltutil.PutProto(
+		tx,
+		new.GetInstanceId(),
 		new,
+		InstanceBktName,
 	)
 }
 
 // updateInstance updates an existing saga instance.
 // It returns an error if i.Revision is not the current revision.
 func (CRUDRepository) updateInstance(
-	bkt *bolt.Bucket,
+	tx *bolt.Tx,
 	new, prev *SagaInstance,
 ) error {
 
 	new.Revision = prev.Revision + 1
 	new.InsertTime = prev.InsertTime
-	new.UpdateTime = time.Now().Format(time.RFC3339Nano)
+	new.UpdateTime = marshaling.MarshalTime(time.Now())
 
-	return boltutil.MarshalProto(
-		bkt,
-		[]byte(new.GetInstanceId()),
+	return boltutil.PutProto(
+		tx,
+		new.GetInstanceId(),
 		new,
+		InstanceBktName,
 	)
 }
