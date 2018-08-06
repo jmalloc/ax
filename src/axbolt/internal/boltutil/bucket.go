@@ -134,3 +134,23 @@ func PutWithPath(tx *bolt.Tx, key string, val []byte, path string) error {
 	}
 	return bkt.Put([]byte(key), []byte(val))
 }
+
+// Delete deletes an entry with key key in the bucket specified as a last item
+// in the ss. If there are any nonexistant buckets in ss the function returns
+// nil.
+func Delete(tx *bolt.Tx, key string, ss ...string) error {
+	if bkt := GetBkt(tx, ss...); bkt != nil {
+		return bkt.Delete([]byte(key))
+	}
+	return nil
+}
+
+// DeleteWithPath deletes an entry with key key in the bucket specified as a last
+// in the separated by BktPathSeparator. If there are any nonexistant buckets in ss the function returns
+// nil.
+func DeleteWithPath(tx *bolt.Tx, key string, path string) error {
+	if bkt := GetBktWithPath(tx, path); bkt != nil {
+		return bkt.Delete([]byte(key))
+	}
+	return nil
+}
