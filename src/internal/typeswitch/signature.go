@@ -66,7 +66,7 @@ func (s *Signature) IsMatch(sw reflect.Type, m reflect.Method) (reflect.Type, bo
 }
 
 // MapInputs generates a mapping between the types in p and s.In.
-// Any type present in p, that is not present in s.In is represented by -1.
+// Any type present in p that is not present in s.In is represented by -1.
 // It returns an error if there are types in s.In that are not present in p.
 func (s *Signature) MapInputs(p []reflect.Type) ([]int, error) {
 	m := make([]int, 0, len(p))
@@ -93,25 +93,27 @@ func (s *Signature) MapInputs(p []reflect.Type) ([]int, error) {
 	return m, nil
 }
 
-// MapOutputs generates a mapping between the types in s.Out and p.
-// Any type present in s.Out, that is not present in p is represented by -1.
-// It returns an error if there are types in p that are not present in s.Out.
+// MapOutputs generates a mapping between the types in p and s.Out.
+// Any type present in p that is not present in s.Out is represented by -1.
+// It returns an error if there are types in s.Out that are not present in p.
 func (s *Signature) MapOutputs(p []reflect.Type) ([]int, error) {
-	m := make([]int, 0, len(s.Out))
+	m := make([]int, 0, len(p))
 
-	for _, t := range s.Out {
-		i := indexOf(t, p)
-		if i != -1 {
-			m = append(m, i)
-		}
+	for _, t := range p {
+		i := indexOf(t, s.Out)
+		m = append(m, i)
 	}
 
-	if len(m) != len(s.Out) {
-		return nil, fmt.Errorf(
-			"signature %s returns output parameters not expected by %s",
-			s,
-			typesToString(p),
-		)
+	for _, t := range s.Out {
+		if indexOf(t, p) == -1 {
+			if len(m) != len(s.Out) {
+				return nil, fmt.Errorf(
+					"signature %s returns output parameters not expected by %s",
+					s,
+					typesToString(p),
+				)
+			}
+		}
 	}
 
 	return m, nil

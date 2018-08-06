@@ -5,6 +5,24 @@ import "errors"
 // MessageDescription returns a human-readable description of the message.
 func (*Message) MessageDescription() string { return "test message" }
 
+// MessageDescription returns a human-readable description of the message.
+func (*MessageA) MessageDescription() string { return "test message A" }
+
+// MessageDescription returns a human-readable description of the message.
+func (*MessageB) MessageDescription() string { return "test message B" }
+
+// MessageDescription returns a human-readable description of the message.
+func (*MessageC) MessageDescription() string { return "test message C" }
+
+// MessageDescription returns a human-readable description of the message.
+func (*MessageD) MessageDescription() string { return "test message D" }
+
+// MessageDescription returns a human-readable description of the message.
+func (*MessageE) MessageDescription() string { return "test message E" }
+
+// MessageDescription returns a human-readable description of the message.
+func (*MessageF) MessageDescription() string { return "test message F" }
+
 // IsCommand marks the message as a command.
 func (*Command) IsCommand() {}
 

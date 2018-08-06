@@ -1,6 +1,13 @@
 package ax
 
-import "time"
+import (
+	"fmt"
+	"reflect"
+	"time"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes"
+)
 
 // Envelope is a container for a message and its associated meta-data.
 type Envelope struct {
@@ -72,7 +79,7 @@ func NewEnvelope(m Message) Envelope {
 	id := GenerateMessageID()
 	t := time.Now()
 
-	env := Envelope{
+	return Envelope{
 		MessageID:     id,
 		CausationID:   id,
 		CorrelationID: id,
@@ -80,8 +87,58 @@ func NewEnvelope(m Message) Envelope {
 		SendAt:        t,
 		Message:       m,
 	}
+}
 
-	return env
+// NewEnvelopeFromProto returns a new envelope from its protocol-buffers
+// representation.
+func NewEnvelopeFromProto(env *EnvelopeProto) (Envelope, error) {
+	messageID, err := ParseMessageID(env.MessageId)
+	if err != nil {
+		return Envelope{}, err
+	}
+
+	causationID, err := ParseMessageID(env.CausationId)
+	if err != nil {
+		return Envelope{}, err
+	}
+
+	correlationID, err := ParseMessageID(env.CorrelationId)
+	if err != nil {
+		return Envelope{}, err
+	}
+
+	createdAt, err := ptypes.Timestamp(env.CreatedAt)
+	if err != nil {
+		return Envelope{}, err
+	}
+
+	sendAt, err := ptypes.Timestamp(env.SendAt)
+	if err != nil {
+		return Envelope{}, err
+	}
+
+	var any ptypes.DynamicAny
+	err = ptypes.UnmarshalAny(env.Message, &any)
+	if err != nil {
+		return Envelope{}, err
+	}
+
+	message, ok := any.Message.(Message)
+	if !ok {
+		return Envelope{}, fmt.Errorf(
+			"%s does not implement Message",
+			reflect.TypeOf(any.Message),
+		)
+	}
+
+	return Envelope{
+		MessageID:     messageID,
+		CausationID:   causationID,
+		CorrelationID: correlationID,
+		CreatedAt:     createdAt,
+		SendAt:        sendAt,
+		Message:       message,
+	}, nil
 }
 
 // NewChild returns a new message envelope containing m.
@@ -91,7 +148,7 @@ func NewEnvelope(m Message) Envelope {
 func (e Envelope) NewChild(m Message) Envelope {
 	t := time.Now()
 
-	env := Envelope{
+	return Envelope{
 		MessageID:     GenerateMessageID(),
 		CorrelationID: e.CorrelationID,
 		CausationID:   e.MessageID,
@@ -99,11 +156,66 @@ func (e Envelope) NewChild(m Message) Envelope {
 		SendAt:        t,
 		Message:       m,
 	}
-
-	return env
 }
 
 // Type returns the message type of the message contained in the envelope.
 func (e Envelope) Type() MessageType {
 	return TypeOf(e.Message)
+}
+
+// Equal returns true if e and env contain the same data.
+func (e Envelope) Equal(env Envelope) bool {
+	return e.MessageID == env.MessageID &&
+		e.CorrelationID == env.CorrelationID &&
+		e.CausationID == env.CausationID &&
+		e.CreatedAt.Equal(env.CreatedAt) &&
+		e.SendAt.Equal(env.SendAt) &&
+		proto.Equal(e.Message, env.Message)
+}
+
+// AsProto returns a Protocol Buffers representation of the envelope.
+func (e Envelope) AsProto() (*EnvelopeProto, error) {
+	createdAt, err := ptypes.TimestampProto(e.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	sendAt, err := ptypes.TimestampProto(e.SendAt)
+	if err != nil {
+		return nil, err
+	}
+
+	message, err := ptypes.MarshalAny(e.Message)
+	if err != nil {
+		return nil, err
+	}
+
+	return &EnvelopeProto{
+		MessageId:     e.MessageID.String(),
+		CausationId:   e.CausationID.String(),
+		CorrelationId: e.CorrelationID.String(),
+		CreatedAt:     createdAt,
+		SendAt:        sendAt,
+		Message:       message,
+	}, nil
+}
+
+// MarshalEnvelope marshals env to a binary representation.
+func MarshalEnvelope(env Envelope) ([]byte, error) {
+	v, err := env.AsProto()
+	if err != nil {
+		return nil, err
+	}
+
+	return proto.Marshal(v)
+}
+
+// UnmarshalEnvelope unmarshals an envelope from its serialized representation.
+func UnmarshalEnvelope(data []byte) (Envelope, error) {
+	var v EnvelopeProto
+	if err := proto.Unmarshal(data, &v); err != nil {
+		return Envelope{}, err
+	}
+
+	return NewEnvelopeFromProto(&v)
 }

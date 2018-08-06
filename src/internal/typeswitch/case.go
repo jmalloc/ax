@@ -15,9 +15,8 @@ type Case struct {
 	InputMap []int
 
 	// OutputMap maps the index of the method's output parameters to the index of
-	// the output parameters returned by Call(). All of the method's output
-	// parameters are mapped, however gaps in the returned output parameters are
-	// permitted and are represented by a nil pointer.
+	// the output parameters returned by Call(). A value of -1 indicates that the
+	// method produces a value that is not required.
 	OutputMap []int
 }
 
@@ -39,9 +38,10 @@ func (c Case) Call(in []interface{}) []interface{} {
 	methodOut := c.Method.Func.Call(methodIn)
 	out := make([]interface{}, len(c.OutputMap))
 
-	for from, v := range methodOut {
-		to := c.OutputMap[from]
-		out[to] = v.Interface()
+	for to, from := range c.OutputMap {
+		if from != -1 {
+			out[to] = methodOut[from].Interface()
+		}
 	}
 
 	return out
