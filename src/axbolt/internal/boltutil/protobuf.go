@@ -55,7 +55,7 @@ func GetProto(
 // function under the hood.
 //
 // It returns an error if bucket creation fails. It returns an error if one
-// occurs in the process of marshalling m into binary.
+// occurs in the process of marshaling m into binary.
 func PutProto(
 	tx *bolt.Tx,
 	key string,
