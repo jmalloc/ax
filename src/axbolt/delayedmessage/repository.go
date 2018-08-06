@@ -109,16 +109,13 @@ func (Repository) SaveMessage(
 		return err
 	}
 
-	bkt, err := boltutil.MakeBkt(
+	return boltutil.PutProto(
 		tx,
+		m.SendAt,
+		m,
 		DelayedMessageBktName,
 		BySendAtBktName,
 	)
-	if err != nil {
-		return err
-	}
-
-	return boltutil.MarshalProto(bkt, []byte(m.SendAt), m)
 }
 
 // MarkAsSent marks a message as sent, removing it from the repository.
