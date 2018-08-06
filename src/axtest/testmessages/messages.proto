@@ -8,6 +8,36 @@ message Message {
     string value = 1;
 }
 
+// MessageA is a protocol buffers message that implements ax.Message.
+message MessageA {
+    string value = 1;
+}
+
+// MessageB is a protocol buffers message that implements ax.Message.
+message MessageB {
+    string value = 1;
+}
+
+// MessageC is a protocol buffers message that implements ax.Message.
+message MessageC {
+    string value = 1;
+}
+
+// MessageD is a protocol buffers message that implements ax.Message.
+message MessageD {
+    string value = 1;
+}
+
+// MessageE is a protocol buffers message that implements ax.Message.
+message MessageE {
+    string value = 1;
+}
+
+// MessageF is a protocol buffers message that implements ax.Message.
+message MessageF {
+    string value = 1;
+}
+
 // Command is a protocol buffers message that implements ax.Command.
 message Command {
     string value = 1;
