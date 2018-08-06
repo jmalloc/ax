@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jmalloc/ax/src/ax/marshaling"
+
 	"github.com/jmalloc/ax/src/axbolt/internal/boltutil"
 
-	bolt "github.com/coreos/bbolt"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 
@@ -21,9 +22,11 @@ import (
 // eventsourcing.SnapshotRepository interface.
 type SnapshotRepository struct{}
 
-// SnapshotBktName is name of the Bolt root bucket where all saga snapshot data
-// is stored.
-var SnapshotBktName = []byte("ax_saga_snapshot")
+const (
+	// SnapshotBktName is name of the Bolt root bucket where all
+	// saga snapshot data is stored.
+	SnapshotBktName = "ax_saga_snapshot"
+)
 
 // LoadSagaSnapshot loads the latest available snapshot from the store.
 //
@@ -36,12 +39,7 @@ func (SnapshotRepository) LoadSagaSnapshot(
 	id saga.InstanceID,
 ) (saga.Instance, bool, error) {
 	tx := boltpersistence.ExtractTx(ptx)
-	bkt := tx.Bucket([]byte("ax_saga_snapshot"))
-	if bkt == nil {
-		return saga.Instance{}, false, nil
-	}
-
-	bkt = bkt.Bucket([]byte(id.Get()))
+	bkt := boltutil.GetBkt(tx, SnapshotBktName, id.Get())
 	if bkt == nil {
 		return saga.Instance{}, false, nil
 	}
@@ -94,14 +92,13 @@ func (SnapshotRepository) SaveSagaSnapshot(
 ) error {
 	var (
 		err error
-		bkt *bolt.Bucket
 	)
 	tx := boltpersistence.ExtractTx(ptx)
 	sn := &SagaSnapshot{
 		InstanceId:     i.InstanceID.Get(),
 		Revision:       int64(i.Revision),
 		PersistenceKey: pk,
-		InsertTime:     time.Now().Format(time.RFC3339Nano),
+		InsertTime:     marshaling.MarshalTime(time.Now()),
 	}
 
 	sn.Data, err = ptypes.MarshalAny(i.Data)
@@ -109,20 +106,16 @@ func (SnapshotRepository) SaveSagaSnapshot(
 		return err
 	}
 
-	bkt, err = tx.CreateBucketIfNotExists([]byte("ax_saga_snapshot"))
-	if err != nil {
-		return err
-	}
+	k := [8]byte{}
+	binary.BigEndian.PutUint64(k[:], uint64(sn.GetRevision()))
 
-	bkt, err = bkt.CreateBucketIfNotExists([]byte(i.InstanceID.Get()))
-	if err != nil {
-		return err
-	}
-
-	k := make([]byte, 8)
-	binary.PutVarint(k, int64(sn.GetRevision()))
-
-	return boltutil.MarshalProto(bkt, k, sn)
+	return boltutil.PutProto(
+		tx,
+		string(k[:]),
+		sn,
+		SnapshotBktName,
+		i.InstanceID.Get(),
+	)
 }
 
 // DeleteSagaSnapshots deletes any snapshots associated with a saga instance.
@@ -136,11 +129,9 @@ func (SnapshotRepository) DeleteSagaSnapshots(
 	id saga.InstanceID,
 ) error {
 	tx := boltpersistence.ExtractTx(ptx)
-
-	bkt := tx.Bucket([]byte("ax_saga_snapshot"))
+	bkt := boltutil.GetBkt(tx, SnapshotBktName)
 	if bkt == nil {
 		return nil
 	}
-
 	return bkt.DeleteBucket([]byte(id.Get()))
 }
