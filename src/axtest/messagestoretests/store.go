@@ -314,6 +314,13 @@ func MessageStoreSuite(
 				)
 				m.Expect(err).ShouldNot(m.HaveOccurred())
 
+				err = com.Commit()
+				m.Expect(err).ShouldNot(m.HaveOccurred())
+
+				tx, com, err = store.BeginTx(ctx)
+				m.Expect(err).ShouldNot(m.HaveOccurred())
+				defer com.Rollback()
+
 				err = msgStore.AppendMessages(
 					ctx,
 					tx,
