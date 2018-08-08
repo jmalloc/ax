@@ -2,6 +2,7 @@ package messagestoretests
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/jmalloc/ax/src/ax"
@@ -450,6 +451,8 @@ func MessageStoreSuite(
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 
 					env, err = s.Get(ctx)
+					log.Printf("env: %+v", env)
+					log.Printf("m2: %+v", m2)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					m.Expect(axtest.EnvelopesEqual(env, m2)).Should(m.BeTrue())
 				})
