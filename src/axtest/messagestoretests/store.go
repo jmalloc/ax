@@ -34,9 +34,12 @@ func DumpSQLTable(t string) error {
 	count := len(columns)
 	values := make([]interface{}, count)
 	valuePtrs := make([]interface{}, count)
+	rowCnt := 0
 
+	fmt.Printf("\n----- Dumping table %s -----\n", t)
 	for rows.Next() {
-		fmt.Println("----------")
+		rowCnt++
+		fmt.Printf("---- row #%d ----\n", rowCnt)
 
 		for i := range columns {
 			valuePtrs[i] = &values[i]
