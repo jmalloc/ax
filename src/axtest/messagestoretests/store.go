@@ -500,6 +500,7 @@ func MessageStoreSuite(
 
 					env, err = s.Get(ctx)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
+					err = DumpSQLTable("ax_messagestore_offset")
 					err = DumpSQLTable("ax_messagestore_message")
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					m.Expect(axtest.EnvelopesEqual(env, m2)).Should(m.BeTrue())
