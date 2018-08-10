@@ -7,6 +7,8 @@ import (
 	"os"
 	"time"
 
+	// mysql driver blank import
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/messagestore"
 	"github.com/jmalloc/ax/src/ax/persistence"
@@ -16,8 +18,8 @@ import (
 	m "github.com/onsi/gomega"
 )
 
-// DumpSqlTable dumps MySQL table into the standard output
-func DumpSqlTable(t string) error {
+// DumpSQLTable dumps MySQL table into the standard output
+func DumpSQLTable(t string) error {
 	dsn := os.Getenv("AX_MYSQL_DSN")
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
@@ -499,7 +501,7 @@ func MessageStoreSuite(
 
 					env, err = s.Get(ctx)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
-					err = DumpSqlTable("ax_messagestore_message")
+					err = DumpSQLTable("ax_messagestore_message")
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					m.Expect(axtest.EnvelopesEqual(env, m2)).Should(m.BeTrue())
 				})
