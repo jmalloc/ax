@@ -26,15 +26,16 @@ func DumpSQLTable(t string) error {
 		return err
 	}
 
-	rows, _ := db.Query(fmt.Sprintf("SELECT * FROM %s;", t))
-
+	rows, err := db.Query(fmt.Sprintf("SELECT * FROM %s;", t))
+	if err != nil {
+		return err
+	}
 	columns, _ := rows.Columns()
 	count := len(columns)
 	values := make([]interface{}, count)
 	valuePtrs := make([]interface{}, count)
 
 	for rows.Next() {
-
 		fmt.Println("----------")
 
 		for i := range columns {
@@ -42,13 +43,9 @@ func DumpSQLTable(t string) error {
 		}
 
 		rows.Scan(valuePtrs...)
-
 		for i, col := range columns {
-
 			var v interface{}
-
 			val := values[i]
-
 			b, ok := val.([]byte)
 
 			if ok {
@@ -56,7 +53,6 @@ func DumpSQLTable(t string) error {
 			} else {
 				v = val
 			}
-
 			fmt.Println(col, ": ", v)
 		}
 	}
