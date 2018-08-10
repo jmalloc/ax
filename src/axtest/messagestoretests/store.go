@@ -2,7 +2,9 @@ package messagestoretests
 
 import (
 	"context"
-	"log"
+	"database/sql"
+	"fmt"
+	"os"
 	"time"
 
 	"github.com/jmalloc/ax/src/ax"
@@ -13,6 +15,51 @@ import (
 	g "github.com/onsi/ginkgo"
 	m "github.com/onsi/gomega"
 )
+
+// DumpSqlTable dumps MySQL table into the standard output
+func DumpSqlTable(t string) error {
+	dsn := os.Getenv("AX_MYSQL_DSN")
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return err
+	}
+
+	rows, _ := db.Query(fmt.Sprintf("SELECT * FROM %s;", t))
+
+	columns, _ := rows.Columns()
+	count := len(columns)
+	values := make([]interface{}, count)
+	valuePtrs := make([]interface{}, count)
+
+	for rows.Next() {
+
+		fmt.Println("----------")
+
+		for i := range columns {
+			valuePtrs[i] = &values[i]
+		}
+
+		rows.Scan(valuePtrs...)
+
+		for i, col := range columns {
+
+			var v interface{}
+
+			val := values[i]
+
+			b, ok := val.([]byte)
+
+			if ok {
+				v = string(b)
+			} else {
+				v = val
+			}
+
+			fmt.Println(col, ": ", v)
+		}
+	}
+	return nil
+}
 
 // MessageStoreSuite returns a test suite for implementations of messagestore.GloballyOrderedStore,
 func MessageStoreSuite(
@@ -318,21 +365,21 @@ func MessageStoreSuite(
 				err = com.Commit()
 				m.Expect(err).ShouldNot(m.HaveOccurred())
 
-				// tx, com, err = store.BeginTx(ctx)
-				// m.Expect(err).ShouldNot(m.HaveOccurred())
-				// defer com.Rollback()
+				tx, com, err = store.BeginTx(ctx)
+				m.Expect(err).ShouldNot(m.HaveOccurred())
+				defer com.Rollback()
 
-				// err = msgStore.AppendMessages(
-				// 	ctx,
-				// 	tx,
-				// 	s2,
-				// 	offset,
-				// 	[]ax.Envelope{m1, m2},
-				// )
-				// m.Expect(err).ShouldNot(m.HaveOccurred())
+				err = msgStore.AppendMessages(
+					ctx,
+					tx,
+					s2,
+					offset,
+					[]ax.Envelope{m1, m2},
+				)
+				m.Expect(err).ShouldNot(m.HaveOccurred())
 
-				// err = com.Commit()
-				// m.Expect(err).ShouldNot(m.HaveOccurred())
+				err = com.Commit()
+				m.Expect(err).ShouldNot(m.HaveOccurred())
 			})
 			g.Context("when global stream exists", func() {
 				g.It("returns no error", func() {
@@ -396,10 +443,10 @@ func MessageStoreSuite(
 						m.Eventually(errNotify).Should(m.Receive(m.Succeed()))
 						// m2
 						m.Eventually(errNotify).Should(m.Receive(m.Succeed()))
-						// // m3
-						// m.Eventually(errNotify).Should(m.Receive(m.Succeed()))
-						// // m4
-						// m.Eventually(errNotify).Should(m.Receive(m.Succeed()))
+						// m3
+						m.Eventually(errNotify).Should(m.Receive(m.Succeed()))
+						// m4
+						m.Eventually(errNotify).Should(m.Receive(m.Succeed()))
 						// no other messages
 						m.Consistently(errNotify).ShouldNot(m.Receive())
 					})
@@ -451,8 +498,8 @@ func MessageStoreSuite(
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 
 					env, err = s.Get(ctx)
-					log.Printf("env: %+v", env)
-					log.Printf("m2: %+v", m2)
+					m.Expect(err).ShouldNot(m.HaveOccurred())
+					err = DumpSqlTable("ax_messagestore_message")
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					m.Expect(axtest.EnvelopesEqual(env, m2)).Should(m.BeTrue())
 				})
