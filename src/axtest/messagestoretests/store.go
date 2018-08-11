@@ -36,7 +36,7 @@ func DumpSQLTable(t string) error {
 	valuePtrs := make([]interface{}, count)
 	rowCnt := 0
 
-	fmt.Printf("\n----- Dumping table %s -----\n", t)
+	fmt.Printf("\n----- dumping table %s -----\n", t)
 	for rows.Next() {
 		rowCnt++
 		fmt.Printf("---- row #%d ----\n", rowCnt)
@@ -59,6 +59,7 @@ func DumpSQLTable(t string) error {
 			fmt.Println(col, ": ", v)
 		}
 	}
+	fmt.Printf("\n----- dumped %d row(s) from table %s -----\n", rowCnt, t)
 	return nil
 }
 
