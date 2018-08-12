@@ -4,6 +4,9 @@ REQ += src/axtest/mocks/routing.go
 REQ += src/axtest/mocks/persistence.go
 REQ += src/axtest/mocks/observability.go
 
+# verbose output for tests
+TEST_ARGS += -v
+
 -include artifacts/make/go/Makefile
 
 .PHONY: banking
