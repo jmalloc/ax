@@ -367,21 +367,21 @@ func MessageStoreSuite(
 				err = com.Commit()
 				m.Expect(err).ShouldNot(m.HaveOccurred())
 
-				tx, com, err = store.BeginTx(ctx)
-				m.Expect(err).ShouldNot(m.HaveOccurred())
-				defer com.Rollback()
+				// tx, com, err = store.BeginTx(ctx)
+				// m.Expect(err).ShouldNot(m.HaveOccurred())
+				// defer com.Rollback()
 
-				err = msgStore.AppendMessages(
-					ctx,
-					tx,
-					s2,
-					offset,
-					[]ax.Envelope{m1, m2},
-				)
-				m.Expect(err).ShouldNot(m.HaveOccurred())
+				// err = msgStore.AppendMessages(
+				// 	ctx,
+				// 	tx,
+				// 	s2,
+				// 	offset,
+				// 	[]ax.Envelope{m1, m2},
+				// )
+				// m.Expect(err).ShouldNot(m.HaveOccurred())
 
-				err = com.Commit()
-				m.Expect(err).ShouldNot(m.HaveOccurred())
+				// err = com.Commit()
+				// m.Expect(err).ShouldNot(m.HaveOccurred())
 			})
 			g.Context("when global stream exists", func() {
 				g.It("returns no error", func() {
@@ -445,10 +445,10 @@ func MessageStoreSuite(
 						m.Eventually(errNotify).Should(m.Receive(m.Succeed()))
 						// m2
 						m.Eventually(errNotify).Should(m.Receive(m.Succeed()))
-						// m3
-						m.Eventually(errNotify).Should(m.Receive(m.Succeed()))
-						// m4
-						m.Eventually(errNotify).Should(m.Receive(m.Succeed()))
+						// // m3
+						// m.Eventually(errNotify).Should(m.Receive(m.Succeed()))
+						// // m4
+						// m.Eventually(errNotify).Should(m.Receive(m.Succeed()))
 						// no other messages
 						m.Consistently(errNotify).ShouldNot(m.Receive())
 					})
