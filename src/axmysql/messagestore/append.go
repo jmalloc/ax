@@ -105,8 +105,8 @@ func incrGlobalOffset(
 		`INSERT INTO ax_messagestore_offset SET
 			next = ?
 		ON DUPLICATE KEY UPDATE
-			next = next + VALUE(next)`,
-		n,
+			next = next + ?`,
+		n, n,
 	)
 	if err != nil {
 		return 0, nil
