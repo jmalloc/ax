@@ -3,7 +3,6 @@ package messagestore
 import (
 	"context"
 	"database/sql"
-	"log"
 	"time"
 
 	"github.com/jmalloc/ax/src/ax"
@@ -117,7 +116,6 @@ func (s *Stream) Get(ctx context.Context) (ax.Envelope, error) {
 
 	env.Message, err = ax.UnmarshalMessage(contentType, data)
 
-	log.Printf("Get(), env: %+v", env)
 	return env, err
 }
 
