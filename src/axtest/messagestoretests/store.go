@@ -2,9 +2,6 @@ package messagestoretests
 
 import (
 	"context"
-	"database/sql"
-	"fmt"
-	"os"
 	"time"
 
 	// mysql driver blank import
@@ -17,51 +14,6 @@ import (
 	g "github.com/onsi/ginkgo"
 	m "github.com/onsi/gomega"
 )
-
-// DumpSQLTable dumps MySQL table into the standard output
-func DumpSQLTable(t string) error {
-	dsn := os.Getenv("AX_MYSQL_DSN")
-	db, err := sql.Open("mysql", dsn)
-	if err != nil {
-		return err
-	}
-
-	rows, err := db.Query(fmt.Sprintf("SELECT * FROM %s;", t))
-	if err != nil {
-		return err
-	}
-	columns, _ := rows.Columns()
-	count := len(columns)
-	values := make([]interface{}, count)
-	valuePtrs := make([]interface{}, count)
-	rowCnt := 0
-
-	fmt.Printf("\n----- dumping table %s -----\n", t)
-	for rows.Next() {
-		rowCnt++
-		fmt.Printf("---- row #%d ----\n", rowCnt)
-
-		for i := range columns {
-			valuePtrs[i] = &values[i]
-		}
-
-		rows.Scan(valuePtrs...)
-		for i, col := range columns {
-			var v interface{}
-			val := values[i]
-			b, ok := val.([]byte)
-
-			if ok {
-				v = string(b)
-			} else {
-				v = val
-			}
-			fmt.Println(col, ": ", v)
-		}
-	}
-	fmt.Printf("\n----- dumped %d row(s) from table %s -----\n", rowCnt, t)
-	return nil
-}
 
 // MessageStoreSuite returns a test suite for implementations of messagestore.GloballyOrderedStore,
 func MessageStoreSuite(
@@ -416,13 +368,13 @@ func MessageStoreSuite(
 								errNotify <- s.Next(ctx)
 							}
 						}()
-						// m1
+						// m1, <stream1>
 						m.Eventually(errNotify).Should(m.Receive(m.Succeed()))
-						// m2
+						// m2, <stream1>
 						m.Eventually(errNotify).Should(m.Receive(m.Succeed()))
-						// m3
+						// m1, <stream2>
 						m.Eventually(errNotify).Should(m.Receive(m.Succeed()))
-						// m4
+						// m2, <stream2>
 						m.Eventually(errNotify).Should(m.Receive(m.Succeed()))
 						// no other messages
 						m.Consistently(errNotify).ShouldNot(m.Receive())
@@ -473,12 +425,6 @@ func MessageStoreSuite(
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 
 					env, err = s.Get(ctx)
-					m.Expect(err).ShouldNot(m.HaveOccurred())
-					err = DumpSQLTable("ax_messagestore_offset")
-					m.Expect(err).ShouldNot(m.HaveOccurred())
-					err = DumpSQLTable("ax_messagestore_stream")
-					m.Expect(err).ShouldNot(m.HaveOccurred())
-					err = DumpSQLTable("ax_messagestore_message")
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					m.Expect(axtest.EnvelopesEqual(env, m2)).Should(m.BeTrue())
 				})
