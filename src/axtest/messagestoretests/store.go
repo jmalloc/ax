@@ -130,13 +130,11 @@ func MessageStoreSuite(
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					defer com.Rollback()
 
-					offset := uint64(0)
-
 					err = msgStore.AppendMessages(
 						ctx,
 						tx,
 						s1,
-						offset,
+						uint64(0),
 						[]ax.Envelope{m1, m2},
 					)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
@@ -145,7 +143,7 @@ func MessageStoreSuite(
 						ctx,
 						tx,
 						s2,
-						offset,
+						uint64(0),
 						[]ax.Envelope{m1, m2},
 					)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
@@ -160,12 +158,11 @@ func MessageStoreSuite(
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					defer com.Rollback()
 
-					offset := uint64(999)
 					err = msgStore.AppendMessages(
 						ctx,
 						tx,
 						s1,
-						offset,
+						uint64(999),
 						[]ax.Envelope{m1, m2},
 					)
 					m.Expect(err).Should(m.HaveOccurred())
@@ -182,13 +179,11 @@ func MessageStoreSuite(
 				m.Expect(err).ShouldNot(m.HaveOccurred())
 				defer com.Rollback()
 
-				offset := uint64(0)
-
 				err = msgStore.AppendMessages(
 					ctx,
 					tx,
 					s1,
-					offset,
+					uint64(0),
 					[]ax.Envelope{m1, m2},
 				)
 				m.Expect(err).ShouldNot(m.HaveOccurred())
@@ -197,7 +192,7 @@ func MessageStoreSuite(
 					ctx,
 					tx,
 					s2,
-					offset,
+					uint64(0),
 					[]ax.Envelope{m1, m2},
 				)
 				m.Expect(err).ShouldNot(m.HaveOccurred())
@@ -207,23 +202,21 @@ func MessageStoreSuite(
 			})
 			g.Context("when stream exists", func() {
 				g.It("returns true", func() {
-					offset := uint64(0)
 					_, ok, err := msgStore.OpenStream(
 						ctx,
 						store,
 						s1,
-						offset,
+						uint64(0),
 					)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					m.Expect(ok).Should(m.BeTrue())
 				})
 				g.It("returns the stream", func() {
-					offset := uint64(0)
 					s, _, err := msgStore.OpenStream(
 						ctx,
 						store,
 						s1,
-						offset,
+						uint64(0),
 					)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					m.Expect(s).ShouldNot(m.BeNil())
@@ -232,12 +225,11 @@ func MessageStoreSuite(
 			g.Context("Stream.Next", func() {
 				g.Context("when next message is available", func() {
 					g.It("advances the stream and returns nil", func() {
-						offset := uint64(0)
 						s, ok, err := msgStore.OpenStream(
 							ctx,
 							store,
 							s1,
-							offset,
+							uint64(0),
 						)
 						m.Expect(err).ShouldNot(m.HaveOccurred())
 						m.Expect(ok).Should(m.BeTrue())
@@ -248,12 +240,11 @@ func MessageStoreSuite(
 				})
 				g.Context("when context is canceled", func() {
 					g.It("returns context.Canceled error", func() {
-						offset := uint64(0)
 						s, ok, err := msgStore.OpenStream(
 							ctx,
 							store,
 							s1,
-							offset,
+							uint64(0),
 						)
 						m.Expect(err).ShouldNot(m.HaveOccurred())
 						m.Expect(ok).Should(m.BeTrue())
@@ -266,13 +257,12 @@ func MessageStoreSuite(
 				})
 				g.Context("when next message is unavailable", func() {
 					g.It("blocks indefinitely", func() {
-						offset := uint64(0)
 						errNotify := make(chan error)
 						s, ok, err := msgStore.OpenStream(
 							ctx,
 							store,
 							s1,
-							offset,
+							uint64(0),
 						)
 						m.Expect(err).ShouldNot(m.HaveOccurred())
 						m.Expect(ok).Should(m.BeTrue())
@@ -293,12 +283,11 @@ func MessageStoreSuite(
 			})
 			g.Context("Stream.Offset", func() {
 				g.It("returns the current offset of the stream", func() {
-					offset := uint64(0)
 					s, ok, err := msgStore.OpenStream(
 						ctx,
 						store,
 						s1,
-						offset,
+						uint64(0),
 					)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					m.Expect(ok).Should(m.BeTrue())
@@ -320,12 +309,11 @@ func MessageStoreSuite(
 			})
 			g.Context("Stream.Get", func() {
 				g.It("returns the message at the current offset of the stream", func() {
-					offset := uint64(0)
 					s, ok, err := msgStore.OpenStream(
 						ctx,
 						store,
 						s1,
-						offset,
+						uint64(0),
 					)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					m.Expect(ok).Should(m.BeTrue())
@@ -353,29 +341,20 @@ func MessageStoreSuite(
 				m.Expect(err).ShouldNot(m.HaveOccurred())
 				defer com.Rollback()
 
-				offset := uint64(0)
-
 				err = msgStore.AppendMessages(
 					ctx,
 					tx,
 					s1,
-					offset,
+					uint64(0),
 					[]ax.Envelope{m1, m2},
 				)
 				m.Expect(err).ShouldNot(m.HaveOccurred())
-
-				err = com.Commit()
-				m.Expect(err).ShouldNot(m.HaveOccurred())
-
-				tx, com, err = store.BeginTx(ctx)
-				m.Expect(err).ShouldNot(m.HaveOccurred())
-				defer com.Rollback()
 
 				err = msgStore.AppendMessages(
 					ctx,
 					tx,
 					s2,
-					offset,
+					uint64(0),
 					[]ax.Envelope{m1, m2},
 				)
 				m.Expect(err).ShouldNot(m.HaveOccurred())
@@ -385,11 +364,10 @@ func MessageStoreSuite(
 			})
 			g.Context("when global stream exists", func() {
 				g.It("returns no error", func() {
-					offset := uint64(0)
 					_, err := msgStore.OpenGlobal(
 						ctx,
 						store,
-						offset,
+						uint64(0),
 					)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 				})
@@ -397,11 +375,10 @@ func MessageStoreSuite(
 			g.Context("Stream.Next", func() {
 				g.Context("when next message is available", func() {
 					g.It("advances the stream and returns nil", func() {
-						offset := uint64(0)
 						s, err := msgStore.OpenGlobal(
 							ctx,
 							store,
-							offset,
+							uint64(0),
 						)
 						m.Expect(err).ShouldNot(m.HaveOccurred())
 
@@ -411,11 +388,10 @@ func MessageStoreSuite(
 				})
 				g.Context("when context is canceled", func() {
 					g.It("returns context.Canceled error", func() {
-						offset := uint64(0)
 						s, err := msgStore.OpenGlobal(
 							ctx,
 							store,
-							offset,
+							uint64(0),
 						)
 						m.Expect(err).ShouldNot(m.HaveOccurred())
 
@@ -427,12 +403,11 @@ func MessageStoreSuite(
 				})
 				g.Context("when next message is unavailable", func() {
 					g.It("blocks indefinitely", func() {
-						offset := uint64(0)
 						errNotify := make(chan error)
 						s, err := msgStore.OpenGlobal(
 							ctx,
 							store,
-							offset,
+							uint64(0),
 						)
 						m.Expect(err).ShouldNot(m.HaveOccurred())
 
@@ -456,11 +431,10 @@ func MessageStoreSuite(
 			})
 			g.Context("Stream.Offset", func() {
 				g.It("returns the current offset of the stream", func() {
-					offset := uint64(0)
 					s, err := msgStore.OpenGlobal(
 						ctx,
 						store,
-						offset,
+						uint64(0),
 					)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 
@@ -481,11 +455,10 @@ func MessageStoreSuite(
 			})
 			g.Context("Stream.Get", func() {
 				g.It("returns the message at the current offset of the stream", func() {
-					offset := uint64(0)
 					s, err := msgStore.OpenGlobal(
 						ctx,
 						store,
-						offset,
+						uint64(0),
 					)
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 
