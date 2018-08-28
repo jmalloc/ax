@@ -19,19 +19,19 @@ import (
 type Repository struct{}
 
 const (
-	// DelayedMessageBktName is the name of the Bolt root bucket where delayed
+	// delayedMessageBktName is the name of the Bolt root bucket where delayed
 	// messages are stored.
-	DelayedMessageBktName = "ax_delayed_message"
+	delayedMessageBktName = "ax_delayed_message"
 
-	// BySendAtBktName is the name of a subbucket in DelayedMessageBktName where
+	// bySendAtBktName is the name of a subbucket in delayedMessageBktName where
 	// delayed messages are stored and indexed by SendAt field in message's
 	// envelope
-	BySendAtBktName = "by_send_at"
+	bySendAtBktName = "by_send_at"
 
-	// ByIDBktName is the name of a subbucket in DelayedMessageBktName where
+	// byIDBktName is the name of a subbucket in delayedMessageBktName where
 	// delayed messages are stored and indexed by MessageID field in message's
 	// envelope
-	ByIDBktName = "by_id"
+	byIDBktName = "by_id"
 )
 
 // LoadNextMessage loads the next that is scheduled to be sent.
@@ -48,8 +48,8 @@ func (Repository) LoadNextMessage(
 
 	bkt := boltutil.GetBkt(
 		tx,
-		DelayedMessageBktName,
-		BySendAtBktName,
+		delayedMessageBktName,
+		bySendAtBktName,
 	)
 	if bkt == nil {
 		return endpoint.OutboundEnvelope{}, false, nil
@@ -80,8 +80,8 @@ func (Repository) SaveMessage(
 	if m := boltutil.Get(
 		tx,
 		env.MessageID.Get(),
-		DelayedMessageBktName,
-		ByIDBktName,
+		delayedMessageBktName,
+		byIDBktName,
 	); m != nil {
 		return nil
 	}
@@ -103,8 +103,8 @@ func (Repository) SaveMessage(
 		tx,
 		env.MessageID.Get(),
 		[]byte(m.SendAt),
-		DelayedMessageBktName,
-		ByIDBktName,
+		delayedMessageBktName,
+		byIDBktName,
 	); err != nil {
 		return err
 	}
@@ -113,8 +113,8 @@ func (Repository) SaveMessage(
 		tx,
 		m.SendAt,
 		m,
-		DelayedMessageBktName,
-		BySendAtBktName,
+		delayedMessageBktName,
+		bySendAtBktName,
 	)
 }
 
@@ -128,8 +128,8 @@ func (Repository) MarkAsSent(
 	sa := boltutil.Get(
 		tx,
 		env.MessageID.Get(),
-		DelayedMessageBktName,
-		ByIDBktName,
+		delayedMessageBktName,
+		byIDBktName,
 	)
 	if sa == nil {
 		return nil
@@ -139,8 +139,8 @@ func (Repository) MarkAsSent(
 	if err := boltutil.Delete(
 		tx,
 		env.MessageID.Get(),
-		DelayedMessageBktName,
-		ByIDBktName,
+		delayedMessageBktName,
+		byIDBktName,
 	); err != nil {
 		return err
 	}
@@ -149,8 +149,8 @@ func (Repository) MarkAsSent(
 	return boltutil.Delete(
 		tx,
 		string(sa),
-		DelayedMessageBktName,
-		BySendAtBktName,
+		delayedMessageBktName,
+		bySendAtBktName,
 	)
 }
 
