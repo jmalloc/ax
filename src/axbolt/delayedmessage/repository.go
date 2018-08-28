@@ -2,13 +2,11 @@ package delayedmessage
 
 import (
 	"context"
-	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
-	"github.com/jmalloc/ax/src/ax/marshaling"
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/axbolt/internal/boltutil"
 	boltpersistence "github.com/jmalloc/ax/src/axbolt/persistence"
@@ -86,23 +84,21 @@ func (Repository) SaveMessage(
 		return nil
 	}
 
+	envproto, err := env.AsProto()
+	if err != nil {
+		return err
+	}
+
 	m := &DelayedMessage{
-		Id:                  env.MessageID.Get(),
-		CausationId:         env.CausationID.Get(),
-		CorrelationId:       env.CorrelationID.Get(),
-		CreatedAt:           marshaling.MarshalTime(env.CreatedAt),
-		SendAt:              marshaling.MarshalTime(env.SendAt),
+		Envelope:            envproto,
 		Operation:           int32(env.Operation),
 		DestinationEndpoint: env.DestinationEndpoint,
-	}
-	if m.Message, err = ptypes.MarshalAny(env.Message); err != nil {
-		return err
 	}
 
 	if err = boltutil.Put(
 		tx,
 		env.MessageID.Get(),
-		[]byte(m.SendAt),
+		[]byte(ptypes.TimestampString(envproto.SendAt)),
 		delayedMessageBktName,
 		byIDBktName,
 	); err != nil {
@@ -111,7 +107,7 @@ func (Repository) SaveMessage(
 
 	return boltutil.PutProto(
 		tx,
-		m.SendAt,
+		ptypes.TimestampString(envproto.SendAt),
 		m,
 		delayedMessageBktName,
 		bySendAtBktName,
@@ -166,28 +162,12 @@ func parseDelayedMessage(
 		return env, err
 	}
 
-	var x ptypes.DynamicAny
-	if err = ptypes.UnmarshalAny(dm.Message, &x); err != nil {
-		return env, err
-	}
-	env.Message, _ = x.Message.(ax.Message)
-
-	if err = env.MessageID.Parse(dm.GetId()); err != nil {
-		return env, err
-	}
-	if err = env.CausationID.Parse(dm.GetCausationId()); err != nil {
-		return env, err
-	}
-	if err = env.CorrelationID.Parse(dm.GetCorrelationId()); err != nil {
+	env.Envelope, err = ax.NewEnvelopeFromProto(dm.GetEnvelope())
+	if err != nil {
 		return env, err
 	}
 	env.Operation = endpoint.Operation(dm.GetOperation())
 	env.DestinationEndpoint = dm.GetDestinationEndpoint()
 
-	if env.CreatedAt, err = time.Parse(time.RFC3339Nano, dm.GetCreatedAt()); err != nil {
-		return env, err
-	}
-
-	env.SendAt, err = time.Parse(time.RFC3339Nano, dm.GetSendAt())
 	return env, err
 }
