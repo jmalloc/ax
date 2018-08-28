@@ -83,7 +83,7 @@ func (f StreamFetcher) fetch(
 	r := map[uint64]*StoredMessage{}
 	bkt := boltutil.GetBktWithPath(
 		tx,
-		fmt.Sprintf("%s/%s/msgs", StreamBktName, f.Stream),
+		fmt.Sprintf("%s/%s/msgs", streamBktName, f.Stream),
 	)
 	if bkt == nil {
 		return r, nil
@@ -103,7 +103,7 @@ func (f StreamFetcher) fetch(
 		if m := boltutil.GetWithPath(
 			tx,
 			string(v),
-			GlobalStreamMsgBktPath,
+			globalStreamMsgBktPath,
 		); m != nil {
 			var msg StoredMessage
 			if err := proto.Unmarshal(m, &msg); err != nil {
@@ -168,7 +168,7 @@ func (f *GlobalFetcher) fetch(
 	default:
 	}
 	r := map[uint64]*StoredMessage{}
-	bkt := boltutil.GetBktWithPath(tx, GlobalStreamMsgBktPath)
+	bkt := boltutil.GetBktWithPath(tx, globalStreamMsgBktPath)
 	if bkt == nil {
 		return r, nil
 	}

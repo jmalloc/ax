@@ -26,11 +26,11 @@ func insertGlobalOffsetMessage(tx *bolt.Tx, env ax.Envelope) (uint64, error) {
 		b      [8]byte
 	)
 
-	if o := boltutil.Get(tx, OffsetKey, GlobalStreamBktName); o != nil {
+	if o := boltutil.Get(tx, offsetKey, globalStreamBktName); o != nil {
 		offset = binary.BigEndian.Uint64(o)
 	}
 
-	bkt, err := boltutil.MakeBktWithPath(tx, GlobalStreamMsgBktPath)
+	bkt, err := boltutil.MakeBktWithPath(tx, globalStreamMsgBktPath)
 	if err != nil {
 		return 0, err
 	}
@@ -54,7 +54,7 @@ func insertGlobalOffsetMessage(tx *bolt.Tx, env ax.Envelope) (uint64, error) {
 	}
 
 	return offset,
-		boltutil.Put(tx, OffsetKey, b[:], GlobalStreamBktName)
+		boltutil.Put(tx, offsetKey, b[:], globalStreamBktName)
 }
 
 // insertStreamOffset inserts a message into the stream offset bucket. This
@@ -74,8 +74,8 @@ func insertStreamOffset(
 	var (
 		b1, b2 [8]byte
 	)
-	p := fmt.Sprintf("%s/%s", StreamBktName, stream)
-	o := boltutil.GetWithPath(tx, OffsetKey, p)
+	p := fmt.Sprintf("%s/%s", streamBktName, stream)
+	o := boltutil.GetWithPath(tx, offsetKey, p)
 	if o != nil && binary.BigEndian.Uint64(o) != offset ||
 		o == nil && offset != 0 {
 		// TODO: use OCC error https://github.com/jmalloc/ax/issues/93
@@ -97,5 +97,5 @@ func insertStreamOffset(
 	if err := bkt.Put(b1[:], b2[:]); err != nil {
 		return err
 	}
-	return boltutil.PutWithPath(tx, OffsetKey, b1[:], p)
+	return boltutil.PutWithPath(tx, offsetKey, b1[:], p)
 }

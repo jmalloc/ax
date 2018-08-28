@@ -19,9 +19,9 @@ import (
 )
 
 const (
-	// InstanceBktName is the name of the Bolt root bucket where all
+	// instanceBktName is the name of the Bolt root bucket where all
 	// saga instance data is stored.
-	InstanceBktName = "ax_saga_instance"
+	instanceBktName = "ax_saga_instance"
 )
 
 // CRUDRepository is a Bolt-backed implementation of Ax's crud.Repository
@@ -49,7 +49,7 @@ func (r CRUDRepository) LoadSagaInstance(
 		s SagaInstance
 	)
 	tx := boltpersistence.ExtractTx(ptx)
-	b := boltutil.Get(tx, id.Get(), InstanceBktName)
+	b := boltutil.Get(tx, id.Get(), instanceBktName)
 	if b == nil {
 		return saga.Instance{}, false, nil
 	}
@@ -116,7 +116,7 @@ func (r CRUDRepository) SaveSagaInstance(
 		tx,
 		i.InstanceID.Get(),
 		&prev,
-		InstanceBktName,
+		instanceBktName,
 	); err != nil {
 		return err
 	}
@@ -169,7 +169,7 @@ func (r CRUDRepository) DeleteSagaInstance(
 		tx,
 		i.InstanceID.Get(),
 		&s,
-		InstanceBktName,
+		instanceBktName,
 	); err != nil {
 		return err
 	}
@@ -192,7 +192,7 @@ func (r CRUDRepository) DeleteSagaInstance(
 			)
 		}
 
-		return boltutil.Delete(tx, i.InstanceID.Get(), InstanceBktName)
+		return boltutil.Delete(tx, i.InstanceID.Get(), instanceBktName)
 	}
 
 	return nil
@@ -212,7 +212,7 @@ func (CRUDRepository) insertInstance(
 		tx,
 		new.GetInstanceId(),
 		new,
-		InstanceBktName,
+		instanceBktName,
 	)
 }
 
@@ -231,6 +231,6 @@ func (CRUDRepository) updateInstance(
 		tx,
 		new.GetInstanceId(),
 		new,
-		InstanceBktName,
+		instanceBktName,
 	)
 }

@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	// ProjectionOffsetBktName is the name of the Bolt root bucket where
+	// projectionOffsetBktName is the name of the Bolt root bucket where
 	// projection offset data is stored.
-	ProjectionOffsetBktName = "ax_projection_offset"
+	projectionOffsetBktName = "ax_projection_offset"
 )
 
 // OffsetStore is a Bolt-backed implementation of Ax's projection.OffsetStore
@@ -36,7 +36,7 @@ func (OffsetStore) LoadOffset(
 	}
 	defer tx.Rollback()
 
-	if b := boltutil.Get(tx, pk, ProjectionOffsetBktName); b != nil {
+	if b := boltutil.Get(tx, pk, projectionOffsetBktName); b != nil {
 		return binary.BigEndian.Uint64(b), nil
 	}
 	return 0, nil
@@ -57,7 +57,7 @@ func (s OffsetStore) IncrementOffset(
 	tx := boltpersistence.ExtractTx(ptx)
 
 	if c != 0 {
-		b := boltutil.Get(tx, pk, ProjectionOffsetBktName)
+		b := boltutil.Get(tx, pk, projectionOffsetBktName)
 		if b == nil {
 			return nil
 		}
@@ -75,6 +75,6 @@ func (s OffsetStore) IncrementOffset(
 	b := [8]byte{}
 	c++
 	binary.BigEndian.PutUint64(b[:], c)
-	return boltutil.Put(tx, pk, b[:], ProjectionOffsetBktName)
+	return boltutil.Put(tx, pk, b[:], projectionOffsetBktName)
 	// TODO: use OCC error https://github.com/jmalloc/ax/issues/93
 }

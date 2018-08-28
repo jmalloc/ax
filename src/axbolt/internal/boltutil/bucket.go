@@ -12,9 +12,9 @@ func Has(b *bolt.Bucket, k []byte) bool {
 }
 
 const (
-	// BktPathSeparator is a delimeter that separates buckets
+	// bktPathSeparator is a delimeter that separates buckets
 	// in the Bolt DB bucket path.
-	BktPathSeparator = "/"
+	bktPathSeparator = "/"
 )
 
 // GetBkt retrieves a Bolt DB bucket with a name of the last string of bkts.
@@ -41,10 +41,10 @@ func GetBkt(tx *bolt.Tx, bkts ...string) *bolt.Bucket {
 }
 
 // GetBktWithPath retrieves a Bolt DB bucket with the path of buckets separated
-// with BktPathSeparator. This method retrieves the last bucket in the path. If
+// with bktPathSeparator. This method retrieves the last bucket in the path. If
 // any bucket in the path is nonexistant, nil is returned.
 func GetBktWithPath(tx *bolt.Tx, path string) *bolt.Bucket {
-	bkts := strings.Split(path, BktPathSeparator)
+	bkts := strings.Split(path, bktPathSeparator)
 	return GetBkt(tx, bkts...)
 }
 
@@ -104,10 +104,10 @@ func MakeBkt(tx *bolt.Tx, bkts ...string) (*bolt.Bucket, error) {
 	return b, nil
 }
 
-// MakeBktWithPath creates Bolt DB buckets from path separated with BktPathSeparator
+// MakeBktWithPath creates Bolt DB buckets from path separated with bktPathSeparator
 // For all usage cases please refer to function MakeBkt.
 func MakeBktWithPath(tx *bolt.Tx, path string) (*bolt.Bucket, error) {
-	bkts := strings.Split(path, BktPathSeparator)
+	bkts := strings.Split(path, bktPathSeparator)
 	return MakeBkt(tx, bkts...)
 }
 
@@ -124,7 +124,7 @@ func Put(tx *bolt.Tx, key string, val []byte, bkts ...string) error {
 }
 
 // PutWithPath places a value val with key key in the bucket specified as a last
-// item in the path separated by BktPathSeparator. Any nonexistant buckets in the
+// item in the path separated by bktPathSeparator. Any nonexistant buckets in the
 // path will be created before the key and the value are placed. For any cases
 // related to the creation of buckets in the path, please refer to function
 // MakeBkt.
@@ -147,7 +147,7 @@ func Delete(tx *bolt.Tx, key string, bkts ...string) error {
 }
 
 // DeleteWithPath deletes an entry with key key in the bucket specified as a
-// last in the separated by BktPathSeparator. If there are any nonexistant
+// last in the separated by bktPathSeparator. If there are any nonexistant
 // buckets in the path, the function returns nil.
 func DeleteWithPath(tx *bolt.Tx, key string, path string) error {
 	if bkt := GetBktWithPath(tx, path); bkt != nil {

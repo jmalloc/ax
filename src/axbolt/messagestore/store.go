@@ -12,22 +12,22 @@ import (
 )
 
 const (
-	// StreamBktName is the name of the Bolt root bucket that contains message
+	// streamBktName is the name of the Bolt root bucket that contains message
 	// offsets for each stream
-	StreamBktName = "ax_messagestore_stream"
+	streamBktName = "ax_messagestore_stream"
 
-	// GlobalStreamBktName is the name of the Bolt root bucket that contains all messages
+	// globalStreamBktName is the name of the Bolt root bucket that contains all messages
 	// stored as a global stream
-	GlobalStreamBktName = "ax_messagestore_message"
+	globalStreamBktName = "ax_messagestore_message"
 
-	// GlobalStreamMsgBktPath is the path to the bucket that contains messages
+	// globalStreamMsgBktPath is the path to the bucket that contains messages
 	// in the global stream
-	GlobalStreamMsgBktPath = GlobalStreamBktName + "/msgs"
+	globalStreamMsgBktPath = globalStreamBktName + "/msgs"
 
-	// OffsetKey is the key within stream buckets to hold the value of the latest
+	// offsetKey is the key within stream buckets to hold the value of the latest
 	// stream offset. This value is incremented in case of successful message
 	// insertion.
-	OffsetKey = "offset"
+	offsetKey = "offset"
 )
 
 // Store is a Bolt-backed implementation of Ax's
@@ -109,6 +109,6 @@ func streamExists(db *bolt.DB, s string) (bool, error) {
 	}
 	defer tx.Rollback()
 
-	bkt := boltutil.GetBkt(tx, StreamBktName, s)
+	bkt := boltutil.GetBkt(tx, streamBktName, s)
 	return bkt != nil, nil
 }

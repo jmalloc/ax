@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	// KeySetBktName is name of the Bolt root bucket where all saga keyset data is
+	// keySetBktName is name of the Bolt root bucket where all saga keyset data is
 	// stored.
-	KeySetBktName = "ax_saga_keyset"
+	keySetBktName = "ax_saga_keyset"
 )
 
 // KeySetRepository is a Bolt-backed implementation of Ax's keyset.Repository
@@ -31,7 +31,7 @@ func (KeySetRepository) FindByKey(
 	pk, mk string,
 ) (id saga.InstanceID, ok bool, err error) {
 	tx := boltpersistence.ExtractTx(ptx)
-	b := boltutil.Get(tx, mk, KeySetBktName, pk)
+	b := boltutil.Get(tx, mk, keySetBktName, pk)
 	if b == nil {
 		return
 	}
@@ -66,7 +66,7 @@ func (KeySetRepository) SaveKeys(
 			PersistenceKey: pk,
 			MappingKeys:    ks,
 		},
-		KeySetBktName,
+		keySetBktName,
 	)
 	if err != nil {
 		return err
@@ -77,7 +77,7 @@ func (KeySetRepository) SaveKeys(
 			tx,
 			k,
 			[]byte(id.Get()),
-			KeySetBktName,
+			keySetBktName,
 			pk,
 		); err != nil {
 			return err
@@ -105,7 +105,7 @@ func (r KeySetRepository) DeleteKeys(
 		tx,
 		id.Get(),
 		&ks,
-		KeySetBktName,
+		keySetBktName,
 	); err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func (r KeySetRepository) DeleteKeys(
 			if err = boltutil.Delete(
 				tx,
 				k,
-				KeySetBktName,
+				keySetBktName,
 				ks.GetPersistenceKey(),
 			); err != nil {
 				return err

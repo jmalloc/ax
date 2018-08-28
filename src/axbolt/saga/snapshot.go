@@ -23,9 +23,9 @@ import (
 type SnapshotRepository struct{}
 
 const (
-	// SnapshotBktName is name of the Bolt root bucket where all
+	// snapshotBktName is name of the Bolt root bucket where all
 	// saga snapshot data is stored.
-	SnapshotBktName = "ax_saga_snapshot"
+	snapshotBktName = "ax_saga_snapshot"
 )
 
 // LoadSagaSnapshot loads the latest available snapshot from the store.
@@ -39,7 +39,7 @@ func (SnapshotRepository) LoadSagaSnapshot(
 	id saga.InstanceID,
 ) (saga.Instance, bool, error) {
 	tx := boltpersistence.ExtractTx(ptx)
-	bkt := boltutil.GetBkt(tx, SnapshotBktName, id.Get())
+	bkt := boltutil.GetBkt(tx, snapshotBktName, id.Get())
 	if bkt == nil {
 		return saga.Instance{}, false, nil
 	}
@@ -113,7 +113,7 @@ func (SnapshotRepository) SaveSagaSnapshot(
 		tx,
 		string(k[:]),
 		sn,
-		SnapshotBktName,
+		snapshotBktName,
 		i.InstanceID.Get(),
 	)
 }
@@ -129,7 +129,7 @@ func (SnapshotRepository) DeleteSagaSnapshots(
 	id saga.InstanceID,
 ) error {
 	tx := boltpersistence.ExtractTx(ptx)
-	bkt := boltutil.GetBkt(tx, SnapshotBktName)
+	bkt := boltutil.GetBkt(tx, snapshotBktName)
 	if bkt == nil {
 		return nil
 	}
