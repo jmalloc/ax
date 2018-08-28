@@ -190,6 +190,29 @@ var _ = Describe("Envelope", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(sendAt).To(BeTemporally("==", env.SendAt))
 		})
+		It("encodes MessageID type values as full UUID strings", func() {
+			id := GenerateMessageID()
+			causationID := GenerateMessageID()
+			correlationID := GenerateMessageID()
+
+			env := Envelope{
+				MessageID:     id,
+				CausationID:   causationID,
+				CorrelationID: correlationID,
+				CreatedAt:     time.Now(),
+				SendAt:        time.Now().Add(1 * time.Minute),
+				Message: &testmessages.Message{
+					Value: "<message>",
+				},
+			}
+
+			pb, err := env.AsProto()
+			Expect(err).ShouldNot(HaveOccurred())
+
+			Expect(pb.MessageId).To(Equal(id.Get()))
+			Expect(pb.CorrelationId).To(Equal(correlationID.Get()))
+			Expect(pb.CausationId).To(Equal(causationID.Get()))
+		})
 	})
 })
 

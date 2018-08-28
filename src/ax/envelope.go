@@ -191,9 +191,9 @@ func (e Envelope) AsProto() (*EnvelopeProto, error) {
 	}
 
 	return &EnvelopeProto{
-		MessageId:     e.MessageID.String(),
-		CausationId:   e.CausationID.String(),
-		CorrelationId: e.CorrelationID.String(),
+		MessageId:     e.MessageID.Get(),
+		CausationId:   e.CausationID.Get(),
+		CorrelationId: e.CorrelationID.Get(),
 		CreatedAt:     createdAt,
 		SendAt:        sendAt,
 		Message:       message,
