@@ -14,9 +14,9 @@ import (
 	m "github.com/onsi/gomega"
 )
 
-// InsertSagaSnapshot insert a saga snapshot into the snapshot repository
+// insertSagaSnapshot insert a saga snapshot into the snapshot repository
 // It panics if any error might result in the process of the snapshot insertion.
-func InsertSagaSnapshot(
+func insertSagaSnapshot(
 	ctx context.Context,
 	store persistence.DataStore,
 	i saga.Instance,
@@ -89,7 +89,7 @@ func SnapshotRepositorySuite(
 					latest = saga.Revision(3)
 					for r := latest; r > saga.Revision(0); r -= saga.Revision(1) {
 						i.Revision = r
-						i = InsertSagaSnapshot(
+						i = insertSagaSnapshot(
 							ctx,
 							store,
 							i,
@@ -190,7 +190,7 @@ func SnapshotRepositorySuite(
 						Value: "<foo>",
 					},
 				}
-				i = InsertSagaSnapshot(
+				i = insertSagaSnapshot(
 					ctx,
 					store,
 					i,

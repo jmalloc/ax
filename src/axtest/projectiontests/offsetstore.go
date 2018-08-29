@@ -10,9 +10,9 @@ import (
 	m "github.com/onsi/gomega"
 )
 
-// InsertOffset inserts an offset into a projection offset store.
+// insertOffset inserts an offset into a projection offset store.
 // The value of c will be increased by the internal call of repo.IncrementOffset
-func InsertOffset(
+func insertOffset(
 	ctx context.Context,
 	store persistence.DataStore,
 	repo projection.OffsetStore,
@@ -74,7 +74,7 @@ func OffsetStoreSuite(
 			g.Context("when previous offset exists", func() {
 				var prevOffset uint64
 				g.BeforeEach(func() {
-					prevOffset = InsertOffset(ctx, store, repo, pk, 0)
+					prevOffset = insertOffset(ctx, store, repo, pk, 0)
 				})
 				g.It("returns no errors", func() {
 					_, com, err := store.BeginTx(ctx)
@@ -117,7 +117,7 @@ func OffsetStoreSuite(
 			g.Context("when previous offset exists", func() {
 				var prevOffset uint64
 				g.BeforeEach(func() {
-					prevOffset = InsertOffset(ctx, store, repo, pk, 0)
+					prevOffset = insertOffset(ctx, store, repo, pk, 0)
 				})
 				g.It("returns no errors", func() {
 					tx, com, err := store.BeginTx(ctx)

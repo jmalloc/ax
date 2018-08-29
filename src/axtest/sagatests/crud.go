@@ -16,9 +16,9 @@ import (
 	m "github.com/onsi/gomega"
 )
 
-// InsertRev1Saga is a helper function that inserts a test SagaInstance
+// insertRev1Saga is a helper function that inserts a test SagaInstance
 // with revision 0 into the underlying database of the store.
-func InsertRev1Saga(
+func insertRev1Saga(
 	ctx context.Context,
 	store persistence.DataStore,
 	repo crud.Repository,
@@ -114,7 +114,7 @@ func CRUDRepositorySuite(
 							Value: "<foo>",
 						},
 					}
-					r1 = InsertRev1Saga(ctx, store, repo, pk, i)
+					r1 = insertRev1Saga(ctx, store, repo, pk, i)
 
 					tx, com, err = store.BeginTx(ctx)
 					if err != nil {
@@ -193,7 +193,7 @@ func CRUDRepositorySuite(
 							Value: "<foo>",
 						},
 					}
-					r1 = InsertRev1Saga(ctx, store, repo, pk, i)
+					r1 = insertRev1Saga(ctx, store, repo, pk, i)
 
 					tx, com, err = store.BeginTx(ctx)
 					if err != nil {
@@ -279,7 +279,7 @@ func CRUDRepositorySuite(
 							Value: "<foo>",
 						},
 					}
-					r1 = InsertRev1Saga(ctx, store, repo, pk, i)
+					r1 = insertRev1Saga(ctx, store, repo, pk, i)
 
 					tx, com, err = store.BeginTx(ctx)
 					if err != nil {
@@ -360,7 +360,7 @@ func CRUDRepositorySuite(
 						Value: "<foo>",
 					},
 				}
-				r1 = InsertRev1Saga(ctx, store, repo, pk, i)
+				r1 = insertRev1Saga(ctx, store, repo, pk, i)
 
 				tx, com, err = store.BeginTx(ctx)
 				if err != nil {

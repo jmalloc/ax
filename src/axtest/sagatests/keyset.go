@@ -12,8 +12,8 @@ import (
 	m "github.com/onsi/gomega"
 )
 
-// InsertMappingKeys inserts saga mapping keys into the repository
-func InsertMappingKeys(
+// insertMappingKeys inserts saga mapping keys into the repository
+func insertMappingKeys(
 	ctx context.Context,
 	store persistence.DataStore,
 	repo keyset.Repository,
@@ -85,7 +85,7 @@ func KeySetRepositorySuite(
 				g.BeforeEach(func() {
 					mk = []string{"<test1>", "<test2>", "<test3>"}
 					id = saga.GenerateInstanceID()
-					InsertMappingKeys(
+					insertMappingKeys(
 						ctx,
 						store,
 						repo,
@@ -174,7 +174,7 @@ func KeySetRepositorySuite(
 			g.BeforeEach(func() {
 				mk = []string{"<test1>", "<test2>", "<test3>"}
 				id = saga.GenerateInstanceID()
-				InsertMappingKeys(
+				insertMappingKeys(
 					ctx,
 					store,
 					repo,
