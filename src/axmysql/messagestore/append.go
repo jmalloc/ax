@@ -99,6 +99,13 @@ func incrGlobalOffset(
 	n uint64,
 ) (uint64, error) {
 	// insert or update both cause the row to be locked in tx
+
+	// The below code is a workaround MariaDB issue related to the change of SQL
+	// syntax in version 10.3.3, see this link for details:
+	// https://mariadb.com/kb/en/library/values-value/ The issue related to this
+	// particular code is that using 'VALUE' syntax the query does not cause an
+	// error in MariaDB versions before 10.3.3, but silently fail with no effect
+	// to the target rows.
 	inserted, err := sqlutil.ExecInsertOrUpdate(
 		ctx,
 		tx,
