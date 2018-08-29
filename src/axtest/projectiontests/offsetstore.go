@@ -10,8 +10,8 @@ import (
 	m "github.com/onsi/gomega"
 )
 
-// insertOffset inserts an offset into a projection offset store.
-// The value of c will be increased by the internal call of repo.IncrementOffset
+// insertOffset inserts an offset into a projection offset store. The value of c
+// will be increased by the internal call of repo.IncrementOffset
 func insertOffset(
 	ctx context.Context,
 	store persistence.DataStore,
@@ -133,8 +133,7 @@ func OffsetStoreSuite(
 						m.Expect(err).ShouldNot(m.HaveOccurred())
 						defer com.Rollback()
 
-						var offset uint64 = 3
-						err = repo.IncrementOffset(ctx, tx, pk, offset)
+						err = repo.IncrementOffset(ctx, tx, pk, uint64(3))
 						m.Expect(err).Should(m.HaveOccurred())
 					})
 				})

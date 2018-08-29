@@ -16,8 +16,8 @@ import (
 	m "github.com/onsi/gomega"
 )
 
-// insertRev1Saga is a helper function that inserts a test SagaInstance
-// with revision 0 into the underlying database of the store.
+// insertRev1Saga is a helper function that inserts a test SagaInstance with
+// revision 0 into the underlying database of the store.
 func insertRev1Saga(
 	ctx context.Context,
 	store persistence.DataStore,
@@ -70,7 +70,8 @@ func insertRev1Saga(
 	return r1
 }
 
-// CRUDRepositorySuite returns a test suite for implementations of crud.Repository.
+// CRUDRepositorySuite returns a test suite for implementations of
+// crud.Repository.
 func CRUDRepositorySuite(
 	getStore func() persistence.DataStore,
 	getRepo func() crud.Repository,
@@ -310,7 +311,7 @@ func CRUDRepositorySuite(
 					m.Expect(err).ShouldNot(m.HaveOccurred())
 					m.Expect(ok).To(m.BeTrue())
 					m.Expect(r2.InstanceID).Should(m.Equal(r1.InstanceID))
-					m.Expect(r2.Revision).Should(m.BeNumerically("==", r1.Revision+1))
+					m.Expect(r2.Revision).Should(m.BeNumerically("==", saga.Revision(2)))
 					m.Expect(proto.Equal(r1.Data, r2.Data)).Should(m.BeTrue())
 				})
 

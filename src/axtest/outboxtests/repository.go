@@ -15,7 +15,8 @@ import (
 	m "github.com/onsi/gomega"
 )
 
-// RepositorySuite returns a test suite for implementations of outbox.Repository.
+// RepositorySuite returns a test suite for implementations of
+// outbox.Repository.
 func RepositorySuite(
 	getStore func() persistence.DataStore,
 	getRepo func() outbox.Repository,

@@ -14,8 +14,8 @@ import (
 	m "github.com/onsi/gomega"
 )
 
-// insertSagaSnapshot insert a saga snapshot into the snapshot repository
-// It panics if any error might result in the process of the snapshot insertion.
+// insertSagaSnapshot insert a saga snapshot into the snapshot repository It
+// panics if any error might result in the process of the snapshot insertion.
 func insertSagaSnapshot(
 	ctx context.Context,
 	store persistence.DataStore,
@@ -44,7 +44,8 @@ func insertSagaSnapshot(
 	return i
 }
 
-// SnapshotRepositorySuite returns a test suite for implementations of snapshot.Repository.
+// SnapshotRepositorySuite returns a test suite for implementations of
+// snapshot.Repository.
 func SnapshotRepositorySuite(
 	getStore func() persistence.DataStore,
 	getRepo func() eventsourcing.SnapshotRepository,

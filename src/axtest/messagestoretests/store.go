@@ -15,7 +15,8 @@ import (
 	m "github.com/onsi/gomega"
 )
 
-// MessageStoreSuite returns a test suite for implementations of messagestore.GloballyOrderedStore,
+// MessageStoreSuite returns a test suite for implementations of
+// messagestore.GloballyOrderedStore,
 func MessageStoreSuite(
 	getStore func() persistence.DataStore,
 	getMessageStore func() messagestore.GloballyOrderedStore,
