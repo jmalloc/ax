@@ -4,9 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/ax/marshaling"
 )
 
 const (
@@ -27,7 +25,7 @@ type Stream struct {
 	Limit        uint64
 	PollInterval time.Duration
 
-	msgs map[uint64]*StoredMessage
+	envpbs map[uint64]*ax.EnvelopeProto
 }
 
 // Next advances the stream to the next message.
@@ -64,7 +62,7 @@ func (s *Stream) Next(ctx context.Context) error {
 //
 // It returns what if there are no more messages in the stream.
 func (s *Stream) TryNext(ctx context.Context) (bool, error) {
-	if s.msgs != nil {
+	if s.envpbs != nil {
 		if s.advance() {
 			return true, nil
 		}
@@ -78,17 +76,17 @@ func (s *Stream) TryNext(ctx context.Context) (bool, error) {
 
 // Get returns the message at the current offset in the stream.
 func (s *Stream) Get(ctx context.Context) (ax.Envelope, error) {
-	if s.msgs == nil {
+	if s.envpbs == nil {
 		panic("Next() must be called before Get()")
 	}
 
-	m := s.msgs[s.NextOffset]
-	return parseMessage(m)
+	envproto := s.envpbs[s.NextOffset]
+	return ax.NewEnvelopeFromProto(envproto)
 }
 
 // Offset returns the offset of the message returned by Get().
 func (s *Stream) Offset() (uint64, error) {
-	if s.msgs == nil {
+	if s.envpbs == nil {
 		panic("Next() must be called before Offset()")
 	}
 	return s.NextOffset - 1, nil
@@ -96,7 +94,7 @@ func (s *Stream) Offset() (uint64, error) {
 
 // Close closes the stream.
 func (s *Stream) Close() error {
-	s.msgs = nil
+	s.envpbs = nil
 	return nil
 }
 
@@ -107,49 +105,21 @@ func (s *Stream) fetchMessages(ctx context.Context) error {
 		n = DefaultFetchLimit
 	}
 
-	msgs, err := s.Fetcher.FetchMessages(ctx, s.NextOffset, n)
+	envpbs, err := s.Fetcher.FetchMessages(ctx, s.NextOffset, n)
 	if err != nil {
 		return err
 	}
-	s.msgs = msgs
+	s.envpbs = envpbs
 	return nil
 }
 
-// advance moves to the next message in s.msgs.
+// advance moves to the next message in s.envpbs.
 func (s *Stream) advance() bool {
 	o := s.NextOffset
 	o++
-	if _, ok := s.msgs[o]; ok {
+	if _, ok := s.envpbs[o]; ok {
 		s.NextOffset++
 		return true
 	}
 	return false
-}
-
-// parseMessage parses a message into an ax.Envelope struct
-func parseMessage(m *StoredMessage) (ax.Envelope, error) {
-	var (
-		err error
-		env ax.Envelope
-	)
-	var x ptypes.DynamicAny
-	if err = ptypes.UnmarshalAny(m.Message, &x); err != nil {
-		return env, err
-	}
-	env.Message, _ = x.Message.(ax.Message)
-
-	if err = env.MessageID.Parse(m.GetId()); err != nil {
-		return env, err
-	}
-	if err = env.CausationID.Parse(m.GetCausationId()); err != nil {
-		return env, err
-	}
-	if err = env.CorrelationID.Parse(m.GetCorrelationId()); err != nil {
-		return env, err
-	}
-	if err = marshaling.UnmarshalTime(m.GetCreatedAt(), &env.CreatedAt); err != nil {
-		return env, err
-	}
-	err = marshaling.UnmarshalTime(m.GetSendAt(), &env.SendAt)
-	return env, err
 }

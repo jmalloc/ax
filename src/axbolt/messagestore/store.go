@@ -20,14 +20,13 @@ const (
 	// stored as a global stream
 	globalStreamBktName = "ax_messagestore_message"
 
-	// globalStreamMsgBktPath is the path to the bucket that contains messages
-	// in the global stream
-	globalStreamMsgBktPath = globalStreamBktName + "/msgs"
-
 	// offsetKey is the key within stream buckets to hold the value of the latest
 	// stream offset. This value is incremented in case of successful message
 	// insertion.
 	offsetKey = "offset"
+
+	// msgsBktName is the name of the bucket to store the messages.
+	msgsBktName = "msgs"
 )
 
 // Store is a Bolt-backed implementation of Ax's

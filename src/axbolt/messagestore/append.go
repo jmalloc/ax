@@ -3,9 +3,7 @@ package messagestore
 import (
 	"encoding/binary"
 	fmt "fmt"
-	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/jmalloc/ax/src/axbolt/internal/boltutil"
 
 	bolt "github.com/coreos/bbolt"
@@ -30,26 +28,20 @@ func insertGlobalOffsetMessage(tx *bolt.Tx, env ax.Envelope) (uint64, error) {
 		offset = binary.BigEndian.Uint64(o)
 	}
 
-	bkt, err := boltutil.MakeBktWithPath(tx, globalStreamMsgBktPath)
-	if err != nil {
-		return 0, err
-	}
-
-	m := &StoredMessage{
-		Id:            env.MessageID.Get(),
-		CausationId:   env.CausationID.Get(),
-		CorrelationId: env.CorrelationID.Get(),
-		CreatedAt:     env.CreatedAt.Format(time.RFC3339Nano),
-		SendAt:        env.SendAt.Format(time.RFC3339Nano),
-	}
-	m.Message, err = ptypes.MarshalAny(env.Message)
+	envb, err := ax.MarshalEnvelope(env)
 	if err != nil {
 		return 0, err
 	}
 
 	offset++
 	binary.BigEndian.PutUint64(b[:], offset)
-	if err = boltutil.MarshalProto(bkt, b[:], m); err != nil {
+	if err = boltutil.PutB(
+		tx,
+		b[:],
+		envb,
+		globalStreamBktName,
+		msgsBktName,
+	); err != nil {
 		return 0, err
 	}
 
@@ -74,8 +66,7 @@ func insertStreamOffset(
 	var (
 		b1, b2 [8]byte
 	)
-	p := fmt.Sprintf("%s/%s", streamBktName, stream)
-	o := boltutil.GetWithPath(tx, offsetKey, p)
+	o := boltutil.Get(tx, offsetKey, streamBktName, stream)
 	if o != nil && binary.BigEndian.Uint64(o) != offset ||
 		o == nil && offset != 0 {
 		// TODO: use OCC error https://github.com/jmalloc/ax/issues/93
@@ -90,12 +81,14 @@ func insertStreamOffset(
 	binary.BigEndian.PutUint64(b1[:], offset)
 	binary.BigEndian.PutUint64(b2[:], global)
 
-	bkt, err := boltutil.MakeBktWithPath(tx, fmt.Sprintf("%s/msgs", p))
-	if err != nil {
+	if err := boltutil.PutB(
+		tx,
+		b1[:],
+		b2[:],
+		streamBktName, stream, msgsBktName,
+	); err != nil {
 		return err
 	}
-	if err := bkt.Put(b1[:], b2[:]); err != nil {
-		return err
-	}
-	return boltutil.PutWithPath(tx, offsetKey, b1[:], p)
+
+	return boltutil.Put(tx, offsetKey, b1[:], streamBktName, stream)
 }

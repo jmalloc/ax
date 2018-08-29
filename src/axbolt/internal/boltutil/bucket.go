@@ -48,15 +48,21 @@ func GetBktWithPath(tx *bolt.Tx, path string) *bolt.Bucket {
 	return GetBkt(tx, bkts...)
 }
 
-// Get retrieves a value from the bucket which is the last in bkts and it has a
+// GetB retrieves a value from the bucket which is the last in bkts and it has a
 // key key. If any bucket in bkts is nonexistant nil is returned. If key does
 // not exist in the last bucket of bkts, nil is returned.
-func Get(tx *bolt.Tx, key string, bkts ...string) []byte {
+func GetB(tx *bolt.Tx, key []byte, bkts ...string) []byte {
 	bkt := GetBkt(tx, bkts...)
 	if bkt == nil {
 		return nil
 	}
-	return bkt.Get([]byte(key))
+	return bkt.Get(key)
+}
+
+// Get is a similar function to GetB except that it accepts key argument as a
+// string.
+func Get(tx *bolt.Tx, key string, bkts ...string) []byte {
+	return GetB(tx, []byte(key), bkts...)
 }
 
 // GetWithPath retrieves a value with key from the last bucket in the path. If
@@ -111,16 +117,22 @@ func MakeBktWithPath(tx *bolt.Tx, path string) (*bolt.Bucket, error) {
 	return MakeBkt(tx, bkts...)
 }
 
-// Put places a value val with key key in the bucket specified as a last string
+// PutB places a value val with key key in the bucket specified as a last string
 // of bkts. Any nonexistant buckets in bkts will be created before the key and
 // the value are placed. For any cases related to bucket creation of bkts,
 // please refer to function MakeBkt.
-func Put(tx *bolt.Tx, key string, val []byte, bkts ...string) error {
+func PutB(tx *bolt.Tx, key, val []byte, bkts ...string) error {
 	bkt, err := MakeBkt(tx, bkts...)
 	if err != nil {
 		return err
 	}
-	return bkt.Put([]byte(key), []byte(val))
+	return bkt.Put(key, val)
+}
+
+// Put is a similar function to PutB except that it accepts key argument as a
+// string.
+func Put(tx *bolt.Tx, key string, val []byte, bkts ...string) error {
+	return PutB(tx, []byte(key), val, bkts...)
 }
 
 // PutWithPath places a value val with key key in the bucket specified as a last
@@ -136,14 +148,20 @@ func PutWithPath(tx *bolt.Tx, key string, val []byte, path string) error {
 	return bkt.Put([]byte(key), []byte(val))
 }
 
-// Delete deletes an entry with key key in the bucket specified as a last item
+// DeleteB deletes an entry with key key in the bucket specified as a last item
 // in the bkts. If there are any nonexistant buckets in bkts the function
 // returns nil.
-func Delete(tx *bolt.Tx, key string, bkts ...string) error {
+func DeleteB(tx *bolt.Tx, key []byte, bkts ...string) error {
 	if bkt := GetBkt(tx, bkts...); bkt != nil {
-		return bkt.Delete([]byte(key))
+		return bkt.Delete(key)
 	}
 	return nil
+}
+
+// Delete is a similar function to DeleteB except that it accepts key argument
+// as a string.
+func Delete(tx *bolt.Tx, key string, bkts ...string) error {
+	return DeleteB(tx, []byte(key), bkts...)
 }
 
 // DeleteWithPath deletes an entry with key key in the bucket specified as a
