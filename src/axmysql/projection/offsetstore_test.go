@@ -15,7 +15,7 @@ import (
 	. "github.com/onsi/ginkgo"
 )
 
-var _ = Describe("Projection Offset Store", func() {
+var _ = Describe("OffsetStore", func() {
 	dsn := os.Getenv("AX_MYSQL_DSN")
 	var db *sql.DB
 
@@ -43,7 +43,7 @@ var _ = Describe("Projection Offset Store", func() {
 	}
 
 	fn(
-		"Projection Offset Store",
+		"OffsetStore",
 		projectiontests.OffsetStoreSuite(
 			func() persistence.DataStore {
 				return axmysql.NewDataStore(db)

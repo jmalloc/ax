@@ -13,7 +13,7 @@ import (
 	. "github.com/onsi/ginkgo"
 )
 
-var _ = Describe("Keyset Repository", func() {
+var _ = Describe("KeySetRepository", func() {
 	dsn := os.Getenv("AX_MYSQL_DSN")
 	var db *sql.DB
 
@@ -41,7 +41,7 @@ var _ = Describe("Keyset Repository", func() {
 	}
 
 	fn(
-		"Keyset Repository",
+		"KeySetRepository",
 		sagatests.KeySetRepositorySuite(
 			func() persistence.DataStore {
 				return axmysql.NewDataStore(db)

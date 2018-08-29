@@ -13,7 +13,7 @@ import (
 	. "github.com/onsi/ginkgo"
 )
 
-var _ = Describe("CRUD Repository", func() {
+var _ = Describe("CRUDRepository", func() {
 	dsn := os.Getenv("AX_MYSQL_DSN")
 	var db *sql.DB
 
@@ -41,7 +41,7 @@ var _ = Describe("CRUD Repository", func() {
 	}
 
 	fn(
-		"CRUD Repository",
+		"CRUDRepository",
 		sagatests.CRUDRepositorySuite(
 			func() persistence.DataStore {
 				return axmysql.NewDataStore(db)

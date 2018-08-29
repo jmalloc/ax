@@ -13,7 +13,7 @@ import (
 	. "github.com/onsi/ginkgo"
 )
 
-var _ = Describe("Snapshot Repository", func() {
+var _ = Describe("SnapshotRepository", func() {
 	dsn := os.Getenv("AX_MYSQL_DSN")
 	var db *sql.DB
 
@@ -41,7 +41,7 @@ var _ = Describe("Snapshot Repository", func() {
 	}
 
 	fn(
-		"Snapshot Repository",
+		"SnapshotRepository",
 		sagatests.SnapshotRepositorySuite(
 			func() persistence.DataStore {
 				return axmysql.NewDataStore(db)

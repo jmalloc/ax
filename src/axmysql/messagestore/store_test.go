@@ -14,7 +14,7 @@ import (
 	. "github.com/onsi/ginkgo"
 )
 
-var _ = Describe("MessageStore", func() {
+var _ = Describe("Store", func() {
 	dsn := os.Getenv("AX_MYSQL_DSN")
 	var db *sql.DB
 
@@ -42,7 +42,7 @@ var _ = Describe("MessageStore", func() {
 	}
 
 	fn(
-		"MessageStore",
+		"Store",
 		messagestoretests.MessageStoreSuite(
 			func() persistence.DataStore {
 				return axmysql.NewDataStore(db)
