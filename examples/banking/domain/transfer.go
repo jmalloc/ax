@@ -9,8 +9,8 @@ import (
 	"github.com/jmalloc/ax/src/ax/ident"
 )
 
-// Start begins a new funds transfer between two accounts.
-func (t *Transfer) Start(m *messages.StartTransfer, rec ax.EventRecorder) {
+// DoTransfer begins a new funds transfer between two accounts.
+func (t *Transfer) DoTransfer(m *messages.StartTransfer, rec ax.EventRecorder) {
 	if t.TransferId != "" {
 		return
 	}
@@ -23,8 +23,8 @@ func (t *Transfer) Start(m *messages.StartTransfer, rec ax.EventRecorder) {
 	})
 }
 
-// MarkApproved marks the transfer as approved.
-func (t *Transfer) MarkApproved(m *messages.MarkTransferApproved, rec ax.EventRecorder) {
+// DoMarkApproved marks the transfer as approved.
+func (t *Transfer) DoMarkApproved(m *messages.MarkTransferApproved, rec ax.EventRecorder) {
 	if t.IsApproved {
 		return
 	}

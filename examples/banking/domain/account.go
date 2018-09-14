@@ -9,8 +9,8 @@ import (
 	"github.com/jmalloc/ax/src/ax/ident"
 )
 
-// OpenAccount opens a new account.
-func (a *Account) OpenAccount(m *messages.OpenAccount, rec ax.EventRecorder) {
+// DoOpenAccount opens a new account.
+func (a *Account) DoOpenAccount(m *messages.OpenAccount, rec ax.EventRecorder) {
 	if !a.IsOpen {
 		rec(&messages.AccountOpened{
 			AccountId: m.AccountId,
@@ -19,8 +19,8 @@ func (a *Account) OpenAccount(m *messages.OpenAccount, rec ax.EventRecorder) {
 	}
 }
 
-// CreditAccount credits funds to the account.
-func (a *Account) CreditAccount(m *messages.CreditAccount, rec ax.EventRecorder) {
+// DoCreditAccount credits funds to the account.
+func (a *Account) DoCreditAccount(m *messages.CreditAccount, rec ax.EventRecorder) {
 	rec(&messages.AccountCredited{
 		AccountId:     m.AccountId,
 		AmountInCents: m.AmountInCents,
@@ -28,8 +28,8 @@ func (a *Account) CreditAccount(m *messages.CreditAccount, rec ax.EventRecorder)
 	})
 }
 
-// DebitAccount debits funds from the account.
-func (a *Account) DebitAccount(m *messages.DebitAccount, rec ax.EventRecorder) {
+// DoDebitAccount debits funds from the account.
+func (a *Account) DoDebitAccount(m *messages.DebitAccount, rec ax.EventRecorder) {
 	rec(&messages.AccountDebited{
 		AccountId:     m.AccountId,
 		AmountInCents: m.AmountInCents,

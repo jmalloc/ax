@@ -8,8 +8,8 @@ import (
 	"github.com/jmalloc/ax/src/ax/ident"
 )
 
-// StartWhenTransferStarted responds to m.
-func (w *Transfer) StartWhenTransferStarted(m *messages.TransferStarted, exec ax.CommandExecutor) {
+// BeginWhenTransferStarted responds to m.
+func (w *Transfer) BeginWhenTransferStarted(m *messages.TransferStarted, exec ax.CommandExecutor) {
 	w.TransferId = m.TransferId
 	w.FromAccountId = m.FromAccountId
 	w.ToAccountId = m.ToAccountId
