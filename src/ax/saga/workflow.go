@@ -2,6 +2,7 @@ package saga
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/golang/protobuf/proto"
@@ -14,10 +15,11 @@ type Workflow struct {
 	ErrorIfNotFound
 	CompletableByData
 
-	Prototype   Data
-	Triggers    ax.MessageTypeSet
-	NonTriggers ax.MessageTypeSet
-	Handle      typeswitch.Switch
+	Prototype     Data
+	Triggers      ax.MessageTypeSet
+	NonTriggers   ax.MessageTypeSet
+	CommandHandle typeswitch.Switch
+	EventHandle   typeswitch.Switch
 }
 
 // NewWorkflow returns a saga that forwards to the given aggregate.
@@ -36,36 +38,75 @@ type Workflow struct {
 // Where T is a struct type that implements ax.Message.
 //
 // Handler methods are responsible for mutating the state of the workflow and
-// producing new commands, based on the command or event being handled. They may
-// inspect the current state of the workflow, and then return zero or more
-// commands to be executed.
+// producing new commands, based on the message being handled.
 //
 // The names of handler methods are meaningful to the workflow system. If a
 // command or event is meant to trigger a new workflow instance, its handler
-// method's name must begin with "StartWhen". Other handler methods must begin
-// with "When". By
-// convention these prefixes are followed by the message name, such as:
+// method's name must have a prefix "Begin". Non-triggering command handler
+// methods must have prefix "Do". Both triggering and non-triggering event
+// handler methods must have prefix "When". For triggering event handlers the
+// combined prefix results in "BeginWhen". By convention these prefixes are
+// followed by the message name, such as:
 //
-//     func (*BankTransferWorkflow) StartWhenTransferStarted(*messages.StartTransfer, ax.CommandExecutor)
-//     func (*BankTransferWorkflow) StartWhenTransferStarted(*messages.TransferStarted, ax.CommandExecutor)
-//     func (*BankTransferWorkflow) WhenAccountDebited(*messages.DebitAccount, ax.CommandExecutor)
-//     func (*BankTransferWorkflow) WhenAccountDebited(*messages.AccountDebited, ax.CommandExecutor)
+//      // workflow-triggering command handler
+//      func (*BankTransferWorkflow) BeginDebitAccount(
+//              *messages.DebitAccount,
+//              ax.CommandExecutor,
+//          )
+//
+//      // non-triggering command handler
+//      func (*BankTransferWorkflow) DoDebitAccount(
+//              *messages.DebitAccount,
+//              ax.CommandExecutor,
+//      )
+//
+//      // workflow-triggering event handler
+//      func (*BankTransferWorkflow) BeginWhenAccountDebited(
+//              *messages.AccountDebited,
+//              ax.CommandExecutor,
+//      )
+//
+//      // non-triggering event handler
+//      func (*BankTransferWorkflow) WhenAccountDebited(
+//              *messages.AccountDebited,
+//              ax.CommandExecutor,
+//      )
 func NewWorkflow(p Data) *Workflow {
 	w := &Workflow{
 		Prototype: p,
 	}
 
-	// setup type-switch for event handlers.
-	sw, types, err := typeswitch.New(
+	// setup type-switch for command handlers.
+	csw, ctypes, err := typeswitch.New(
 		[]reflect.Type{
 			reflect.TypeOf(p),
-			reflect.TypeOf((*ax.Message)(nil)).Elem(),
+			reflect.TypeOf((*ax.Command)(nil)).Elem(),
 			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
 			reflect.TypeOf((*ax.CommandExecutor)(nil)).Elem(),
 		},
 		nil,
-		workflowStartWhenSignature,
-		workflowStartWhenWithEnvelopeSignature,
+		workflowBeginSignature,
+		workflowBeginWithEnvelopeSignature,
+		workflowDoSignature,
+		workflowDoWithEnvelopeSignature,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	w.CommandHandle = csw
+
+	// setup type-switch for event handlers.
+	esw, etypes, err := typeswitch.New(
+		[]reflect.Type{
+			reflect.TypeOf(p),
+			reflect.TypeOf((*ax.Event)(nil)).Elem(),
+			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
+			reflect.TypeOf((*ax.CommandExecutor)(nil)).Elem(),
+		},
+		nil,
+		workflowBeginWhenSignature,
+		workflowBeginWhenWithEnvelopeSignature,
 		workflowWhenSignature,
 		workflowWhenWithEnvelopeSignature,
 	)
@@ -73,19 +114,23 @@ func NewWorkflow(p Data) *Workflow {
 		panic(err)
 	}
 
-	w.Handle = sw
+	w.EventHandle = esw
 
 	w.Triggers = ax.TypesByGoType(
-		append(
-			types[workflowStartWhenSignature],
-			types[workflowStartWhenWithEnvelopeSignature]...,
+		mergeTypeSlices(
+			ctypes[workflowBeginSignature],
+			ctypes[workflowBeginWithEnvelopeSignature],
+			etypes[workflowBeginWhenSignature],
+			etypes[workflowBeginWhenWithEnvelopeSignature],
 		)...,
 	)
 
 	w.NonTriggers = ax.TypesByGoType(
-		append(
-			types[workflowWhenSignature],
-			types[workflowWhenWithEnvelopeSignature]...,
+		mergeTypeSlices(
+			ctypes[workflowDoSignature],
+			ctypes[workflowDoWithEnvelopeSignature],
+			etypes[workflowWhenSignature],
+			etypes[workflowWhenWithEnvelopeSignature],
 		)...,
 	)
 
@@ -120,7 +165,12 @@ func (w *Workflow) NewData() Data {
 }
 
 // HandleMessage handles a message for a particular saga instance.
-func (w *Workflow) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope, i Instance) error {
+func (w *Workflow) HandleMessage(
+	ctx context.Context,
+	s ax.Sender,
+	env ax.Envelope,
+	i Instance,
+) error {
 	type command struct {
 		Command ax.Command
 		Options []ax.ExecuteOption
@@ -128,14 +178,31 @@ func (w *Workflow) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelo
 
 	var cmds []command
 
-	w.Handle.Dispatch(
-		i.Data,
-		env.Message,
-		env,
-		func(m ax.Command, opts ...ax.ExecuteOption) {
-			cmds = append(cmds, command{m, opts})
-		},
-	)
+	switch t := env.Message.(type) {
+	case ax.Command:
+		w.CommandHandle.Dispatch(
+			i.Data,
+			env.Message.(ax.Command),
+			env,
+			func(m ax.Command, opts ...ax.ExecuteOption) {
+				cmds = append(cmds, command{m, opts})
+			},
+		)
+	case ax.Event:
+		w.EventHandle.Dispatch(
+			i.Data,
+			env.Message.(ax.Event),
+			env,
+			func(m ax.Command, opts ...ax.ExecuteOption) {
+				cmds = append(cmds, command{m, opts})
+			},
+		)
+	default:
+		return fmt.Errorf(
+			"unknown message type %T",
+			t,
+		)
+	}
 
 	for _, c := range cmds {
 		if _, err := s.ExecuteCommand(ctx, c.Command, c.Options...); err != nil {
@@ -147,20 +214,58 @@ func (w *Workflow) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelo
 }
 
 var (
-	workflowStartWhenSignature = &typeswitch.Signature{
-		Prefix: "StartWhen",
+	workflowBeginSignature = &typeswitch.Signature{
+		Prefix: "Begin",
 		In: []reflect.Type{
 			reflect.TypeOf((*Data)(nil)).Elem(),
-			reflect.TypeOf((*ax.Message)(nil)).Elem(),
+			reflect.TypeOf((*ax.Command)(nil)).Elem(),
 			reflect.TypeOf((*ax.CommandExecutor)(nil)).Elem(),
 		},
 	}
 
-	workflowStartWhenWithEnvelopeSignature = &typeswitch.Signature{
-		Prefix: "StartWhen",
+	workflowBeginWithEnvelopeSignature = &typeswitch.Signature{
+		Prefix: "Begin",
 		In: []reflect.Type{
 			reflect.TypeOf((*Data)(nil)).Elem(),
-			reflect.TypeOf((*ax.Message)(nil)).Elem(),
+			reflect.TypeOf((*ax.Command)(nil)).Elem(),
+			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
+			reflect.TypeOf((*ax.CommandExecutor)(nil)).Elem(),
+		},
+	}
+
+	workflowDoSignature = &typeswitch.Signature{
+		Prefix: "Do",
+		In: []reflect.Type{
+			reflect.TypeOf((*Data)(nil)).Elem(),
+			reflect.TypeOf((*ax.Command)(nil)).Elem(),
+			reflect.TypeOf((*ax.CommandExecutor)(nil)).Elem(),
+		},
+	}
+
+	workflowDoWithEnvelopeSignature = &typeswitch.Signature{
+		Prefix: "Do",
+		In: []reflect.Type{
+			reflect.TypeOf((*Data)(nil)).Elem(),
+			reflect.TypeOf((*ax.Command)(nil)).Elem(),
+			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
+			reflect.TypeOf((*ax.CommandExecutor)(nil)).Elem(),
+		},
+	}
+
+	workflowBeginWhenSignature = &typeswitch.Signature{
+		Prefix: "BeginWhen",
+		In: []reflect.Type{
+			reflect.TypeOf((*Data)(nil)).Elem(),
+			reflect.TypeOf((*ax.Event)(nil)).Elem(),
+			reflect.TypeOf((*ax.CommandExecutor)(nil)).Elem(),
+		},
+	}
+
+	workflowBeginWhenWithEnvelopeSignature = &typeswitch.Signature{
+		Prefix: "BeginWhen",
+		In: []reflect.Type{
+			reflect.TypeOf((*Data)(nil)).Elem(),
+			reflect.TypeOf((*ax.Event)(nil)).Elem(),
 			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
 			reflect.TypeOf((*ax.CommandExecutor)(nil)).Elem(),
 		},
@@ -170,7 +275,7 @@ var (
 		Prefix: "When",
 		In: []reflect.Type{
 			reflect.TypeOf((*Data)(nil)).Elem(),
-			reflect.TypeOf((*ax.Message)(nil)).Elem(),
+			reflect.TypeOf((*ax.Event)(nil)).Elem(),
 			reflect.TypeOf((*ax.CommandExecutor)(nil)).Elem(),
 		},
 	}
@@ -179,9 +284,18 @@ var (
 		Prefix: "When",
 		In: []reflect.Type{
 			reflect.TypeOf((*Data)(nil)).Elem(),
-			reflect.TypeOf((*ax.Message)(nil)).Elem(),
+			reflect.TypeOf((*ax.Event)(nil)).Elem(),
 			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
 			reflect.TypeOf((*ax.CommandExecutor)(nil)).Elem(),
 		},
 	}
 )
+
+// mergeTypeSlices appends all slices of reflect.Type to a single slice.
+func mergeTypeSlices(slices ...[]reflect.Type) []reflect.Type {
+	var r []reflect.Type
+	for _, s := range slices {
+		r = append(r, s...)
+	}
+	return r
+}
