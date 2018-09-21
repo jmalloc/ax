@@ -18,8 +18,8 @@ type Workflow struct {
 	Prototype     Data
 	Triggers      ax.MessageTypeSet
 	NonTriggers   ax.MessageTypeSet
-	CommandHandle typeswitch.Switch
-	EventHandle   typeswitch.Switch
+	HandleCommand typeswitch.Switch
+	HandleEvent   typeswitch.Switch
 }
 
 // NewWorkflow returns a saga that forwards to the given aggregate.
@@ -41,12 +41,13 @@ type Workflow struct {
 // producing new commands, based on the message being handled.
 //
 // The names of handler methods are meaningful to the workflow system. If a
-// command or event is meant to trigger a new workflow instance, its handler
-// method's name must have a prefix "Begin". Non-triggering command handler
-// methods must have prefix "Do". Both triggering and non-triggering event
-// handler methods must have prefix "When". For triggering event handlers the
-// combined prefix results in "BeginWhen". By convention these prefixes are
-// followed by the message name, such as:
+// message is meant to trigger a new workflow instance, its handler method's
+// name must prefixed with "Begin", if it is a command handler, or "BeginWhen"
+// if it is an event handler. Messages that can be routed to existing workflow
+// instances, but not cause new instances must have their method names prefixed
+// with "Do" and "When" for commands and events, respectively.
+//
+// By convention these prefixes are followed by the message name, such as:
 //
 //      // workflow-triggering command handler
 //      func (*BankTransferWorkflow) BeginDebitAccount(
@@ -94,7 +95,7 @@ func NewWorkflow(p Data) *Workflow {
 		panic(err)
 	}
 
-	w.CommandHandle = csw
+	w.HandleCommand = csw
 
 	// setup type-switch for event handlers.
 	esw, etypes, err := typeswitch.New(
@@ -114,7 +115,7 @@ func NewWorkflow(p Data) *Workflow {
 		panic(err)
 	}
 
-	w.EventHandle = esw
+	w.HandleEvent = esw
 
 	w.Triggers = ax.TypesByGoType(
 		mergeTypeSlices(
@@ -180,7 +181,7 @@ func (w *Workflow) HandleMessage(
 
 	switch t := env.Message.(type) {
 	case ax.Command:
-		w.CommandHandle.Dispatch(
+		w.HandleCommand.Dispatch(
 			i.Data,
 			env.Message.(ax.Command),
 			env,
@@ -189,7 +190,7 @@ func (w *Workflow) HandleMessage(
 			},
 		)
 	case ax.Event:
-		w.EventHandle.Dispatch(
+		w.HandleEvent.Dispatch(
 			i.Data,
 			env.Message.(ax.Event),
 			env,
