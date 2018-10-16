@@ -7,8 +7,8 @@ import (
 	"github.com/jmalloc/ax/src/ax"
 )
 
-// Transport is an interface for communicating messages between endpoints.
-type Transport interface {
+// InboundTransport is an interface receiving messages from endpoints.
+type InboundTransport interface {
 	// Initialize sets up the transport to communicate as an endpoint named ep.
 	Initialize(ctx context.Context, ep string) error
 
@@ -16,25 +16,31 @@ type Transport interface {
 	// sent using op.
 	Subscribe(ctx context.Context, op Operation, mt ax.MessageTypeSet) error
 
-	// Send sends env via the transport.
-	Send(ctx context.Context, env OutboundEnvelope) error
-
 	// Receive returns the next message sent to this endpoint.
 	// It blocks until a message is available, or ctx is canceled.
 	Receive(ctx context.Context) (InboundEnvelope, Acknowledger, error)
 }
 
+// OutboundTransport is an interface for sending messages to endpoints.
+type OutboundTransport interface {
+	// Initialize sets up the transport to communicate as an endpoint named ep.
+	Initialize(ctx context.Context, ep string) error
+
+	// Send sends env via the transport.
+	Send(ctx context.Context, env OutboundEnvelope) error
+}
+
 // TransportStage is an outbound pipeline stage that forwards messages to a
 // transport. It is typically used as the last stage in an outbound pipeline.
 type TransportStage struct {
-	transport Transport
+	transport OutboundTransport
 }
 
 // Initialize is called during initialization of the endpoint, after the
 // transport is initialized. It can be used to inspect or further configure the
 // endpoint as per the needs of the pipeline.
 func (s *TransportStage) Initialize(ctx context.Context, ep *Endpoint) error {
-	s.transport = ep.Transport
+	s.transport = ep.OutboundTransport
 	return nil
 }
 

@@ -28,7 +28,8 @@ src/axtest/mocks/endpoint.go: $(wildcard src/ax/endpoint/%.go) | $(MOQ)
 		MessageSink \
 		OutboundPipeline \
 		SelfValidatingMessage \
-		Transport \
+		InboundTransport \
+		OutboundTransport \
 		Validator
 
 src/axtest/mocks/routing.go: $(wildcard src/ax/routing/%.go)  | $(MOQ)

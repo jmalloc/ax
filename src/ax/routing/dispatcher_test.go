@@ -61,14 +61,14 @@ var _ = Describe("Dispatcher", func() {
 
 	Describe("Initialize", func() {
 		It("subscribes the transport to all handled message types", func() {
-			t := &mocks.TransportMock{
+			t := &mocks.InboundTransportMock{
 				SubscribeFunc: func(context.Context, endpoint.Operation, ax.MessageTypeSet) error {
 					return nil
 				},
 			}
 
 			ctx := context.Background()
-			err := dispatcher.Initialize(ctx, &endpoint.Endpoint{Transport: t})
+			err := dispatcher.Initialize(ctx, &endpoint.Endpoint{InboundTransport: t})
 			Expect(err).ShouldNot(HaveOccurred())
 
 			Expect(t.SubscribeCalls()).To(ConsistOf(

@@ -9,7 +9,7 @@ import (
 // receiver receives a message from a transport, forwards it to the inbound
 // pipeline, then acknowledges the message.
 type receiver struct {
-	Transport   Transport
+	Transport   InboundTransport
 	In          InboundPipeline
 	Out         OutboundPipeline
 	RetryPolicy RetryPolicy

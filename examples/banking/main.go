@@ -107,12 +107,15 @@ func main() {
 		},
 	}
 
+	transport := &axrmq.Transport{
+		Conn: rmq,
+	}
+
 	ep := &endpoint.Endpoint{
-		Name: "ax.examples.banking",
-		Transport: &axrmq.Transport{
-			Conn: rmq,
-		},
-		In: &observability.InboundHook{
+		Name:              "ax.examples.banking",
+		InboundTransport:  transport,
+		OutboundTransport: transport,
+		InboundPipeline: &observability.InboundHook{
 			Observers: observers,
 			Next: &persistence.Injector{
 				DataStore: ds,
@@ -124,7 +127,7 @@ func main() {
 				},
 			},
 		},
-		Out: &observability.OutboundHook{
+		OutboundPipeline: &observability.OutboundHook{
 			Observers: observers,
 			Next: &delayedmessage.Interceptor{
 				Repository: axmysql.DelayedMessageRepository,

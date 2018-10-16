@@ -17,13 +17,13 @@ var _ = Describe("TransportStage", func() {
 			stage := &TransportStage{}
 
 			ctx := context.Background()
-			tr := &mocks.TransportMock{
+			tr := &mocks.OutboundTransportMock{
 				SendFunc: func(context.Context, OutboundEnvelope) error {
 					return nil
 				},
 			}
 
-			stage.Initialize(ctx, &Endpoint{Transport: tr})
+			stage.Initialize(ctx, &Endpoint{OutboundTransport: tr})
 
 			env := OutboundEnvelope{
 				Envelope: ax.Envelope{
