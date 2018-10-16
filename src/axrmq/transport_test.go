@@ -5,4 +5,5 @@ import (
 	. "github.com/jmalloc/ax/src/axrmq"
 )
 
-var ensureTransportIsEndpointTransport endpoint.Transport = &Transport{}
+var ensureTransportIsInboundTransport endpoint.InboundTransport = &Transport{}
+var ensureTransportIsOutboundTransport endpoint.OutboundTransport = &Transport{}

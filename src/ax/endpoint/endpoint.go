@@ -10,12 +10,13 @@ import (
 
 // Endpoint is a named source and recipient of messages.
 type Endpoint struct {
-	Name             string
-	Transport        Transport
-	In               InboundPipeline
-	Out              OutboundPipeline
-	RetryPolicy      RetryPolicy
-	SenderValidators []Validator
+	Name              string
+	OutboundTransport OutboundTransport
+	InboundTransport  InboundTransport
+	InboundPipeline   InboundPipeline
+	OutboundPipeline  OutboundPipeline
+	RetryPolicy       RetryPolicy
+	SenderValidators  []Validator
 
 	initOnce sync.Once
 }
@@ -27,14 +28,18 @@ func (ep *Endpoint) NewSender(ctx context.Context) (ax.Sender, error) {
 	}
 
 	return SinkSender{
-		Sink:       ep.Out,
+		Sink:       ep.OutboundPipeline,
 		Validators: ep.SenderValidators,
 	}, nil
 }
 
 // StartReceiving processes inbound messages until an error occurrs or ctx is canceled.
 func (ep *Endpoint) StartReceiving(ctx context.Context) error {
-	if ep.In == nil {
+	if ep.InboundTransport == nil {
+		return errors.New("can not receive on send-only endpoint, there is no inbound transport")
+	}
+
+	if ep.InboundPipeline == nil {
 		return errors.New("can not receive on send-only endpoint, there is no inbound message pipeline")
 	}
 
@@ -43,9 +48,9 @@ func (ep *Endpoint) StartReceiving(ctx context.Context) error {
 	}
 
 	recv := &receiver{
-		Transport:   ep.Transport,
-		In:          ep.In,
-		Out:         ep.Out,
+		Transport:   ep.InboundTransport,
+		In:          ep.InboundPipeline,
+		Out:         ep.OutboundPipeline,
 		RetryPolicy: ep.RetryPolicy,
 	}
 
@@ -54,21 +59,26 @@ func (ep *Endpoint) StartReceiving(ctx context.Context) error {
 
 func (ep *Endpoint) initialize(ctx context.Context) (err error) {
 	ep.initOnce.Do(func() {
-		err = ep.Transport.Initialize(ctx, ep.Name)
+		err = ep.OutboundTransport.Initialize(ctx, ep.Name)
 		if err != nil {
 			return
 		}
 
-		if ep.In != nil {
-			err = ep.In.Initialize(ctx, ep)
+		err = ep.OutboundPipeline.Initialize(ctx, ep)
+		if err != nil {
+			return
+		}
+
+		if ep.InboundTransport != nil && ep.InboundPipeline != nil {
+			err = ep.InboundTransport.Initialize(ctx, ep.Name)
 			if err != nil {
 				return
 			}
-		}
 
-		err = ep.Out.Initialize(ctx, ep)
-		if err != nil {
-			return
+			err = ep.InboundPipeline.Initialize(ctx, ep)
+			if err != nil {
+				return
+			}
 		}
 	})
 

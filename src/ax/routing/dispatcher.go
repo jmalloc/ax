@@ -34,11 +34,11 @@ func (d *Dispatcher) Initialize(ctx context.Context, ep *endpoint.Endpoint) erro
 
 	d.validators = ep.SenderValidators
 
-	if err := ep.Transport.Subscribe(ctx, endpoint.OpSendUnicast, unicast); err != nil {
+	if err := ep.InboundTransport.Subscribe(ctx, endpoint.OpSendUnicast, unicast); err != nil {
 		return err
 	}
 
-	return ep.Transport.Subscribe(ctx, endpoint.OpSendMulticast, multicast)
+	return ep.InboundTransport.Subscribe(ctx, endpoint.OpSendMulticast, multicast)
 }
 
 // Accept dispatches env to zero or more message handlers as per the dispatch

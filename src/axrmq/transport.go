@@ -2,6 +2,7 @@ package axrmq
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"runtime"
 
@@ -16,8 +17,9 @@ var DefaultReceiveConcurrency = runtime.NumCPU() * 2
 // DefaultSendConcurrency is the default number of messages to send concurrently.
 var DefaultSendConcurrency = runtime.NumCPU() * 10
 
-// Transport is an implementation of endpoint.Transport that uses RabbitMQ to
-// communicate messages between endpoints.
+// Transport is an implementation of endpoint.InboundTransport and
+// endpoint.OutboundTransport that uses RabbitMQ to communicate messages between
+// endpoints.
 type Transport struct {
 	Conn               *amqp.Connection
 	Exclusive          bool
@@ -31,6 +33,12 @@ type Transport struct {
 
 // Initialize sets up the transport to communicate as an endpoint named ep.
 func (t *Transport) Initialize(ctx context.Context, ep string) error {
+	if t.ep == ep {
+		return nil
+	} else if t.ep != "" {
+		return errors.New("transport already initialized")
+	}
+
 	ch, err := t.Conn.Channel()
 	if err != nil {
 		return err
