@@ -40,10 +40,11 @@ type Aggregate struct {
 // record zero or more events using rec. Handlers should never mutate the
 // aggregate state.
 //
-// The names of handler methods are not meaningful. By convention the methods
-// are named the same as the command they accept, such as:
+// The names of handler methods are meaningful. Each handler method's name must
+// begin with "Do". By convention these prefixes are followed by the message
+// name, such as:
 //
-//     func (*BankAccount) CreditAccount(*messages.CreditAccount, ax.EventRecorder)
+//     func (*BankAccount) DoCreditAccount(*messages.CreditAccount, ax.EventRecorder)
 //
 // For each of the event types passed to rec, the aggregate must implement an
 // "applier" method that adheres to one of the following signatures:
@@ -54,8 +55,8 @@ type Aggregate struct {
 // Where T is a struct type that implements ax.Event.
 //
 // Applier methods are responsible for mutating the aggregate state. The applier
-// is called every time an event is recorded, *and* when loading an event-sourced
-// aggregate from the message store.
+// is called every time an event is recorded, *and* when loading an
+// event-sourced aggregate from the message store.
 //
 // The names of handler methods are meaningful. Each handler method's name must
 // begin with "When". By convention these prefixes are followed by the message
@@ -180,6 +181,7 @@ func (a *Aggregate) ApplyEvent(d Data, env ax.Envelope) {
 
 var (
 	aggregateHandleSignature = &typeswitch.Signature{
+		Prefix: "Do",
 		In: []reflect.Type{
 			reflect.TypeOf((*Data)(nil)).Elem(),
 			reflect.TypeOf((*ax.Command)(nil)).Elem(),
@@ -188,6 +190,7 @@ var (
 	}
 
 	aggregateHandleWithEnvelopeSignature = &typeswitch.Signature{
+		Prefix: "Do",
 		In: []reflect.Type{
 			reflect.TypeOf((*Data)(nil)).Elem(),
 			reflect.TypeOf((*ax.Command)(nil)).Elem(),
