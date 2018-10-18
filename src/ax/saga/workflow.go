@@ -166,12 +166,7 @@ func (w *Workflow) NewData() Data {
 }
 
 // HandleMessage handles a message for a particular saga instance.
-func (w *Workflow) HandleMessage(
-	ctx context.Context,
-	s ax.Sender,
-	env ax.Envelope,
-	i Instance,
-) error {
+func (w *Workflow) HandleMessage(ctx context.Context, mctx ax.MessageContext, i Instance) error {
 	type command struct {
 		Command ax.Command
 		Options []ax.ExecuteOption
@@ -179,12 +174,12 @@ func (w *Workflow) HandleMessage(
 
 	var cmds []command
 
-	switch t := env.Message.(type) {
+	switch t := mctx.Envelope.Message.(type) {
 	case ax.Command:
 		w.HandleCommand.Dispatch(
 			i.Data,
-			env.Message.(ax.Command),
-			env,
+			mctx.Envelope.Message.(ax.Command),
+			mctx.Envelope,
 			func(m ax.Command, opts ...ax.ExecuteOption) {
 				cmds = append(cmds, command{m, opts})
 			},
@@ -192,8 +187,8 @@ func (w *Workflow) HandleMessage(
 	case ax.Event:
 		w.HandleEvent.Dispatch(
 			i.Data,
-			env.Message.(ax.Event),
-			env,
+			mctx.Envelope.Message.(ax.Event),
+			mctx.Envelope,
 			func(m ax.Command, opts ...ax.ExecuteOption) {
 				cmds = append(cmds, command{m, opts})
 			},
@@ -206,7 +201,7 @@ func (w *Workflow) HandleMessage(
 	}
 
 	for _, c := range cmds {
-		if _, err := s.ExecuteCommand(ctx, c.Command, c.Options...); err != nil {
+		if _, err := mctx.Sender.ExecuteCommand(ctx, c.Command, c.Options...); err != nil {
 			return err
 		}
 	}

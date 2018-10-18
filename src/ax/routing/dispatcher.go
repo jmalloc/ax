@@ -50,13 +50,17 @@ func (d *Dispatcher) Initialize(ctx context.Context, ep *endpoint.Endpoint) erro
 // Each message handler is invoked on its own goroutine.
 func (d *Dispatcher) Accept(ctx context.Context, s endpoint.MessageSink, env endpoint.InboundEnvelope) error {
 	ctx = endpoint.WithEnvelope(ctx, env.Envelope)
-	sender := endpoint.SinkSender{
-		Sink:       s,
-		Validators: d.validators,
+
+	mctx := ax.MessageContext{
+		Envelope: env.Envelope,
+		Sender: endpoint.SinkSender{
+			Sink:       s,
+			Validators: d.validators,
+		},
 	}
 
 	for _, h := range d.Routes.Lookup(env.Type()) {
-		if err := h.HandleMessage(ctx, sender, env.Envelope); err != nil {
+		if err := h.HandleMessage(ctx, mctx); err != nil {
 			return err
 		}
 	}

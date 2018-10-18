@@ -22,28 +22,18 @@ func (h *messageHandler) Handle(msg *testmessages.MessageA) {
 	h.Letter = "A"
 }
 
-func (h *messageHandler) HandleWithEnvelope(msg *testmessages.MessageB, env ax.Envelope) {
+func (h *messageHandler) HandleWithMessageContext(mctx ax.MessageContext, msg *testmessages.MessageB) {
 	h.Letter = "B"
 }
 
-func (h *messageHandler) HandleWithContext(ctx context.Context, msg *testmessages.MessageC) error {
+func (h *messageHandler) HandleWithError(ctx context.Context, msg *testmessages.MessageC) error {
 	h.Letter = "C"
 	return errors.New("C")
 }
 
-func (h *messageHandler) HandleWithContextAndEnvelope(ctx context.Context, msg *testmessages.MessageD, env ax.Envelope) error {
+func (h *messageHandler) HandleWithErrorAndMessageContext(ctx context.Context, mctx ax.MessageContext, msg *testmessages.MessageD) error {
 	h.Letter = "D"
 	return errors.New("D")
-}
-
-func (h *messageHandler) HandleWithSender(ctx context.Context, s ax.Sender, msg *testmessages.MessageE) error {
-	h.Letter = "E"
-	return errors.New("E")
-}
-
-func (h *messageHandler) HandleWithSenderAndEnvelope(ctx context.Context, s ax.Sender, msg *testmessages.MessageF, env ax.Envelope) error {
-	h.Letter = "F"
-	return errors.New("F")
 }
 
 var _ = Describe("MessageHandler", func() {
@@ -62,8 +52,6 @@ var _ = Describe("MessageHandler", func() {
 				ax.TypeOf(&testmessages.MessageB{}),
 				ax.TypeOf(&testmessages.MessageC{}),
 				ax.TypeOf(&testmessages.MessageD{}),
-				ax.TypeOf(&testmessages.MessageE{}),
-				ax.TypeOf(&testmessages.MessageF{}),
 			))
 		})
 	})
@@ -78,8 +66,10 @@ var _ = Describe("MessageHandler", func() {
 			) {
 				err := handler.HandleMessage(
 					context.Background(),
-					&endpoint.SinkSender{},
-					ax.NewEnvelope(m),
+					ax.MessageContext{
+						Envelope: ax.NewEnvelope(m),
+						Sender:   &endpoint.SinkSender{},
+					},
 				)
 
 				Expect(value.Letter).To(Equal(letter))
@@ -97,33 +87,21 @@ var _ = Describe("MessageHandler", func() {
 				false,
 			),
 			Entry(
-				"HandleWithEnvelope",
+				"HandleWithMessageContext",
 				&testmessages.MessageB{},
 				"B",
 				false,
 			),
 			Entry(
-				"HandleWithContext",
+				"HandleWithError",
 				&testmessages.MessageC{},
 				"C",
 				true,
 			),
 			Entry(
-				"HandleWithContextAndEnvelope",
+				"HandleWithErrorAndMessageContext",
 				&testmessages.MessageD{},
 				"D",
-				true,
-			),
-			Entry(
-				"HandleWithSender",
-				&testmessages.MessageE{},
-				"E",
-				true,
-			),
-			Entry(
-				"HandleWithSenderAndEnvelope",
-				&testmessages.MessageF{},
-				"F",
 				true,
 			),
 		)

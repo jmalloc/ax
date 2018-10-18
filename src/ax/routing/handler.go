@@ -26,7 +26,7 @@ type MessageHandler interface {
 	//
 	// It may panic if env.Message is not one of the types described by
 	// MessageTypes().
-	HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope) error
+	HandleMessage(ctx context.Context, mctx ax.MessageContext) error
 }
 
 // NewMessageHandler returns a new message handler that dispatches messages to
@@ -36,11 +36,9 @@ type MessageHandler interface {
 // method that adheres to one of the following signatures:
 //
 //     func (msg *<T>)
-//     func (msg *<T>, env ax.Envelope)
+//     func (mctx MessageContext, msg *<T>)
 //     func (ctx context.Context, msg *<T>) error
-//     func (ctx context.Context, msg *<T>, env ax.Envelope) error
-//     func (ctx context.Context, s ax.Sender, msg *<T>) error
-//     func (ctx context.Context, s ax.Sender, msg *<T>, env ax.Envelope) error
+//     func (ctx context.Context, mctx MessageContext, msg *<T>) error
 //
 // Where T is a struct type that implements ax.Message.
 //
@@ -53,19 +51,16 @@ func NewMessageHandler(v interface{}) MessageHandler {
 		[]reflect.Type{
 			reflect.TypeOf(v),
 			reflect.TypeOf((*ax.Message)(nil)).Elem(),
-			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
 			reflect.TypeOf((*context.Context)(nil)).Elem(),
-			reflect.TypeOf((*ax.Sender)(nil)).Elem(),
+			reflect.TypeOf((*ax.MessageContext)(nil)).Elem(),
 		},
 		[]reflect.Type{
 			reflect.TypeOf((*error)(nil)).Elem(),
 		},
 		handlerSignature,
-		handlerSignatureWithEnvelope,
-		handlerSignatureWithContext,
-		handlerSignatureWithContextAndEnvelope,
-		handlerSignatureWithSender,
-		handlerSignatureWithSenderAndEnvelope,
+		handlerSignatureWithMessageContext,
+		handlerSignatureWithError,
+		handlerSignatureWithErrorAndMessageContext,
 	)
 	if err != nil {
 		panic(err)
@@ -98,13 +93,12 @@ func (h *messageHandler) MessageTypes() ax.MessageTypeSet {
 //
 // It may panic if env.Message is not one of the types described by
 // MessageTypes().
-func (h *messageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope) error {
+func (h *messageHandler) HandleMessage(ctx context.Context, mctx ax.MessageContext) error {
 	out := h.handle.Dispatch(
 		h.value,
-		env.Message,
-		env,
+		mctx.Envelope.Message,
 		ctx,
-		s,
+		mctx,
 	)
 
 	if err := out[0]; err != nil {
@@ -122,15 +116,15 @@ var (
 		},
 	}
 
-	handlerSignatureWithEnvelope = &typeswitch.Signature{
+	handlerSignatureWithMessageContext = &typeswitch.Signature{
 		In: []reflect.Type{
 			reflect.TypeOf((*interface{})(nil)).Elem(),
+			reflect.TypeOf((*ax.MessageContext)(nil)).Elem(),
 			reflect.TypeOf((*ax.Message)(nil)).Elem(),
-			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
 		},
 	}
 
-	handlerSignatureWithContext = &typeswitch.Signature{
+	handlerSignatureWithError = &typeswitch.Signature{
 		In: []reflect.Type{
 			reflect.TypeOf((*interface{})(nil)).Elem(),
 			reflect.TypeOf((*context.Context)(nil)).Elem(),
@@ -141,37 +135,12 @@ var (
 		},
 	}
 
-	handlerSignatureWithContextAndEnvelope = &typeswitch.Signature{
+	handlerSignatureWithErrorAndMessageContext = &typeswitch.Signature{
 		In: []reflect.Type{
 			reflect.TypeOf((*interface{})(nil)).Elem(),
 			reflect.TypeOf((*context.Context)(nil)).Elem(),
+			reflect.TypeOf((*ax.MessageContext)(nil)).Elem(),
 			reflect.TypeOf((*ax.Message)(nil)).Elem(),
-			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
-		},
-		Out: []reflect.Type{
-			reflect.TypeOf((*error)(nil)).Elem(),
-		},
-	}
-
-	handlerSignatureWithSender = &typeswitch.Signature{
-		In: []reflect.Type{
-			reflect.TypeOf((*interface{})(nil)).Elem(),
-			reflect.TypeOf((*context.Context)(nil)).Elem(),
-			reflect.TypeOf((*ax.Sender)(nil)).Elem(),
-			reflect.TypeOf((*ax.Message)(nil)).Elem(),
-		},
-		Out: []reflect.Type{
-			reflect.TypeOf((*error)(nil)).Elem(),
-		},
-	}
-
-	handlerSignatureWithSenderAndEnvelope = &typeswitch.Signature{
-		In: []reflect.Type{
-			reflect.TypeOf((*interface{})(nil)).Elem(),
-			reflect.TypeOf((*context.Context)(nil)).Elem(),
-			reflect.TypeOf((*ax.Sender)(nil)).Elem(),
-			reflect.TypeOf((*ax.Message)(nil)).Elem(),
-			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
 		},
 		Out: []reflect.Type{
 			reflect.TypeOf((*error)(nil)).Elem(),

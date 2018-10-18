@@ -30,7 +30,7 @@ func (h *MessageHandler) MessageTypes() ax.MessageTypeSet {
 //
 // Changes to the saga are persisted within the existing transaction in ctx, if
 // present.
-func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope) error {
+func (h *MessageHandler) HandleMessage(ctx context.Context, mctx ax.MessageContext) error {
 	tx, com, err := persistence.GetOrBeginTx(ctx)
 	if err != nil {
 		return err
@@ -40,7 +40,7 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 
 	// begin a new unit of work.
 	// if ok is false the message is not map to any instance and is ignored.
-	w, ok, err := h.begin(ctx, tx, s, env)
+	w, ok, err := h.begin(ctx, mctx, tx)
 	if !ok || err != nil {
 		return err
 	}
@@ -48,12 +48,12 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 
 	// call the not-found handler if the instance is new but the message is not a
 	// trigger.
-	if w.Instance().Revision == 0 && !h.isTrigger(env) {
-		return h.Saga.HandleNotFound(ctx, s, env)
+	if w.Instance().Revision == 0 && !h.isTrigger(mctx.Envelope) {
+		return h.Saga.HandleNotFound(ctx, mctx)
 	}
 
 	// otherwise, forward the message to the saga for handling.
-	err = h.forward(ctx, w, env)
+	err = h.forward(ctx, mctx, w)
 	if err != nil {
 		return err
 	}
@@ -84,29 +84,28 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, env ax.
 // should be ignored.
 func (h *MessageHandler) begin(
 	ctx context.Context,
+	mctx ax.MessageContext,
 	tx persistence.Tx,
-	s ax.Sender,
-	env ax.Envelope,
 ) (UnitOfWork, bool, error) {
-	id, ok, err := h.Mapper.MapMessageToInstance(ctx, h.Saga, tx, env)
+	id, ok, err := h.Mapper.MapMessageToInstance(ctx, h.Saga, tx, mctx.Envelope)
 	if !ok || err != nil {
 		return nil, false, err
 	}
 
-	w, err := h.Persister.BeginUnitOfWork(ctx, h.Saga, tx, s, id)
+	w, err := h.Persister.BeginUnitOfWork(ctx, h.Saga, tx, mctx.Sender, id)
 	return w, true, err
 }
 
 // forward passes the message to the saga to be handled.
-func (h *MessageHandler) forward(ctx context.Context, w UnitOfWork, env ax.Envelope) error {
+func (h *MessageHandler) forward(ctx context.Context, mctx ax.MessageContext, w UnitOfWork) error {
 	i := w.Instance()
-	s := w.Sender()
 
+	mctx.Sender = w.Sender()
 	if es, ok := h.Saga.(EventedSaga); ok {
-		s = &Applier{es, i.Data, s}
+		mctx.Sender = &Applier{es, i.Data, mctx.Sender}
 	}
 
-	return h.Saga.HandleMessage(ctx, s, env, i)
+	return h.Saga.HandleMessage(ctx, mctx, i)
 }
 
 // save persists changes to the saga instance.
