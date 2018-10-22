@@ -3,9 +3,8 @@ package routing
 import (
 	"context"
 
-	"github.com/jmalloc/ax/src/ax/endpoint"
-
 	"github.com/jmalloc/ax/src/ax"
+	"github.com/jmalloc/ax/src/ax/endpoint"
 )
 
 // Dispatcher is an inbound pipeline stage that routes messages to the
@@ -50,13 +49,18 @@ func (d *Dispatcher) Initialize(ctx context.Context, ep *endpoint.Endpoint) erro
 // Each message handler is invoked on its own goroutine.
 func (d *Dispatcher) Accept(ctx context.Context, s endpoint.MessageSink, env endpoint.InboundEnvelope) error {
 	ctx = endpoint.WithEnvelope(ctx, env.Envelope)
+
 	sender := endpoint.SinkSender{
 		Sink:       s,
 		Validators: d.validators,
 	}
 
+	mctx := ax.MessageContext{
+		Envelope: env.Envelope,
+	}
+
 	for _, h := range d.Routes.Lookup(env.Type()) {
-		if err := h.HandleMessage(ctx, sender, env.Envelope); err != nil {
+		if err := h.HandleMessage(ctx, sender, mctx); err != nil {
 			return err
 		}
 	}
