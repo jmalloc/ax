@@ -134,7 +134,12 @@ func (a *Aggregate) NewData() Data {
 }
 
 // HandleMessage handles a message for a particular saga instance.
-func (a *Aggregate) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope, i Instance) (err error) {
+func (a *Aggregate) HandleMessage(
+	ctx context.Context,
+	s ax.Sender,
+	mctx ax.MessageContext,
+	i Instance,
+) (err error) {
 	// recordError is a container for errors produced while attempting to record an
 	// event.
 	type recordError struct{ err error }
@@ -160,8 +165,8 @@ func (a *Aggregate) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envel
 
 	a.Handle.Dispatch(
 		i.Data,
-		env.Message.(ax.Command),
-		env,
+		mctx.Envelope.Message.(ax.Command),
+		mctx.Envelope,
 		rec,
 	)
 

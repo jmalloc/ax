@@ -3,9 +3,11 @@
 
 package domain
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
+import (
+	fmt "fmt"
+	proto "github.com/golang/protobuf/proto"
+	math "math"
+)
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -33,16 +35,17 @@ func (m *Account) Reset()         { *m = Account{} }
 func (m *Account) String() string { return proto.CompactTextString(m) }
 func (*Account) ProtoMessage()    {}
 func (*Account) Descriptor() ([]byte, []int) {
-	return fileDescriptor_data_493847c8acc5d581, []int{0}
+	return fileDescriptor_a7fadce38753b8e1, []int{0}
 }
+
 func (m *Account) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Account.Unmarshal(m, b)
 }
 func (m *Account) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Account.Marshal(b, m, deterministic)
 }
-func (dst *Account) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Account.Merge(dst, src)
+func (m *Account) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Account.Merge(m, src)
 }
 func (m *Account) XXX_Size() int {
 	return xxx_messageInfo_Account.Size(m)
@@ -97,16 +100,17 @@ func (m *Transfer) Reset()         { *m = Transfer{} }
 func (m *Transfer) String() string { return proto.CompactTextString(m) }
 func (*Transfer) ProtoMessage()    {}
 func (*Transfer) Descriptor() ([]byte, []int) {
-	return fileDescriptor_data_493847c8acc5d581, []int{1}
+	return fileDescriptor_a7fadce38753b8e1, []int{1}
 }
+
 func (m *Transfer) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Transfer.Unmarshal(m, b)
 }
 func (m *Transfer) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Transfer.Marshal(b, m, deterministic)
 }
-func (dst *Transfer) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Transfer.Merge(dst, src)
+func (m *Transfer) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Transfer.Merge(m, src)
 }
 func (m *Transfer) XXX_Size() int {
 	return xxx_messageInfo_Transfer.Size(m)
@@ -157,11 +161,9 @@ func init() {
 	proto.RegisterType((*Transfer)(nil), "ax.examples.banking.Transfer")
 }
 
-func init() {
-	proto.RegisterFile("examples/banking/domain/data.proto", fileDescriptor_data_493847c8acc5d581)
-}
+func init() { proto.RegisterFile("examples/banking/domain/data.proto", fileDescriptor_a7fadce38753b8e1) }
 
-var fileDescriptor_data_493847c8acc5d581 = []byte{
+var fileDescriptor_a7fadce38753b8e1 = []byte{
 	// 270 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x54, 0x90, 0xbd, 0x4e, 0xc3, 0x30,
 	0x14, 0x46, 0x95, 0xd2, 0x9f, 0xf4, 0x56, 0xa1, 0xc8, 0x0c, 0x64, 0x41, 0x44, 0x19, 0xaa, 0x4c,

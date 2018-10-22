@@ -12,7 +12,7 @@ import (
 type IgnoreNotFound struct{}
 
 // HandleNotFound always returns nil.
-func (IgnoreNotFound) HandleNotFound(context.Context, ax.Sender, ax.Envelope) error {
+func (IgnoreNotFound) HandleNotFound(context.Context, ax.Sender, ax.MessageContext) error {
 	return nil
 }
 
@@ -21,7 +21,7 @@ func (IgnoreNotFound) HandleNotFound(context.Context, ax.Sender, ax.Envelope) er
 type ErrorIfNotFound struct{}
 
 // HandleNotFound always returns an error.
-func (ErrorIfNotFound) HandleNotFound(_ context.Context, _ ax.Sender, _ ax.Envelope) error {
+func (ErrorIfNotFound) HandleNotFound(context.Context, ax.Sender, ax.MessageContext) error {
 	return errors.New("could not find a saga instance to handle message")
 }
 
@@ -45,6 +45,6 @@ func (CompletableByData) IsInstanceComplete(_ context.Context, i Instance) (bool
 type InstancesNeverComplete struct{}
 
 // IsInstanceComplete always returns false.
-func (InstancesNeverComplete) IsInstanceComplete(_ context.Context, i Instance) (bool, error) {
+func (InstancesNeverComplete) IsInstanceComplete(context.Context, Instance) (bool, error) {
 	return false, nil
 }

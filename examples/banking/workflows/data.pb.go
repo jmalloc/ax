@@ -3,9 +3,11 @@
 
 package workflows
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
+import (
+	fmt "fmt"
+	proto "github.com/golang/protobuf/proto"
+	math "math"
+)
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -33,16 +35,17 @@ func (m *Transfer) Reset()         { *m = Transfer{} }
 func (m *Transfer) String() string { return proto.CompactTextString(m) }
 func (*Transfer) ProtoMessage()    {}
 func (*Transfer) Descriptor() ([]byte, []int) {
-	return fileDescriptor_data_2809d817cb4b9095, []int{0}
+	return fileDescriptor_4103c54b25992069, []int{0}
 }
+
 func (m *Transfer) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Transfer.Unmarshal(m, b)
 }
 func (m *Transfer) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Transfer.Marshal(b, m, deterministic)
 }
-func (dst *Transfer) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Transfer.Merge(dst, src)
+func (m *Transfer) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Transfer.Merge(m, src)
 }
 func (m *Transfer) XXX_Size() int {
 	return xxx_messageInfo_Transfer.Size(m)
@@ -93,10 +96,10 @@ func init() {
 }
 
 func init() {
-	proto.RegisterFile("examples/banking/workflows/data.proto", fileDescriptor_data_2809d817cb4b9095)
+	proto.RegisterFile("examples/banking/workflows/data.proto", fileDescriptor_4103c54b25992069)
 }
 
-var fileDescriptor_data_2809d817cb4b9095 = []byte{
+var fileDescriptor_4103c54b25992069 = []byte{
 	// 219 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x4c, 0xcf, 0xb1, 0x4e, 0xc3, 0x30,
 	0x10, 0xc6, 0x71, 0x19, 0x28, 0x6a, 0x2f, 0x8a, 0x2a, 0x79, 0xca, 0x82, 0x88, 0x2a, 0x51, 0x65,

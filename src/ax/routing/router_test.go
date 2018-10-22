@@ -12,7 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var ensureRouterIsOutboundPipeline endpoint.OutboundPipeline = &Router{}
+var _ endpoint.OutboundPipeline = (*Router)(nil) // ensure Router implements OutboundPipeline
 
 var _ = Describe("Router", func() {
 	var (

@@ -43,11 +43,11 @@ type Saga interface {
 	NewData() Data
 
 	// HandleMessage handles a message for a particular saga instance.
-	HandleMessage(context.Context, ax.Sender, ax.Envelope, Instance) error
+	HandleMessage(context.Context, ax.Sender, ax.MessageContext, Instance) error
 
 	// HandleNotFound handles a message that is intended for a saga instance
 	// that could not be found.
-	HandleNotFound(context.Context, ax.Sender, ax.Envelope) error
+	HandleNotFound(context.Context, ax.Sender, ax.MessageContext) error
 
 	// IsInstanceComplete returns true if the given instance is complete.
 	IsInstanceComplete(ctx context.Context, i Instance) (bool, error)

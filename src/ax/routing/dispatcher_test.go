@@ -13,7 +13,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var ensureDispatcherIsInboundPipeline endpoint.InboundPipeline = &Dispatcher{}
+var _ endpoint.InboundPipeline = (*Dispatcher)(nil) // ensure Dispatcher implements InboundPipeline
 
 var _ = Describe("Dispatcher", func() {
 	var (

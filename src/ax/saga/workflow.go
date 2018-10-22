@@ -169,7 +169,7 @@ func (w *Workflow) NewData() Data {
 func (w *Workflow) HandleMessage(
 	ctx context.Context,
 	s ax.Sender,
-	env ax.Envelope,
+	mctx ax.MessageContext,
 	i Instance,
 ) error {
 	type command struct {
@@ -178,6 +178,7 @@ func (w *Workflow) HandleMessage(
 	}
 
 	var cmds []command
+	env := mctx.Envelope
 
 	switch t := env.Message.(type) {
 	case ax.Command:

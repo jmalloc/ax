@@ -3,9 +3,11 @@
 
 package messages
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
+import (
+	fmt "fmt"
+	proto "github.com/golang/protobuf/proto"
+	math "math"
+)
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -33,16 +35,17 @@ func (m *StartTransfer) Reset()         { *m = StartTransfer{} }
 func (m *StartTransfer) String() string { return proto.CompactTextString(m) }
 func (*StartTransfer) ProtoMessage()    {}
 func (*StartTransfer) Descriptor() ([]byte, []int) {
-	return fileDescriptor_transfer_8743ef8a4f199f98, []int{0}
+	return fileDescriptor_e75cd10884c5b714, []int{0}
 }
+
 func (m *StartTransfer) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_StartTransfer.Unmarshal(m, b)
 }
 func (m *StartTransfer) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_StartTransfer.Marshal(b, m, deterministic)
 }
-func (dst *StartTransfer) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_StartTransfer.Merge(dst, src)
+func (m *StartTransfer) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StartTransfer.Merge(m, src)
 }
 func (m *StartTransfer) XXX_Size() int {
 	return xxx_messageInfo_StartTransfer.Size(m)
@@ -96,16 +99,17 @@ func (m *TransferStarted) Reset()         { *m = TransferStarted{} }
 func (m *TransferStarted) String() string { return proto.CompactTextString(m) }
 func (*TransferStarted) ProtoMessage()    {}
 func (*TransferStarted) Descriptor() ([]byte, []int) {
-	return fileDescriptor_transfer_8743ef8a4f199f98, []int{1}
+	return fileDescriptor_e75cd10884c5b714, []int{1}
 }
+
 func (m *TransferStarted) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TransferStarted.Unmarshal(m, b)
 }
 func (m *TransferStarted) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TransferStarted.Marshal(b, m, deterministic)
 }
-func (dst *TransferStarted) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TransferStarted.Merge(dst, src)
+func (m *TransferStarted) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TransferStarted.Merge(m, src)
 }
 func (m *TransferStarted) XXX_Size() int {
 	return xxx_messageInfo_TransferStarted.Size(m)
@@ -156,16 +160,17 @@ func (m *MarkTransferApproved) Reset()         { *m = MarkTransferApproved{} }
 func (m *MarkTransferApproved) String() string { return proto.CompactTextString(m) }
 func (*MarkTransferApproved) ProtoMessage()    {}
 func (*MarkTransferApproved) Descriptor() ([]byte, []int) {
-	return fileDescriptor_transfer_8743ef8a4f199f98, []int{2}
+	return fileDescriptor_e75cd10884c5b714, []int{2}
 }
+
 func (m *MarkTransferApproved) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MarkTransferApproved.Unmarshal(m, b)
 }
 func (m *MarkTransferApproved) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_MarkTransferApproved.Marshal(b, m, deterministic)
 }
-func (dst *MarkTransferApproved) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MarkTransferApproved.Merge(dst, src)
+func (m *MarkTransferApproved) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MarkTransferApproved.Merge(m, src)
 }
 func (m *MarkTransferApproved) XXX_Size() int {
 	return xxx_messageInfo_MarkTransferApproved.Size(m)
@@ -195,16 +200,17 @@ func (m *TransferApproved) Reset()         { *m = TransferApproved{} }
 func (m *TransferApproved) String() string { return proto.CompactTextString(m) }
 func (*TransferApproved) ProtoMessage()    {}
 func (*TransferApproved) Descriptor() ([]byte, []int) {
-	return fileDescriptor_transfer_8743ef8a4f199f98, []int{3}
+	return fileDescriptor_e75cd10884c5b714, []int{3}
 }
+
 func (m *TransferApproved) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TransferApproved.Unmarshal(m, b)
 }
 func (m *TransferApproved) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TransferApproved.Marshal(b, m, deterministic)
 }
-func (dst *TransferApproved) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TransferApproved.Merge(dst, src)
+func (m *TransferApproved) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TransferApproved.Merge(m, src)
 }
 func (m *TransferApproved) XXX_Size() int {
 	return xxx_messageInfo_TransferApproved.Size(m)
@@ -230,10 +236,10 @@ func init() {
 }
 
 func init() {
-	proto.RegisterFile("examples/banking/messages/transfer.proto", fileDescriptor_transfer_8743ef8a4f199f98)
+	proto.RegisterFile("examples/banking/messages/transfer.proto", fileDescriptor_e75cd10884c5b714)
 }
 
-var fileDescriptor_transfer_8743ef8a4f199f98 = []byte{
+var fileDescriptor_e75cd10884c5b714 = []byte{
 	// 233 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x91, 0x3f, 0x4f, 0xc3, 0x30,
 	0x10, 0x47, 0x65, 0xfe, 0x09, 0xae, 0xb2, 0x82, 0x0c, 0x43, 0x37, 0x2a, 0x0f, 0x55, 0xa6, 0x64,
