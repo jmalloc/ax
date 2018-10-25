@@ -37,6 +37,8 @@ var _ = Describe("Logger", func() {
 				CorrelationID: ax.MustParseMessageID("<correlation-id>"),
 				Message:       &testmessages.Command{},
 			},
+			DeliveryID:    endpoint.MustParseDeliveryID("<delivery-id>"),
+			DeliveryCount: 3,
 		}
 
 		Describe("BeforeInbound", func() {
@@ -45,7 +47,7 @@ var _ = Describe("Logger", func() {
 
 				Expect(logger.Messages()).To(ConsistOf(
 					twelf.BufferedLogMessage{
-						Message: "recv: test command  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id>]",
+						Message: "recv: test command  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id> del:<delivery-id>#3]",
 						IsDebug: false,
 					},
 				))
@@ -59,7 +61,7 @@ var _ = Describe("Logger", func() {
 
 				Expect(logger.Messages()).To(ConsistOf(
 					twelf.BufferedLogMessage{
-						Message: "error: test command  <error>  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id>]",
+						Message: "error: test command  <error>  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id> del:<delivery-id>#3]",
 						IsDebug: false,
 					},
 				))

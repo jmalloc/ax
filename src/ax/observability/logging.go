@@ -17,12 +17,14 @@ func (o *LoggingObserver) BeforeInbound(ctx context.Context, env endpoint.Inboun
 	mt := env.Type()
 
 	o.log(
-		"recv: %s  [%s msg:%s cause:%s corr:%s]",
+		"recv: %s  [%s msg:%s cause:%s corr:%s del:%s#%d]",
 		env.Message.MessageDescription(),
 		mt,
 		env.MessageID,
 		env.CausationID,
 		env.CorrelationID,
+		env.DeliveryID,
+		env.DeliveryCount,
 	)
 }
 
@@ -30,13 +32,15 @@ func (o *LoggingObserver) BeforeInbound(ctx context.Context, env endpoint.Inboun
 func (o *LoggingObserver) AfterInbound(ctx context.Context, env endpoint.InboundEnvelope, err error) {
 	if err != nil {
 		o.log(
-			"error: %s  %s  [%s msg:%s cause:%s corr:%s]",
+			"error: %s  %s  [%s msg:%s cause:%s corr:%s del:%s#%d]",
 			env.Message.MessageDescription(),
 			err,
 			env.Type(),
 			env.MessageID,
 			env.CausationID,
 			env.CorrelationID,
+			env.DeliveryID,
+			env.DeliveryCount,
 		)
 	}
 }
