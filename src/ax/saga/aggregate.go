@@ -31,7 +31,7 @@ type Aggregate struct {
 // implement a "handler" method that adheres to one of the following signatures:
 //
 //     func (cmd *<T>, rec ax.EventRecorder)
-//     func (cmd *<T>, env ax.Envelope, rec ax.EventRecorder)
+//     func (cmd *<T>, mctx ax.MessageContext, rec ax.EventRecorder)
 //
 // Where T is a struct type that implements ax.Command.
 //
@@ -50,7 +50,7 @@ type Aggregate struct {
 // "applier" method that adheres to one of the following signatures:
 //
 //     func (ev *T)
-//     func (ev *T, env ax.Envelope)
+//     func (ev *T, mctx ax.MessageContext)
 //
 // Where T is a struct type that implements ax.Event.
 //
@@ -73,12 +73,12 @@ func NewAggregate(p Data) *Aggregate {
 		[]reflect.Type{
 			reflect.TypeOf(p),
 			reflect.TypeOf((*ax.Command)(nil)).Elem(),
-			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
+			reflect.TypeOf((*ax.MessageContext)(nil)).Elem(),
 			reflect.TypeOf((*ax.EventRecorder)(nil)).Elem(),
 		},
 		nil, // no outputs
 		aggregateHandleSignature,
-		aggregateHandleWithEnvelopeSignature,
+		aggregateHandleSignatureWithMessageContext,
 	)
 	if err != nil {
 		panic(err)
@@ -92,11 +92,11 @@ func NewAggregate(p Data) *Aggregate {
 		[]reflect.Type{
 			reflect.TypeOf(p),
 			reflect.TypeOf((*ax.Event)(nil)).Elem(),
-			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
+			reflect.TypeOf((*ax.MessageContext)(nil)).Elem(),
 		},
 		nil, // no outputs
 		aggregateApplySignature,
-		aggregateApplyWithEnvelopeSignature,
+		aggregateApplySignatureWithMessageContext,
 	)
 	if err != nil {
 		panic(err)
@@ -134,7 +134,12 @@ func (a *Aggregate) NewData() Data {
 }
 
 // HandleMessage handles a message for a particular saga instance.
-func (a *Aggregate) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envelope, i Instance) (err error) {
+func (a *Aggregate) HandleMessage(
+	ctx context.Context,
+	s ax.Sender,
+	mctx ax.MessageContext,
+	i Instance,
+) (err error) {
 	// recordError is a container for errors produced while attempting to record an
 	// event.
 	type recordError struct{ err error }
@@ -160,8 +165,8 @@ func (a *Aggregate) HandleMessage(ctx context.Context, s ax.Sender, env ax.Envel
 
 	a.Handle.Dispatch(
 		i.Data,
-		env.Message.(ax.Command),
-		env,
+		mctx.Envelope.Message.(ax.Command),
+		mctx.Envelope,
 		rec,
 	)
 
@@ -189,12 +194,12 @@ var (
 		},
 	}
 
-	aggregateHandleWithEnvelopeSignature = &typeswitch.Signature{
+	aggregateHandleSignatureWithMessageContext = &typeswitch.Signature{
 		Prefix: "Do",
 		In: []reflect.Type{
 			reflect.TypeOf((*Data)(nil)).Elem(),
 			reflect.TypeOf((*ax.Command)(nil)).Elem(),
-			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
+			reflect.TypeOf((*ax.MessageContext)(nil)).Elem(),
 			reflect.TypeOf((*ax.EventRecorder)(nil)).Elem(),
 		},
 	}
@@ -207,12 +212,12 @@ var (
 		},
 	}
 
-	aggregateApplyWithEnvelopeSignature = &typeswitch.Signature{
+	aggregateApplySignatureWithMessageContext = &typeswitch.Signature{
 		Prefix: "When",
 		In: []reflect.Type{
 			reflect.TypeOf((*Data)(nil)).Elem(),
 			reflect.TypeOf((*ax.Event)(nil)).Elem(),
-			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
+			reflect.TypeOf((*ax.MessageContext)(nil)).Elem(),
 		},
 	}
 )

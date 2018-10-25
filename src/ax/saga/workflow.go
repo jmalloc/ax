@@ -33,7 +33,7 @@ type Workflow struct {
 // method that adheres to one of the following signatures:
 //
 //     func (m *<T>, ax.CommandExecutor)
-//     func (m *<T>, env ax.Envelope, ax.CommandExecutor)
+//     func (m *<T>, mctx ax.MessageContext, ax.CommandExecutor)
 //
 // Where T is a struct type that implements ax.Message.
 //
@@ -82,14 +82,14 @@ func NewWorkflow(p Data) *Workflow {
 		[]reflect.Type{
 			reflect.TypeOf(p),
 			reflect.TypeOf((*ax.Command)(nil)).Elem(),
-			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
+			reflect.TypeOf((*ax.MessageContext)(nil)).Elem(),
 			reflect.TypeOf((*ax.CommandExecutor)(nil)).Elem(),
 		},
 		nil,
 		workflowBeginSignature,
-		workflowBeginWithEnvelopeSignature,
+		workflowBeginSignatureWithMessageContext,
 		workflowDoSignature,
-		workflowDoWithEnvelopeSignature,
+		workflowDoSignatureWithMessageContext,
 	)
 	if err != nil {
 		panic(err)
@@ -102,14 +102,14 @@ func NewWorkflow(p Data) *Workflow {
 		[]reflect.Type{
 			reflect.TypeOf(p),
 			reflect.TypeOf((*ax.Event)(nil)).Elem(),
-			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
+			reflect.TypeOf((*ax.MessageContext)(nil)).Elem(),
 			reflect.TypeOf((*ax.CommandExecutor)(nil)).Elem(),
 		},
 		nil,
 		workflowBeginWhenSignature,
-		workflowBeginWhenWithEnvelopeSignature,
+		workflowBeginWhenSignatureWithMessageContext,
 		workflowWhenSignature,
-		workflowWhenWithEnvelopeSignature,
+		workflowWhenSignatureWithMessageContext,
 	)
 	if err != nil {
 		panic(err)
@@ -120,18 +120,18 @@ func NewWorkflow(p Data) *Workflow {
 	w.Triggers = ax.TypesByGoType(
 		mergeTypeSlices(
 			ctypes[workflowBeginSignature],
-			ctypes[workflowBeginWithEnvelopeSignature],
+			ctypes[workflowBeginSignatureWithMessageContext],
 			etypes[workflowBeginWhenSignature],
-			etypes[workflowBeginWhenWithEnvelopeSignature],
+			etypes[workflowBeginWhenSignatureWithMessageContext],
 		)...,
 	)
 
 	w.NonTriggers = ax.TypesByGoType(
 		mergeTypeSlices(
 			ctypes[workflowDoSignature],
-			ctypes[workflowDoWithEnvelopeSignature],
+			ctypes[workflowDoSignatureWithMessageContext],
 			etypes[workflowWhenSignature],
-			etypes[workflowWhenWithEnvelopeSignature],
+			etypes[workflowWhenSignatureWithMessageContext],
 		)...,
 	)
 
@@ -169,7 +169,7 @@ func (w *Workflow) NewData() Data {
 func (w *Workflow) HandleMessage(
 	ctx context.Context,
 	s ax.Sender,
-	env ax.Envelope,
+	mctx ax.MessageContext,
 	i Instance,
 ) error {
 	type command struct {
@@ -178,6 +178,7 @@ func (w *Workflow) HandleMessage(
 	}
 
 	var cmds []command
+	env := mctx.Envelope
 
 	switch t := env.Message.(type) {
 	case ax.Command:
@@ -224,12 +225,12 @@ var (
 		},
 	}
 
-	workflowBeginWithEnvelopeSignature = &typeswitch.Signature{
+	workflowBeginSignatureWithMessageContext = &typeswitch.Signature{
 		Prefix: "Begin",
 		In: []reflect.Type{
 			reflect.TypeOf((*Data)(nil)).Elem(),
 			reflect.TypeOf((*ax.Command)(nil)).Elem(),
-			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
+			reflect.TypeOf((*ax.MessageContext)(nil)).Elem(),
 			reflect.TypeOf((*ax.CommandExecutor)(nil)).Elem(),
 		},
 	}
@@ -243,12 +244,12 @@ var (
 		},
 	}
 
-	workflowDoWithEnvelopeSignature = &typeswitch.Signature{
+	workflowDoSignatureWithMessageContext = &typeswitch.Signature{
 		Prefix: "Do",
 		In: []reflect.Type{
 			reflect.TypeOf((*Data)(nil)).Elem(),
 			reflect.TypeOf((*ax.Command)(nil)).Elem(),
-			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
+			reflect.TypeOf((*ax.MessageContext)(nil)).Elem(),
 			reflect.TypeOf((*ax.CommandExecutor)(nil)).Elem(),
 		},
 	}
@@ -262,12 +263,12 @@ var (
 		},
 	}
 
-	workflowBeginWhenWithEnvelopeSignature = &typeswitch.Signature{
+	workflowBeginWhenSignatureWithMessageContext = &typeswitch.Signature{
 		Prefix: "BeginWhen",
 		In: []reflect.Type{
 			reflect.TypeOf((*Data)(nil)).Elem(),
 			reflect.TypeOf((*ax.Event)(nil)).Elem(),
-			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
+			reflect.TypeOf((*ax.MessageContext)(nil)).Elem(),
 			reflect.TypeOf((*ax.CommandExecutor)(nil)).Elem(),
 		},
 	}
@@ -281,12 +282,12 @@ var (
 		},
 	}
 
-	workflowWhenWithEnvelopeSignature = &typeswitch.Signature{
+	workflowWhenSignatureWithMessageContext = &typeswitch.Signature{
 		Prefix: "When",
 		In: []reflect.Type{
 			reflect.TypeOf((*Data)(nil)).Elem(),
 			reflect.TypeOf((*ax.Event)(nil)).Elem(),
-			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
+			reflect.TypeOf((*ax.MessageContext)(nil)).Elem(),
 			reflect.TypeOf((*ax.CommandExecutor)(nil)).Elem(),
 		},
 	}

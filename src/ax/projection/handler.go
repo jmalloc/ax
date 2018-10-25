@@ -29,7 +29,7 @@ func (a *MessageHandler) MessageTypes() ax.MessageTypeSet {
 func (a *MessageHandler) HandleMessage(
 	ctx context.Context,
 	_ ax.Sender,
-	env ax.Envelope,
+	mctx ax.MessageContext,
 ) error {
-	return a.Projector.ApplyMessage(ctx, env)
+	return a.Projector.ApplyMessage(ctx, mctx)
 }

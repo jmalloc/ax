@@ -21,7 +21,7 @@ import (
 // implement an "apply" method that adheres to one of the following signatures:
 //
 //     func (ctx context.Context, tx *sql.Tx, ev *<T>) error
-//     func (ctx context.Context, tx *sql.Tx, ev *<T>, env ax.Envelope) error
+//     func (ctx context.Context, tx *sql.Tx, ev *<T>, mctx ax.MessageContext) error
 //
 // Where T is a struct type that implements ax.Event.
 //
@@ -62,7 +62,7 @@ func NewReadModelProjector(rm ReadModel) *ReadModelProjector {
 		[]reflect.Type{
 			reflect.TypeOf(rm),
 			reflect.TypeOf((*ax.Event)(nil)).Elem(),
-			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
+			reflect.TypeOf((*ax.MessageContext)(nil)).Elem(),
 			reflect.TypeOf((*context.Context)(nil)).Elem(),
 			reflect.TypeOf((*sql.Tx)(nil)),
 		},
@@ -70,7 +70,7 @@ func NewReadModelProjector(rm ReadModel) *ReadModelProjector {
 			reflect.TypeOf((*error)(nil)).Elem(),
 		},
 		readModelApplySignature,
-		readModelApplyWithEnvelopeSignature,
+		readModelApplySignatureWithMessageContext,
 	)
 	if err != nil {
 		panic(err)
@@ -104,14 +104,14 @@ func (p ReadModelProjector) MessageTypes() ax.MessageTypeSet {
 //
 // It may panic if env.Message is not one of the types described by
 // MessageTypes().
-func (p ReadModelProjector) ApplyMessage(ctx context.Context, env ax.Envelope) error {
+func (p ReadModelProjector) ApplyMessage(ctx context.Context, mctx ax.MessageContext) error {
 	ptx, _ := persistence.GetTx(ctx)
 	tx := mysqlpersistence.ExtractTx(ptx)
 
 	out := p.Apply.Dispatch(
 		p.ReadModel,
-		env.Message.(ax.Event),
-		env,
+		mctx.Envelope.Message.(ax.Event),
+		mctx,
 		ctx,
 		tx,
 	)
@@ -136,13 +136,13 @@ var (
 		},
 	}
 
-	readModelApplyWithEnvelopeSignature = &typeswitch.Signature{
+	readModelApplySignatureWithMessageContext = &typeswitch.Signature{
 		In: []reflect.Type{
 			reflect.TypeOf((*ReadModel)(nil)).Elem(),
 			reflect.TypeOf((*context.Context)(nil)).Elem(),
 			reflect.TypeOf((*sql.Tx)(nil)),
 			reflect.TypeOf((*ax.Event)(nil)).Elem(),
-			reflect.TypeOf((*ax.Envelope)(nil)).Elem(),
+			reflect.TypeOf((*ax.MessageContext)(nil)).Elem(),
 		},
 		Out: []reflect.Type{
 			reflect.TypeOf((*error)(nil)).Elem(),

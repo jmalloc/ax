@@ -13,7 +13,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var ensureDispatcherIsInboundPipeline endpoint.InboundPipeline = &Dispatcher{}
+var _ endpoint.InboundPipeline = (*Dispatcher)(nil) // ensure Dispatcher implements InboundPipeline
 
 var _ = Describe("Dispatcher", func() {
 	var (
@@ -23,7 +23,7 @@ var _ = Describe("Dispatcher", func() {
 	)
 
 	BeforeEach(func() {
-		noOp := func(context.Context, ax.Sender, ax.Envelope) error { return nil }
+		noOp := func(context.Context, ax.Sender, ax.MessageContext) error { return nil }
 
 		h1 = &mocks.MessageHandlerMock{
 			MessageTypesFunc: func() ax.MessageTypeSet {
@@ -117,7 +117,7 @@ var _ = Describe("Dispatcher", func() {
 		})
 
 		It("uses a context that contains the message envelope", func() {
-			h1.HandleMessageFunc = func(ctx context.Context, _ ax.Sender, _ ax.Envelope) error {
+			h1.HandleMessageFunc = func(ctx context.Context, _ ax.Sender, _ ax.MessageContext) error {
 				defer GinkgoRecover()
 
 				e, ok := endpoint.GetEnvelope(ctx)
@@ -134,7 +134,7 @@ var _ = Describe("Dispatcher", func() {
 		})
 
 		It("passes a sender that sends messages via the message sink", func() {
-			h1.HandleMessageFunc = func(ctx context.Context, s ax.Sender, _ ax.Envelope) error {
+			h1.HandleMessageFunc = func(ctx context.Context, s ax.Sender, _ ax.MessageContext) error {
 				_, err := s.ExecuteCommand(ctx, &testmessages.Command{})
 				return err
 			}
@@ -152,7 +152,7 @@ var _ = Describe("Dispatcher", func() {
 		})
 
 		It("returns an error if any handler fails", func() {
-			h2.HandleMessageFunc = func(context.Context, ax.Sender, ax.Envelope) error {
+			h2.HandleMessageFunc = func(context.Context, ax.Sender, ax.MessageContext) error {
 				return errors.New("<error>")
 			}
 

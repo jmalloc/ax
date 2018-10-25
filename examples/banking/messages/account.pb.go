@@ -3,9 +3,11 @@
 
 package messages
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
+import (
+	fmt "fmt"
+	proto "github.com/golang/protobuf/proto"
+	math "math"
+)
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -31,16 +33,17 @@ func (m *OpenAccount) Reset()         { *m = OpenAccount{} }
 func (m *OpenAccount) String() string { return proto.CompactTextString(m) }
 func (*OpenAccount) ProtoMessage()    {}
 func (*OpenAccount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_account_b038f6bb64e1d106, []int{0}
+	return fileDescriptor_9df08c57b6a370e5, []int{0}
 }
+
 func (m *OpenAccount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_OpenAccount.Unmarshal(m, b)
 }
 func (m *OpenAccount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_OpenAccount.Marshal(b, m, deterministic)
 }
-func (dst *OpenAccount) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_OpenAccount.Merge(dst, src)
+func (m *OpenAccount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OpenAccount.Merge(m, src)
 }
 func (m *OpenAccount) XXX_Size() int {
 	return xxx_messageInfo_OpenAccount.Size(m)
@@ -78,16 +81,17 @@ func (m *AccountOpened) Reset()         { *m = AccountOpened{} }
 func (m *AccountOpened) String() string { return proto.CompactTextString(m) }
 func (*AccountOpened) ProtoMessage()    {}
 func (*AccountOpened) Descriptor() ([]byte, []int) {
-	return fileDescriptor_account_b038f6bb64e1d106, []int{1}
+	return fileDescriptor_9df08c57b6a370e5, []int{1}
 }
+
 func (m *AccountOpened) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AccountOpened.Unmarshal(m, b)
 }
 func (m *AccountOpened) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_AccountOpened.Marshal(b, m, deterministic)
 }
-func (dst *AccountOpened) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AccountOpened.Merge(dst, src)
+func (m *AccountOpened) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AccountOpened.Merge(m, src)
 }
 func (m *AccountOpened) XXX_Size() int {
 	return xxx_messageInfo_AccountOpened.Size(m)
@@ -126,16 +130,17 @@ func (m *CreditAccount) Reset()         { *m = CreditAccount{} }
 func (m *CreditAccount) String() string { return proto.CompactTextString(m) }
 func (*CreditAccount) ProtoMessage()    {}
 func (*CreditAccount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_account_b038f6bb64e1d106, []int{2}
+	return fileDescriptor_9df08c57b6a370e5, []int{2}
 }
+
 func (m *CreditAccount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CreditAccount.Unmarshal(m, b)
 }
 func (m *CreditAccount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CreditAccount.Marshal(b, m, deterministic)
 }
-func (dst *CreditAccount) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CreditAccount.Merge(dst, src)
+func (m *CreditAccount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CreditAccount.Merge(m, src)
 }
 func (m *CreditAccount) XXX_Size() int {
 	return xxx_messageInfo_CreditAccount.Size(m)
@@ -182,16 +187,17 @@ func (m *AccountCredited) Reset()         { *m = AccountCredited{} }
 func (m *AccountCredited) String() string { return proto.CompactTextString(m) }
 func (*AccountCredited) ProtoMessage()    {}
 func (*AccountCredited) Descriptor() ([]byte, []int) {
-	return fileDescriptor_account_b038f6bb64e1d106, []int{3}
+	return fileDescriptor_9df08c57b6a370e5, []int{3}
 }
+
 func (m *AccountCredited) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AccountCredited.Unmarshal(m, b)
 }
 func (m *AccountCredited) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_AccountCredited.Marshal(b, m, deterministic)
 }
-func (dst *AccountCredited) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AccountCredited.Merge(dst, src)
+func (m *AccountCredited) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AccountCredited.Merge(m, src)
 }
 func (m *AccountCredited) XXX_Size() int {
 	return xxx_messageInfo_AccountCredited.Size(m)
@@ -237,16 +243,17 @@ func (m *DebitAccount) Reset()         { *m = DebitAccount{} }
 func (m *DebitAccount) String() string { return proto.CompactTextString(m) }
 func (*DebitAccount) ProtoMessage()    {}
 func (*DebitAccount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_account_b038f6bb64e1d106, []int{4}
+	return fileDescriptor_9df08c57b6a370e5, []int{4}
 }
+
 func (m *DebitAccount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DebitAccount.Unmarshal(m, b)
 }
 func (m *DebitAccount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DebitAccount.Marshal(b, m, deterministic)
 }
-func (dst *DebitAccount) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DebitAccount.Merge(dst, src)
+func (m *DebitAccount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DebitAccount.Merge(m, src)
 }
 func (m *DebitAccount) XXX_Size() int {
 	return xxx_messageInfo_DebitAccount.Size(m)
@@ -293,16 +300,17 @@ func (m *AccountDebited) Reset()         { *m = AccountDebited{} }
 func (m *AccountDebited) String() string { return proto.CompactTextString(m) }
 func (*AccountDebited) ProtoMessage()    {}
 func (*AccountDebited) Descriptor() ([]byte, []int) {
-	return fileDescriptor_account_b038f6bb64e1d106, []int{5}
+	return fileDescriptor_9df08c57b6a370e5, []int{5}
 }
+
 func (m *AccountDebited) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AccountDebited.Unmarshal(m, b)
 }
 func (m *AccountDebited) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_AccountDebited.Marshal(b, m, deterministic)
 }
-func (dst *AccountDebited) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AccountDebited.Merge(dst, src)
+func (m *AccountDebited) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AccountDebited.Merge(m, src)
 }
 func (m *AccountDebited) XXX_Size() int {
 	return xxx_messageInfo_AccountDebited.Size(m)
@@ -344,10 +352,10 @@ func init() {
 }
 
 func init() {
-	proto.RegisterFile("examples/banking/messages/account.proto", fileDescriptor_account_b038f6bb64e1d106)
+	proto.RegisterFile("examples/banking/messages/account.proto", fileDescriptor_9df08c57b6a370e5)
 }
 
-var fileDescriptor_account_b038f6bb64e1d106 = []byte{
+var fileDescriptor_9df08c57b6a370e5 = []byte{
 	// 237 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x92, 0x3f, 0x4f, 0x84, 0x40,
 	0x10, 0xc5, 0x73, 0xfe, 0x8b, 0x37, 0x27, 0x5e, 0xb2, 0x36, 0xd7, 0x18, 0x0d, 0x85, 0x5a, 0x41,
