@@ -28,5 +28,5 @@ type Projector interface {
 	//
 	// It may panic if env.Message is not one of the types described by
 	// MessageTypes().
-	ApplyMessage(ctx context.Context, env ax.Envelope) error
+	ApplyMessage(ctx context.Context, mctx ax.MessageContext) error
 }

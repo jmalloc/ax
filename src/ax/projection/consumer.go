@@ -68,7 +68,9 @@ func (c *GlobalStoreConsumer) processNextMessage(ctx context.Context) error {
 	if c.types.Has(env.Type()) {
 		err = c.Projector.ApplyMessage(
 			persistence.WithTx(ctx, tx),
-			env,
+			ax.MessageContext{
+				Envelope: env,
+			},
 		)
 		if err != nil {
 			return err

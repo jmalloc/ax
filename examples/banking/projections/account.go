@@ -5,9 +5,8 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/jmalloc/ax/src/ax"
-
 	"github.com/jmalloc/ax/examples/banking/messages"
+	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/projection"
 	"github.com/jmalloc/ax/src/axmysql"
 )
@@ -18,8 +17,8 @@ func (account) PersistenceKey() string {
 	return "Account"
 }
 
-func (account) WhenAccountOpened(ctx context.Context, tx *sql.Tx, ev *messages.AccountOpened, env ax.Envelope) error {
-	return insertAccount(ctx, tx, ev.AccountId, ev.Name, env.CreatedAt)
+func (account) WhenAccountOpened(ctx context.Context, tx *sql.Tx, ev *messages.AccountOpened, mctx ax.MessageContext) error {
+	return insertAccount(ctx, tx, ev.AccountId, ev.Name, mctx.Envelope.CreatedAt)
 }
 
 func (account) WhenAccountDebited(ctx context.Context, tx *sql.Tx, ev *messages.AccountDebited) error {
