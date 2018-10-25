@@ -50,6 +50,7 @@ func marshalMessage(ep string, env endpoint.OutboundEnvelope) (amqp.Publishing, 
 func unmarshalMessage(del amqp.Delivery) (endpoint.InboundEnvelope, error) {
 	env := endpoint.InboundEnvelope{
 		SourceEndpoint: del.AppId,
+		DeliveryID:     endpoint.GenerateDeliveryID(),
 		DeliveryCount:  countDeliveries(del),
 	}
 
