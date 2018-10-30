@@ -14,12 +14,10 @@ type LoggingObserver struct {
 
 // BeforeInbound logs information about an inbound message.
 func (o *LoggingObserver) BeforeInbound(ctx context.Context, env endpoint.InboundEnvelope) {
-	mt := env.Type()
-
 	o.log(
 		"recv: %s  [%s msg:%s cause:%s corr:%s del:%s#%d]",
 		env.Message.MessageDescription(),
-		mt,
+		env.Type(),
 		env.MessageID,
 		env.CausationID,
 		env.CorrelationID,
@@ -32,7 +30,7 @@ func (o *LoggingObserver) BeforeInbound(ctx context.Context, env endpoint.Inboun
 func (o *LoggingObserver) AfterInbound(ctx context.Context, env endpoint.InboundEnvelope, err error) {
 	if err != nil {
 		o.log(
-			"error: %s  %s  [%s msg:%s cause:%s corr:%s del:%s#%d]",
+			"recv error: %s  %s  [%s msg:%s cause:%s corr:%s del:%s#%d]",
 			env.Message.MessageDescription(),
 			err,
 			env.Type(),
@@ -45,12 +43,25 @@ func (o *LoggingObserver) AfterInbound(ctx context.Context, env endpoint.Inbound
 	}
 }
 
+// BeforeOutbound logs information about an outbound message.
+func (o *LoggingObserver) BeforeOutbound(ctx context.Context, env endpoint.OutboundEnvelope) {
+	o.log(
+		"send: %s  [%s msg:%s cause:%s corr:%s]",
+		env.Message.MessageDescription(),
+		env.Type(),
+		env.MessageID,
+		env.CausationID,
+		env.CorrelationID,
+	)
+}
+
 // AfterOutbound logs information about an outbound message.
 func (o *LoggingObserver) AfterOutbound(ctx context.Context, env endpoint.OutboundEnvelope, err error) {
-	if err == nil {
+	if err != nil {
 		o.log(
-			"send: %s  [%s msg:%s cause:%s corr:%s]",
+			"send error: %s  %s  [%s msg:%s cause:%s corr:%s]",
 			env.Message.MessageDescription(),
+			err,
 			env.Type(),
 			env.MessageID,
 			env.CausationID,
