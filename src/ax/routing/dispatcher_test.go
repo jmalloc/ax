@@ -116,23 +116,6 @@ var _ = Describe("Dispatcher", func() {
 			Expect(h3.HandleMessageCalls()).To(HaveLen(0))
 		})
 
-		It("uses a context that contains the message envelope", func() {
-			h1.HandleMessageFunc = func(ctx context.Context, _ ax.Sender, _ ax.MessageContext) error {
-				defer GinkgoRecover()
-
-				e, ok := endpoint.GetEnvelope(ctx)
-
-				Expect(ok).To(BeTrue())
-				Expect(e).To(BeIdenticalTo(env.Envelope))
-
-				return nil
-			}
-
-			_ = dispatcher.Accept(ctx, sink, env)
-
-			Expect(h1.HandleMessageCalls()).To(HaveLen(1))
-		})
-
 		It("passes a sender that sends messages via the message sink", func() {
 			h1.HandleMessageFunc = func(ctx context.Context, s ax.Sender, _ ax.MessageContext) error {
 				_, err := s.ExecuteCommand(ctx, &testmessages.Command{})

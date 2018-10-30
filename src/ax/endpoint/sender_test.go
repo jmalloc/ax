@@ -58,7 +58,9 @@ var _ = Describe("SinkSender", func() {
 		})
 
 		It("configures the outbound message as a child of the envelope in ctx", func() {
-			env := ax.NewEnvelope(&testmessages.Message{})
+			env := InboundEnvelope{
+				Envelope: ax.NewEnvelope(&testmessages.Message{}),
+			}
 			ctx := WithEnvelope(context.Background(), env)
 
 			_, _ = sender.ExecuteCommand(ctx, &testmessages.Command{})
@@ -79,7 +81,9 @@ var _ = Describe("SinkSender", func() {
 				return expected
 			}
 
-			env := ax.NewEnvelope(&testmessages.Message{})
+			env := InboundEnvelope{
+				Envelope: ax.NewEnvelope(&testmessages.Message{}),
+			}
 			ctx := WithEnvelope(context.Background(), env)
 
 			_, err := sender.ExecuteCommand(ctx, &testmessages.Command{})
@@ -92,7 +96,9 @@ var _ = Describe("SinkSender", func() {
 				Sink: sink,
 			}
 
-			env := ax.NewEnvelope(&testmessages.Message{})
+			env := InboundEnvelope{
+				Envelope: ax.NewEnvelope(&testmessages.Message{}),
+			}
 			ctx := WithEnvelope(context.Background(), env)
 			_, err := sender.ExecuteCommand(
 				ctx,
@@ -106,7 +112,9 @@ var _ = Describe("SinkSender", func() {
 			sender = SinkSender{
 				Sink: sink,
 			}
-			env := ax.NewEnvelope(&testmessages.Message{})
+			env := InboundEnvelope{
+				Envelope: ax.NewEnvelope(&testmessages.Message{}),
+			}
 			ctx := WithEnvelope(context.Background(), env)
 			_, err := sender.ExecuteCommand(
 				ctx,
@@ -128,7 +136,9 @@ var _ = Describe("SinkSender", func() {
 		})
 
 		It("configures the outbound message as a child of the envelope in ctx", func() {
-			env := ax.NewEnvelope(&testmessages.Message{})
+			env := InboundEnvelope{
+				Envelope: ax.NewEnvelope(&testmessages.Message{}),
+			}
 			ctx := WithEnvelope(context.Background(), env)
 
 			_, _ = sender.PublishEvent(ctx, &testmessages.Event{})
@@ -149,7 +159,9 @@ var _ = Describe("SinkSender", func() {
 				return expected
 			}
 
-			env := ax.NewEnvelope(&testmessages.Message{})
+			env := InboundEnvelope{
+				Envelope: ax.NewEnvelope(&testmessages.Message{}),
+			}
 			ctx := WithEnvelope(context.Background(), env)
 
 			_, err := sender.PublishEvent(ctx, &testmessages.Event{})
@@ -162,7 +174,9 @@ var _ = Describe("SinkSender", func() {
 				Sink: sink,
 			}
 
-			env := ax.NewEnvelope(&testmessages.Message{})
+			env := InboundEnvelope{
+				Envelope: ax.NewEnvelope(&testmessages.Message{}),
+			}
 			ctx := WithEnvelope(context.Background(), env)
 			_, err := sender.PublishEvent(
 				ctx,
@@ -176,7 +190,9 @@ var _ = Describe("SinkSender", func() {
 			sender = SinkSender{
 				Sink: sink,
 			}
-			env := ax.NewEnvelope(&testmessages.Message{})
+			env := InboundEnvelope{
+				Envelope: ax.NewEnvelope(&testmessages.Message{}),
+			}
 			ctx := WithEnvelope(context.Background(), env)
 			_, err := sender.PublishEvent(
 				ctx,

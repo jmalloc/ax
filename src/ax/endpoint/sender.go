@@ -86,7 +86,7 @@ func (s SinkSender) newEnvelope(ctx context.Context, m ax.Message) (ax.Envelope,
 	}
 
 	if env, ok := GetEnvelope(ctx); ok {
-		return env.NewChild(m), nil
+		return env.Envelope.NewChild(m), nil
 	}
 
 	return ax.NewEnvelope(m), nil

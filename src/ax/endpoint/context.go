@@ -2,13 +2,11 @@ package endpoint
 
 import (
 	"context"
-
-	"github.com/jmalloc/ax/src/ax"
 )
 
 // WithEnvelope returns a new context derived from p that contains env.
 // The envelope can be retreived from the context with GetEnvelope().
-func WithEnvelope(p context.Context, env ax.Envelope) context.Context {
+func WithEnvelope(p context.Context, env InboundEnvelope) context.Context {
 	return context.WithValue(
 		p,
 		envelopeKey,
@@ -18,11 +16,11 @@ func WithEnvelope(p context.Context, env ax.Envelope) context.Context {
 
 // GetEnvelope returns the message envelope contained in ctx.
 // If ctx does not contain an envelope then ok is false.
-func GetEnvelope(ctx context.Context) (env ax.Envelope, ok bool) {
+func GetEnvelope(ctx context.Context) (env InboundEnvelope, ok bool) {
 	v := ctx.Value(envelopeKey)
 
 	if v != nil {
-		env, ok = v.(ax.Envelope)
+		env, ok = v.(InboundEnvelope)
 	}
 
 	return
