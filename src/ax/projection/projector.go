@@ -24,7 +24,7 @@ type Projector interface {
 	MessageTypes() ax.MessageTypeSet
 
 	// ApplyMessage invokes application-defined logic that updates the
-	// application state to reflect the delivery of a message.
+	// application state to reflect the occurrence of a message.
 	//
 	// It may panic if env.Message is not one of the types described by
 	// MessageTypes().

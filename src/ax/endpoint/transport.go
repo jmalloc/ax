@@ -52,13 +52,13 @@ func (s *TransportStage) Accept(ctx context.Context, env OutboundEnvelope) error
 // Acknowledger is an interface for acknowledging a specific inbound message.
 type Acknowledger interface {
 	// Ack acknowledges the message, indicating that is was handled successfully
-	// and does not need to be redelivered.
+	// and does not need to be retried.
 	Ack(ctx context.Context) error
 
-	// Retry requeues the message so that it is redelivered at some point in the
+	// Retry requeues the message so that it is retried at some point in the
 	// future.
 	//
-	// d is a hint as to how long the transport should wait before redelivering
+	// d is a hint as to how long the transport should wait before retrying
 	// this message.
 	Retry(ctx context.Context, err error, d time.Duration) error
 

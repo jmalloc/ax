@@ -5,30 +5,30 @@ import (
 	"github.com/jmalloc/ax/src/ax/ident"
 )
 
-// DeliveryID uniquely identifies an attempt to process a message.
-type DeliveryID struct {
+// AttemptID uniquely identifies an attempt to process a message.
+type AttemptID struct {
 	ident.ID
 }
 
-// GenerateDeliveryID generates a new unique identifier for a delivery.
-func GenerateDeliveryID() DeliveryID {
-	var id DeliveryID
+// GenerateAttemptID generates a new unique identifier for a processing attempt.
+func GenerateAttemptID() AttemptID {
+	var id AttemptID
 	id.GenerateUUID()
 	return id
 }
 
-// ParseDeliveryID parses s into a delivery ID and returns it. It returns an
+// ParseAttemptID parses s into an attempt ID and returns it. It returns an
 // error if s is empty.
-func ParseDeliveryID(s string) (DeliveryID, error) {
-	var id DeliveryID
+func ParseAttemptID(s string) (AttemptID, error) {
+	var id AttemptID
 	err := id.Parse(s)
 	return id, err
 }
 
-// MustParseDeliveryID parses s into a delivery ID and returns it. It panics if
+// MustParseAttemptID parses s into an attempt ID and returns it. It panics if
 // s is empty.
-func MustParseDeliveryID(s string) DeliveryID {
-	var id DeliveryID
+func MustParseAttemptID(s string) AttemptID {
+	var id AttemptID
 	id.MustParse(s)
 	return id
 }
@@ -43,18 +43,19 @@ type InboundEnvelope struct {
 	// SourceEndpoint is the endpoint that sent the message.
 	SourceEndpoint string
 
-	// DeliveryID uniquely identifies the attempt to process this message.
-	DeliveryID DeliveryID
+	// AttemptID uniquely identifies the attempt to process this message.
+	AttemptID AttemptID
 
-	// DeliveryCount is the number of times that this message has been delivered.
+	// AttemptCount is the number of times that an attempt has been made to process
+	// this message.
 	//
-	// Messages may be redelivered after a failure handling the message, or if
-	// an endpoint crashes, for example. Not all transports support a delivery
-	// count, in which case the count is zero.
+	// Messages may be retried after a failure handling the message, or if
+	// an endpoint crashes, for example. Not all transports support an attempt
+	// count. If the attempt count is unknown, it is set to zero.
 	//
-	// The delivery count may be reset if a message is manually re-queued after
+	// The attempt count may be reset if a message is manually re-queued after
 	// being rejected by the retry policy.
-	DeliveryCount uint
+	AttemptCount uint
 }
 
 // OutboundEnvelope is a specialization of ax.Envelope for messages that are

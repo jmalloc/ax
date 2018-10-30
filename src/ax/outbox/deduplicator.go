@@ -25,9 +25,9 @@ func (d *Deduplicator) Initialize(ctx context.Context, ep *endpoint.Endpoint) er
 }
 
 // Accept passes env to the next pipeline stage only if it has not been
-// delivered previously.
+// processed previously.
 //
-// If it has been delivered previously, the messages that were produced the
+// If it has been processed previously, the messages that were produced the
 // first time are sent using s.
 func (d *Deduplicator) Accept(ctx context.Context, s endpoint.MessageSink, env endpoint.InboundEnvelope) error {
 	ds, ok := persistence.GetDataStore(ctx)

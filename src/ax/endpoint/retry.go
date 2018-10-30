@@ -26,14 +26,14 @@ var DefaultRetryPolicy = NewExponentialBackoffPolicy(3, 10, 1*time.Second)
 // d is a multplier for the backoff duration.
 func NewExponentialBackoffPolicy(i, m uint, d time.Duration) RetryPolicy {
 	return func(env InboundEnvelope, _ error) (time.Duration, bool) {
-		n := env.DeliveryCount
+		n := env.AttemptCount
 
 		// Stop retrying if we've reached the maximum number of attempts.
 		if n >= m {
 			return 0, false
 		}
 
-		// If the delivery count is unknown, always retry, but always use the
+		// If the attempt count is unknown, always retry, but always use the
 		// maximium backoff period.
 		if n == 0 {
 			n = m

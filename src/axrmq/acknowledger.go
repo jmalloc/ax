@@ -16,15 +16,15 @@ type Acknowledger struct {
 }
 
 // Ack acknowledges the message, indicating that is was handled successfully
-// and does not need to be redelivered.
+// and does not need to be retried.
 func (a *Acknowledger) Ack(_ context.Context) error {
 	return a.del.Ack(false) // false = single message
 }
 
-// Retry requeues the message so that it is redelivered at some point in the
+// Retry requeues the message so that it is retried at some point in the
 // future.
 //
-// d is a hint as to how long the transport should wait before redelivering
+// d is a hint as to how long the transport should wait before retrying
 // this message.
 func (a *Acknowledger) Retry(ctx context.Context, _ error, d time.Duration) error {
 	if d >= 0 {
@@ -35,7 +35,7 @@ func (a *Acknowledger) Retry(ctx context.Context, _ error, d time.Duration) erro
 
 	// Rejecting the message causes it to be requeued in the *same queue* via
 	// the DLX configuration. This allows us to use the DLX x-death header to
-	// get a redelivery count.
+	// get an attempt count.
 	return a.del.Reject(false) // true = don't requeue
 }
 

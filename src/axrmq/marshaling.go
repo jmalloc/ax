@@ -50,8 +50,8 @@ func marshalMessage(ep string, env endpoint.OutboundEnvelope) (amqp.Publishing, 
 func unmarshalMessage(del amqp.Delivery) (endpoint.InboundEnvelope, error) {
 	env := endpoint.InboundEnvelope{
 		SourceEndpoint: del.AppId,
-		DeliveryID:     endpoint.GenerateDeliveryID(),
-		DeliveryCount:  countDeliveries(del),
+		AttemptID:      endpoint.GenerateAttemptID(),
+		AttemptCount:   countAttempts(del),
 	}
 
 	if err := env.MessageID.Parse(del.MessageId); err != nil {
@@ -85,9 +85,9 @@ func unmarshalMessage(del amqp.Delivery) (endpoint.InboundEnvelope, error) {
 	return env, err
 }
 
-// countDeliveries attempts to return the number of times the given message has
-// been delievered. It returns zero if the count is unknown.
-func countDeliveries(del amqp.Delivery) uint {
+// countAttempts returns the number of times the given message has been
+// delievered. It returns zero if the count is unknown.
+func countAttempts(del amqp.Delivery) uint {
 	death, ok := del.Headers["x-death"]
 
 	if !ok {
