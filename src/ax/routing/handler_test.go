@@ -71,9 +71,9 @@ var _ = Describe("MessageHandler", func() {
 				err := handler.HandleMessage(
 					context.Background(),
 					&endpoint.SinkSender{},
-					ax.MessageContext{
-						Envelope: ax.NewEnvelope(m),
-					},
+					ax.NewMessageContext(
+						ax.NewEnvelope(m),
+					),
 				)
 
 				Expect(value.Letter).To(Equal(letter))

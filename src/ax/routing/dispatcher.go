@@ -53,9 +53,7 @@ func (d *Dispatcher) Accept(ctx context.Context, s endpoint.MessageSink, env end
 		Validators: d.validators,
 	}
 
-	mctx := ax.MessageContext{
-		Envelope: env.Envelope,
-	}
+	mctx := ax.NewMessageContext(env.Envelope)
 
 	for _, h := range d.Routes.Lookup(env.Type()) {
 		if err := h.HandleMessage(ctx, sender, mctx); err != nil {
