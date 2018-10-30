@@ -55,13 +55,13 @@ var _ = Describe("Logger", func() {
 		})
 
 		Describe("AfterInbound", func() {
-			It("logs information about processing errors", func() {
+			It("logs information about errors", func() {
 				err := errors.New("<error>")
 				observer.AfterInbound(context.Background(), env, err)
 
 				Expect(logger.Messages()).To(ConsistOf(
 					twelf.BufferedLogMessage{
-						Message: "error: test command  <error>  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id> del:<delivery-id>#3]",
+						Message: "recv error: test command  <error>  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id> del:<delivery-id>#3]",
 						IsDebug: false,
 					},
 				))
@@ -85,9 +85,9 @@ var _ = Describe("Logger", func() {
 			},
 		}
 
-		Describe("AfterOutbound", func() {
+		Describe("BeforeOutbound", func() {
 			It("logs information about the message", func() {
-				observer.AfterOutbound(context.Background(), env, nil)
+				observer.BeforeOutbound(context.Background(), env)
 
 				Expect(logger.Messages()).To(ConsistOf(
 					twelf.BufferedLogMessage{
@@ -96,10 +96,23 @@ var _ = Describe("Logger", func() {
 					},
 				))
 			})
+		})
 
-			It("does not log if an error occurred", func() {
+		Describe("AfterOutbound", func() {
+			It("logs information about errors", func() {
 				err := errors.New("<error>")
 				observer.AfterOutbound(context.Background(), env, err)
+
+				Expect(logger.Messages()).To(ConsistOf(
+					twelf.BufferedLogMessage{
+						Message: "send error: test command  <error>  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id>]",
+						IsDebug: false,
+					},
+				))
+			})
+
+			It("does not log if no error occurred", func() {
+				observer.AfterOutbound(context.Background(), env, nil)
 
 				Expect(logger.Messages()).To(BeEmpty())
 			})
