@@ -12,7 +12,9 @@ import (
 
 var _ = Describe("WithEnvelope / GetEnvelope", func() {
 	It("transports a message envelope via the context", func() {
-		expected := ax.NewEnvelope(&testmessages.Message{})
+		expected := InboundEnvelope{
+			Envelope: ax.NewEnvelope(&testmessages.Message{}),
+		}
 		ctx := WithEnvelope(context.Background(), expected)
 
 		env, ok := GetEnvelope(ctx)

@@ -53,7 +53,11 @@ func (r *receiver) process(
 	env InboundEnvelope,
 	ack Acknowledger,
 ) error {
-	err := r.In.Accept(ctx, r.Out, env)
+	err := r.In.Accept(
+		WithEnvelope(ctx, env),
+		r.Out,
+		env,
+	)
 
 	if err == nil {
 		return ack.Ack(ctx)

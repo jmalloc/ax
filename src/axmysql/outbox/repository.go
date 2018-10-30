@@ -18,7 +18,7 @@ type Repository struct{}
 const messageTable = "ax_outbox_message"
 
 // LoadOutbox loads the unsent outbound messages that were produced when the
-// message identified by id was first delivered.
+// message identified by id was first processed.
 func (Repository) LoadOutbox(
 	ctx context.Context,
 	ds persistence.DataStore,
@@ -70,7 +70,7 @@ func (Repository) LoadOutbox(
 }
 
 // SaveOutbox saves a set of unsent outbound messages that were produced
-// when the message identified by id was delivered.
+// when the message identified by id was processed.
 func (Repository) SaveOutbox(
 	ctx context.Context,
 	ptx persistence.Tx,

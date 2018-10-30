@@ -25,29 +25,40 @@ var _ = Describe("Logger", func() {
 		observer = &LoggingObserver{Logger: logger}
 	)
 
+	in := endpoint.InboundEnvelope{
+		Envelope: ax.Envelope{
+			MessageID:     ax.MustParseMessageID("<message-id>"),
+			CausationID:   ax.MustParseMessageID("<causation-id>"),
+			CorrelationID: ax.MustParseMessageID("<correlation-id>"),
+			Message:       &testmessages.Command{},
+		},
+		AttemptID:    endpoint.MustParseAttemptID("<attempt-id>"),
+		AttemptCount: 3,
+	}
+
+	out := endpoint.OutboundEnvelope{
+		Envelope: ax.Envelope{
+			MessageID:     ax.MustParseMessageID("<message-id>"),
+			CausationID:   ax.MustParseMessageID("<causation-id>"),
+			CorrelationID: ax.MustParseMessageID("<correlation-id>"),
+			Message:       &testmessages.Command{},
+		},
+	}
+
 	BeforeEach(func() {
 		logger.Reset()
 	})
 
 	Context("inbound messages", func() {
-		env := endpoint.InboundEnvelope{
-			Envelope: ax.Envelope{
-				MessageID:     ax.MustParseMessageID("<message-id>"),
-				CausationID:   ax.MustParseMessageID("<causation-id>"),
-				CorrelationID: ax.MustParseMessageID("<correlation-id>"),
-				Message:       &testmessages.Command{},
-			},
-			DeliveryID:    endpoint.MustParseDeliveryID("<delivery-id>"),
-			DeliveryCount: 3,
-		}
-
 		Describe("BeforeInbound", func() {
 			It("logs information about the message", func() {
-				observer.BeforeInbound(context.Background(), env)
+				ctx := endpoint.WithEnvelope(context.Background(), in)
+
+				observer.BeforeInbound(ctx, in)
 
 				Expect(logger.Messages()).To(ConsistOf(
 					twelf.BufferedLogMessage{
-						Message: "recv: test command  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id> del:<delivery-id>#3]",
+						Message: "▼   test command  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id>] [attempt:<attempt-id> #3]",
 						IsDebug: false,
 					},
 				))
@@ -56,19 +67,21 @@ var _ = Describe("Logger", func() {
 
 		Describe("AfterInbound", func() {
 			It("logs information about errors", func() {
+				ctx := endpoint.WithEnvelope(context.Background(), in)
 				err := errors.New("<error>")
-				observer.AfterInbound(context.Background(), env, err)
+
+				observer.AfterInbound(ctx, in, err)
 
 				Expect(logger.Messages()).To(ConsistOf(
 					twelf.BufferedLogMessage{
-						Message: "recv error: test command  <error>  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id> del:<delivery-id>#3]",
+						Message: "▽ ✘ test command ∎ <error>  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id>] [attempt:<attempt-id> #3]",
 						IsDebug: false,
 					},
 				))
 			})
 
 			It("does not log if no error occurred", func() {
-				observer.AfterInbound(context.Background(), env, nil)
+				observer.AfterInbound(context.Background(), in, nil)
 
 				Expect(logger.Messages()).To(BeEmpty())
 			})
@@ -76,22 +89,26 @@ var _ = Describe("Logger", func() {
 	})
 
 	Context("outbound messages", func() {
-		env := endpoint.OutboundEnvelope{
-			Envelope: ax.Envelope{
-				MessageID:     ax.MustParseMessageID("<message-id>"),
-				CausationID:   ax.MustParseMessageID("<causation-id>"),
-				CorrelationID: ax.MustParseMessageID("<correlation-id>"),
-				Message:       &testmessages.Command{},
-			},
-		}
-
 		Describe("BeforeOutbound", func() {
 			It("logs information about the message", func() {
-				observer.BeforeOutbound(context.Background(), env)
+				observer.BeforeOutbound(context.Background(), out)
 
 				Expect(logger.Messages()).To(ConsistOf(
 					twelf.BufferedLogMessage{
-						Message: "send: test command  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id>]",
+						Message: "▲   test command  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id>]",
+						IsDebug: false,
+					},
+				))
+			})
+
+			It("includes information about the attempt if the inbound envelope is in the context", func() {
+				ctx := endpoint.WithEnvelope(context.Background(), in)
+
+				observer.BeforeOutbound(ctx, out)
+
+				Expect(logger.Messages()).To(ConsistOf(
+					twelf.BufferedLogMessage{
+						Message: "▲   test command  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id>] [attempt:<attempt-id> #3]",
 						IsDebug: false,
 					},
 				))
@@ -101,18 +118,32 @@ var _ = Describe("Logger", func() {
 		Describe("AfterOutbound", func() {
 			It("logs information about errors", func() {
 				err := errors.New("<error>")
-				observer.AfterOutbound(context.Background(), env, err)
+				observer.AfterOutbound(context.Background(), out, err)
 
 				Expect(logger.Messages()).To(ConsistOf(
 					twelf.BufferedLogMessage{
-						Message: "send error: test command  <error>  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id>]",
+						Message: "△ ✘ test command ∎ <error>  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id>]",
+						IsDebug: false,
+					},
+				))
+			})
+
+			It("includes information about the attempt if the inbound envelope is in the context", func() {
+				ctx := endpoint.WithEnvelope(context.Background(), in)
+				err := errors.New("<error>")
+
+				observer.AfterOutbound(ctx, out, err)
+
+				Expect(logger.Messages()).To(ConsistOf(
+					twelf.BufferedLogMessage{
+						Message: "△ ✘ test command ∎ <error>  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id>] [attempt:<attempt-id> #3]",
 						IsDebug: false,
 					},
 				))
 			})
 
 			It("does not log if no error occurred", func() {
-				observer.AfterOutbound(context.Background(), env, nil)
+				observer.AfterOutbound(context.Background(), out, nil)
 
 				Expect(logger.Messages()).To(BeEmpty())
 			})
