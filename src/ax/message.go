@@ -43,7 +43,8 @@ type Message interface {
 	// MessageDescription returns a human-readable description of the message.
 	//
 	// Assume that the description will be used inside log messages or displayed
-	// in audit logs.
+	// in audit logs. They should be understood by non-developers who are
+	// familiar with the application's business domain.
 	//
 	// Follow the same conventions as for error messages:
 	// https://github.com/golang/go/wiki/CodeReviewComments#error-strings
