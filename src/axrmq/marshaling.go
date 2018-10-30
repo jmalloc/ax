@@ -119,7 +119,7 @@ func countDeliveries(del amqp.Delivery) uint {
 		}
 	}
 
-	return count
+	return count + 1
 }
 
 // unmarshalTimeFromHeader unmarshals a time from headers[n].
