@@ -178,31 +178,29 @@ func (w *Workflow) HandleMessage(
 	}
 
 	var cmds []command
-	env := mctx.Envelope
+	exec := func(m ax.Command, opts ...ax.ExecuteOption) {
+		cmds = append(cmds, command{m, opts})
+	}
 
-	switch t := env.Message.(type) {
+	switch m := mctx.Envelope.Message.(type) {
 	case ax.Command:
 		w.HandleCommand.Dispatch(
 			i.Data,
-			env.Message.(ax.Command),
-			env,
-			func(m ax.Command, opts ...ax.ExecuteOption) {
-				cmds = append(cmds, command{m, opts})
-			},
+			m,
+			mctx,
+			exec,
 		)
 	case ax.Event:
 		w.HandleEvent.Dispatch(
 			i.Data,
-			env.Message.(ax.Event),
-			env,
-			func(m ax.Command, opts ...ax.ExecuteOption) {
-				cmds = append(cmds, command{m, opts})
-			},
+			m,
+			mctx,
+			exec,
 		)
 	default:
 		return fmt.Errorf(
 			"unknown message type %T",
-			t,
+			m,
 		)
 	}
 
