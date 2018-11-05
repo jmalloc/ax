@@ -6,36 +6,27 @@ import (
 	"github.com/jmalloc/ax/src/ax/endpoint"
 )
 
-// Observer is an interface for types that implement one or more of the more
-// specific observer interfaces.
-type Observer interface {
-}
+// InboundObserver is an interface for types that observe inbound messages.
+type InboundObserver interface {
+	// InitializeInbound initializes the observer for inbound messages.
+	InitializeInbound(ctx context.Context, ep *endpoint.Endpoint) error
 
-// BeforeInboundObserver is an interface for observers that are notified before
-// the inbound pipeline accepts a message.
-type BeforeInboundObserver interface {
 	// BeforeInbound is called before a message is passed to the next pipeline stage.
 	BeforeInbound(ctx context.Context, env endpoint.InboundEnvelope)
-}
 
-// AfterInboundObserver is an interface for observers that are notified after
-// the inbound pipeline accepts a message.
-type AfterInboundObserver interface {
 	// AfterInbound is called after a message is accepted by the next pipeline stage.
 	// err is the error returned by the next pipeline stage, which may be nil.
 	AfterInbound(ctx context.Context, env endpoint.InboundEnvelope, err error)
 }
 
-// BeforeOutboundObserver is an interface for observers that are notified before
-// the outbound pipeline accepts a message.
-type BeforeOutboundObserver interface {
+// OutboundObserver is an interface for types that observe outbound messages.
+type OutboundObserver interface {
+	// InitializeOutbound initializes the observer for outbound messages.
+	InitializeOutbound(ctx context.Context, ep *endpoint.Endpoint) error
+
 	// BeforeOutbound is called before a message is passed to the next pipeline stage.
 	BeforeOutbound(ctx context.Context, env endpoint.OutboundEnvelope)
-}
 
-// AfterOutboundObserver is an interface for observers that are notified after
-// the outbound pipeline accepts a message.
-type AfterOutboundObserver interface {
 	// AfterOutbound is called after a message is accepted by the next pipeline stage.
 	// err is the error returned by the next pipeline stage, which may be nil.
 	AfterOutbound(ctx context.Context, env endpoint.OutboundEnvelope, err error)
