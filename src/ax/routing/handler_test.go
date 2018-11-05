@@ -8,6 +8,7 @@ import (
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	. "github.com/jmalloc/ax/src/ax/routing"
 	"github.com/jmalloc/ax/src/axtest/testmessages"
+	"github.com/jmalloc/twelf/src/twelf"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
@@ -73,6 +74,7 @@ var _ = Describe("MessageHandler", func() {
 					&endpoint.SinkSender{},
 					ax.NewMessageContext(
 						ax.NewEnvelope(m),
+						twelf.SilentLogger,
 					),
 				)
 
