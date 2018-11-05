@@ -32,17 +32,19 @@ func (w *Transfer) WhenAccountDebited(m *messages.AccountDebited, exec ax.Comman
 }
 
 // WhenAccountCredited responds to m.
-func (w *Transfer) WhenAccountCredited(m *messages.AccountCredited, exec ax.CommandExecutor) {
-	w.IsApproved = true
+func (w *Transfer) WhenAccountCredited(m *messages.AccountCredited, mctx ax.MessageContext, exec ax.CommandExecutor) {
+	w.IsComplete = true
 
-	exec(&messages.MarkTransferApproved{
+	exec(&messages.MarkTransferComplete{
 		TransferId: w.TransferId,
 	})
+
+	mctx.Log("credit and debit have both completed successfully")
 }
 
 // IsInstanceComplete returns true if the transfer has completed processing.
 func (w *Transfer) IsInstanceComplete() bool {
-	return w.IsApproved
+	return w.IsComplete
 }
 
 // InstanceDescription returns a human-readable description of the aggregate
