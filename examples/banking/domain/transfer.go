@@ -10,8 +10,9 @@ import (
 )
 
 // DoTransfer begins a new funds transfer between two accounts.
-func (t *Transfer) DoTransfer(m *messages.StartTransfer, rec ax.EventRecorder) {
+func (t *Transfer) DoTransfer(m *messages.StartTransfer, mctx ax.MessageContext, rec ax.EventRecorder) {
 	if t.TransferId != "" {
+		mctx.Log("transfer has already been started")
 		return
 	}
 
@@ -23,13 +24,14 @@ func (t *Transfer) DoTransfer(m *messages.StartTransfer, rec ax.EventRecorder) {
 	})
 }
 
-// DoMarkApproved marks the transfer as approved.
-func (t *Transfer) DoMarkApproved(m *messages.MarkTransferApproved, rec ax.EventRecorder) {
-	if t.IsApproved {
+// DoMarkComplete marks the transfer as completed.
+func (t *Transfer) DoMarkComplete(m *messages.MarkTransferComplete, mctx ax.MessageContext, rec ax.EventRecorder) {
+	if t.IsComplete {
+		mctx.Log("transfer has already been completed")
 		return
 	}
 
-	rec(&messages.TransferApproved{
+	rec(&messages.TransferCompleted{
 		TransferId: t.TransferId,
 	})
 }
@@ -42,9 +44,9 @@ func (t *Transfer) WhenStarted(m *messages.TransferStarted) {
 	t.AmountInCents = m.AmountInCents
 }
 
-// WhenApproved updates the transfer to reflect the occurance of m.
-func (t *Transfer) WhenApproved(m *messages.TransferApproved) {
-	t.IsApproved = true
+// WhenCompleted updates the transfer to reflect the occurance of m.
+func (t *Transfer) WhenCompleted(m *messages.TransferCompleted) {
+	t.IsComplete = true
 }
 
 // InstanceDescription returns a human-readable description of the aggregate

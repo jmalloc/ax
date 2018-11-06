@@ -14,15 +14,17 @@ import (
 )
 
 var (
-	ensureLoggingObserverIsBeforeInboundObserver BeforeInboundObserver = &LoggingObserver{}
-	ensureLoggingObserverIsAfterInboundObserver  AfterInboundObserver  = &LoggingObserver{}
-	ensureLoggingObserverIsAfterOutboundObserver AfterOutboundObserver = &LoggingObserver{}
+	ensureLoggingObserverIsInboundObserver  InboundObserver  = &LoggingObserver{}
+	ensureLoggingObserverIsOutboundObserver OutboundObserver = &LoggingObserver{}
 )
 
 var _ = Describe("Logger", func() {
 	var (
 		logger   = &twelf.BufferedLogger{}
-		observer = &LoggingObserver{Logger: logger}
+		observer = &LoggingObserver{}
+		ep       = &endpoint.Endpoint{
+			Logger: logger,
+		}
 	)
 
 	in := endpoint.InboundEnvelope{
@@ -50,6 +52,12 @@ var _ = Describe("Logger", func() {
 	})
 
 	Context("inbound messages", func() {
+		BeforeEach(func() {
+			if err := observer.InitializeInbound(context.Background(), ep); err != nil {
+				panic(err)
+			}
+		})
+
 		Describe("BeforeInbound", func() {
 			It("logs information about the message", func() {
 				ctx := endpoint.WithEnvelope(context.Background(), in)
@@ -58,7 +66,7 @@ var _ = Describe("Logger", func() {
 
 				Expect(logger.Messages()).To(ConsistOf(
 					twelf.BufferedLogMessage{
-						Message: "▼   test command  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id>] [attempt:<attempt-id> #3]",
+						Message: "= <message-id>  ∵ <causation-id>  ⋲ <correlation-id>  ▼ ↻  axtest.testmessages.Command? ● test command",
 						IsDebug: false,
 					},
 				))
@@ -74,7 +82,7 @@ var _ = Describe("Logger", func() {
 
 				Expect(logger.Messages()).To(ConsistOf(
 					twelf.BufferedLogMessage{
-						Message: "▽ ✘ test command ∎ <error>  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id>] [attempt:<attempt-id> #3]",
+						Message: "= <message-id>  ∵ <causation-id>  ⋲ <correlation-id>  ▽ ✖  axtest.testmessages.Command? ● <error> ● test command",
 						IsDebug: false,
 					},
 				))
@@ -89,26 +97,19 @@ var _ = Describe("Logger", func() {
 	})
 
 	Context("outbound messages", func() {
+		BeforeEach(func() {
+			if err := observer.InitializeOutbound(context.Background(), ep); err != nil {
+				panic(err)
+			}
+		})
+
 		Describe("BeforeOutbound", func() {
 			It("logs information about the message", func() {
 				observer.BeforeOutbound(context.Background(), out)
 
 				Expect(logger.Messages()).To(ConsistOf(
 					twelf.BufferedLogMessage{
-						Message: "▲   test command  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id>]",
-						IsDebug: false,
-					},
-				))
-			})
-
-			It("includes information about the attempt if the inbound envelope is in the context", func() {
-				ctx := endpoint.WithEnvelope(context.Background(), in)
-
-				observer.BeforeOutbound(ctx, out)
-
-				Expect(logger.Messages()).To(ConsistOf(
-					twelf.BufferedLogMessage{
-						Message: "▲   test command  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id>] [attempt:<attempt-id> #3]",
+						Message: "= <message-id>  ∵ <causation-id>  ⋲ <correlation-id>  ▲    axtest.testmessages.Command? ● test command",
 						IsDebug: false,
 					},
 				))
@@ -122,21 +123,7 @@ var _ = Describe("Logger", func() {
 
 				Expect(logger.Messages()).To(ConsistOf(
 					twelf.BufferedLogMessage{
-						Message: "△ ✘ test command ∎ <error>  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id>]",
-						IsDebug: false,
-					},
-				))
-			})
-
-			It("includes information about the attempt if the inbound envelope is in the context", func() {
-				ctx := endpoint.WithEnvelope(context.Background(), in)
-				err := errors.New("<error>")
-
-				observer.AfterOutbound(ctx, out, err)
-
-				Expect(logger.Messages()).To(ConsistOf(
-					twelf.BufferedLogMessage{
-						Message: "△ ✘ test command ∎ <error>  [axtest.testmessages.Command? msg:<message-id> cause:<causation-id> corr:<correlation-id>] [attempt:<attempt-id> #3]",
+						Message: "= <message-id>  ∵ <causation-id>  ⋲ <correlation-id>  △ ✖  axtest.testmessages.Command? ● <error> ● test command",
 						IsDebug: false,
 					},
 				))

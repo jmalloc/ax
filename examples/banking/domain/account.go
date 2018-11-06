@@ -10,13 +10,16 @@ import (
 )
 
 // DoOpenAccount opens a new account.
-func (a *Account) DoOpenAccount(m *messages.OpenAccount, rec ax.EventRecorder) {
-	if !a.IsOpen {
-		rec(&messages.AccountOpened{
-			AccountId: m.AccountId,
-			Name:      m.Name,
-		})
+func (a *Account) DoOpenAccount(m *messages.OpenAccount, mctx ax.MessageContext, rec ax.EventRecorder) {
+	if a.IsOpen {
+		mctx.Log("account is already open")
+		return
 	}
+
+	rec(&messages.AccountOpened{
+		AccountId: m.AccountId,
+		Name:      m.Name,
+	})
 }
 
 // DoCreditAccount credits funds to the account.

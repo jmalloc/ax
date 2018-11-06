@@ -18,15 +18,42 @@ func (account) PersistenceKey() string {
 }
 
 func (account) WhenAccountOpened(ctx context.Context, tx *sql.Tx, ev *messages.AccountOpened, mctx ax.MessageContext) error {
-	return insertAccount(ctx, tx, ev.AccountId, ev.Name, mctx.Envelope.CreatedAt)
+	new, err := insertAccount(ctx, tx, ev.AccountId, ev.Name, mctx.Envelope.CreatedAt)
+	if err != nil {
+		return err
+	}
+
+	if new {
+		mctx.Log("account now reflected in read model")
+	}
+
+	return nil
 }
 
-func (account) WhenAccountDebited(ctx context.Context, tx *sql.Tx, ev *messages.AccountDebited) error {
-	return updateBalance(ctx, tx, ev.AccountId, -ev.AmountInCents)
+func (account) WhenAccountDebited(ctx context.Context, tx *sql.Tx, ev *messages.AccountDebited, mctx ax.MessageContext) error {
+	new, err := updateBalance(ctx, tx, ev.AccountId, -ev.AmountInCents)
+	if err != nil {
+		return err
+	}
+
+	if new {
+		mctx.Log("account now reflected in read model")
+	}
+
+	return nil
 }
 
-func (account) WhenAccountCredited(ctx context.Context, tx *sql.Tx, ev *messages.AccountCredited) error {
-	return updateBalance(ctx, tx, ev.AccountId, +ev.AmountInCents)
+func (account) WhenAccountCredited(ctx context.Context, tx *sql.Tx, ev *messages.AccountCredited, mctx ax.MessageContext) error {
+	new, err := updateBalance(ctx, tx, ev.AccountId, +ev.AmountInCents)
+	if err != nil {
+		return err
+	}
+
+	if new {
+		mctx.Log("account now reflected in read model")
+	}
+
+	return nil
 }
 
 func insertAccount(
@@ -35,8 +62,8 @@ func insertAccount(
 	id string,
 	name string,
 	at time.Time,
-) error {
-	_, err := tx.ExecContext(
+) (bool, error) {
+	r, err := tx.ExecContext(
 		ctx,
 		`INSERT INTO account SET
 			id = ?,
@@ -49,8 +76,16 @@ func insertAccount(
 		name,
 		at,
 	)
+	if err != nil {
+		return false, err
+	}
 
-	return err
+	n, err := r.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return n == 1, nil
 }
 
 func updateBalance(
@@ -58,8 +93,8 @@ func updateBalance(
 	tx *sql.Tx,
 	id string,
 	delta int32,
-) error {
-	_, err := tx.ExecContext(
+) (bool, error) {
+	r, err := tx.ExecContext(
 		ctx,
 		`INSERT INTO account SET
 			id = ?,
@@ -70,7 +105,16 @@ func updateBalance(
 		delta,
 	)
 
-	return err
+	if err != nil {
+		return false, err
+	}
+
+	n, err := r.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return n == 1, nil
 }
 
 // AccountProjector is a message handler that builds the "account" read-model.

@@ -4,11 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math/rand"
 	"os"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"golang.org/x/sync/errgroup"
-
 	"github.com/jmalloc/ax/examples/banking/domain"
 	"github.com/jmalloc/ax/examples/banking/messages"
 	"github.com/jmalloc/ax/examples/banking/projections"
@@ -31,9 +31,12 @@ import (
 	"github.com/jmalloc/ax/src/axrmq"
 	"github.com/spf13/cobra"
 	"github.com/streadway/amqp"
+	"golang.org/x/sync/errgroup"
 )
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
+
 	db, err := sql.Open("mysql", os.Getenv("AX_MYSQL_DSN"))
 	if err != nil {
 		panic(err)
@@ -85,9 +88,9 @@ func main() {
 		panic(err)
 	}
 
-	observers := []observability.Observer{
-		&observability.LoggingObserver{},
-	}
+	loggingObserver := &observability.LoggingObserver{}
+	inboundObservers := []observability.InboundObserver{loggingObserver}
+	outboundObservers := []observability.OutboundObserver{loggingObserver}
 
 	ds := axmysql.NewDataStore(db)
 
@@ -102,7 +105,7 @@ func main() {
 		DataStore:  ds,
 		Repository: axmysql.DelayedMessageRepository,
 		Out: &observability.OutboundHook{
-			Observers: observers,
+			Observers: outboundObservers,
 			Next:      router,
 		},
 	}
@@ -116,7 +119,7 @@ func main() {
 		InboundTransport:  transport,
 		OutboundTransport: transport,
 		InboundPipeline: &observability.InboundHook{
-			Observers: observers,
+			Observers: inboundObservers,
 			Next: &persistence.Injector{
 				DataStore: ds,
 				Next: &outbox.Deduplicator{
@@ -128,7 +131,7 @@ func main() {
 			},
 		},
 		OutboundPipeline: &observability.OutboundHook{
-			Observers: observers,
+			Observers: outboundObservers,
 			Next: &delayedmessage.Interceptor{
 				Repository: axmysql.DelayedMessageRepository,
 				Next:       router,

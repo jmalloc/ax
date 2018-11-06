@@ -36,23 +36,23 @@ func (m *TransferStarted) MessageDescription() string {
 }
 
 // IsCommand marks the message as a command.
-func (*MarkTransferApproved) IsCommand() {}
+func (*MarkTransferComplete) IsCommand() {}
 
 // MessageDescription returns a human-readable description of the message.
-func (m *MarkTransferApproved) MessageDescription() string {
+func (m *MarkTransferComplete) MessageDescription() string {
 	return fmt.Sprintf(
-		"mark transfer %s as approved",
+		"mark transfer %s as complete",
 		ident.Format(m.TransferId),
 	)
 }
 
 // IsEvent marks the message as an event.
-func (*TransferApproved) IsEvent() {}
+func (*TransferCompleted) IsEvent() {}
 
 // MessageDescription returns a human-readable description of the message.
-func (m *TransferApproved) MessageDescription() string {
+func (m *TransferCompleted) MessageDescription() string {
 	return fmt.Sprintf(
-		"transfer %s approved",
+		"transfer %s completed",
 		ident.Format(m.TransferId),
 	)
 }

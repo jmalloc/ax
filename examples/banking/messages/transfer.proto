@@ -19,12 +19,12 @@ message TransferStarted {
     int32 amount_in_cents = 4;
 }
 
-// MarkTransferApproved is a command that marks a transfer as approved.
-message MarkTransferApproved {
+// MarkTransferComplete is a command that marks a transfer as completed.
+message MarkTransferComplete {
     string transfer_id = 1;
 }
 
-// TransferApproved is an event that occurs when a funds transfer is completed.
-message TransferApproved {
+// TransferCompleted is an event that occurs when a funds transfer is completed.
+message TransferCompleted {
     string transfer_id = 1;
 }

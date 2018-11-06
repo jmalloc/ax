@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/jmalloc/ax/src/ax"
+	"github.com/jmalloc/twelf/src/twelf"
 )
 
 // Endpoint is a named source and recipient of messages.
@@ -17,6 +18,7 @@ type Endpoint struct {
 	OutboundPipeline  OutboundPipeline
 	RetryPolicy       RetryPolicy
 	SenderValidators  []Validator
+	Logger            twelf.Logger
 
 	initOnce sync.Once
 }

@@ -5,7 +5,9 @@ import (
 
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/messagestore"
+	"github.com/jmalloc/ax/src/ax/observability"
 	"github.com/jmalloc/ax/src/ax/persistence"
+	"github.com/jmalloc/twelf/src/twelf"
 )
 
 // GlobalStoreConsumer reads messages from all streams in a message store and
@@ -15,6 +17,7 @@ type GlobalStoreConsumer struct {
 	DataStore    persistence.DataStore
 	MessageStore messagestore.GloballyOrderedStore
 	Offsets      OffsetStore
+	Logger       twelf.Logger
 
 	key    string
 	types  ax.MessageTypeSet
@@ -66,11 +69,17 @@ func (c *GlobalStoreConsumer) processNextMessage(ctx context.Context) error {
 	defer com.Rollback()
 
 	if c.types.Has(env.Type()) {
+		mctx := ax.NewMessageContext(
+			env,
+			observability.NewProjectionLogger(
+				c.Logger,
+				env,
+			),
+		)
+
 		err = c.Projector.ApplyMessage(
 			persistence.WithTx(ctx, tx),
-			ax.MessageContext{
-				Envelope: env,
-			},
+			mctx,
 		)
 		if err != nil {
 			return err

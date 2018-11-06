@@ -22,7 +22,7 @@ MOQ := $(GOPATH)/bin/moq
 $(MOQ): | vendor # ensure dependencies are installed before trying to build mocks
 	go get -u github.com/matryer/moq
 
-src/axtest/mocks/endpoint.go: $(wildcard src/ax/endpoint/%.go) | $(MOQ)
+src/axtest/mocks/endpoint.go: $(wildcard src/ax/endpoint/*.go) | $(MOQ)
 	$(MOQ) -out "$@" -pkg "mocks" src/ax/endpoint \
 		InboundPipeline \
 		MessageSink \
@@ -32,22 +32,20 @@ src/axtest/mocks/endpoint.go: $(wildcard src/ax/endpoint/%.go) | $(MOQ)
 		OutboundTransport \
 		Validator
 
-src/axtest/mocks/routing.go: $(wildcard src/ax/routing/%.go)  | $(MOQ)
+src/axtest/mocks/routing.go: $(wildcard src/ax/routing/*.go)  | $(MOQ)
 	$(MOQ) -out "$@" -pkg "mocks" src/ax/routing \
 		MessageHandler
 
-src/axtest/mocks/persistence.go: $(wildcard src/ax/persistence/%.go) | $(MOQ)
+src/axtest/mocks/persistence.go: $(wildcard src/ax/persistence/*.go) | $(MOQ)
 	$(MOQ) -out "$@" -pkg "mocks" src/ax/persistence \
 		Committer \
 		DataStore \
 		Tx
 
-src/axtest/mocks/observability.go: $(wildcard src/ax/observability/%.go) | $(MOQ)
+src/axtest/mocks/observability.go: $(wildcard src/ax/observability/*.go) | $(MOQ)
 	$(MOQ) -out "$@" -pkg "mocks" src/ax/observability \
-		AfterInboundObserver \
-		AfterOutboundObserver \
-		BeforeInboundObserver \
-		BeforeOutboundObserver
+		InboundObserver \
+		OutboundObserver
 
 artifacts/make/%/Makefile:
 	curl -sf https://jmalloc.github.io/makefiles/fetch | bash /dev/stdin $*

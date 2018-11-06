@@ -5,19 +5,26 @@ import (
 
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
+	"github.com/jmalloc/ax/src/ax/observability"
+	"github.com/jmalloc/twelf/src/twelf"
 )
 
 // Dispatcher is an inbound pipeline stage that routes messages to the
 // appropriate MessageHandler instances according to a "handler table".
 type Dispatcher struct {
-	Routes     HandlerTable
+	Routes HandlerTable
+
 	validators []endpoint.Validator
+	logger     twelf.Logger
 }
 
 // Initialize is called during initialization of the endpoint, after the
 // transport is initialized. It can be used to inspect or further configure the
 // endpoint as per the needs of the pipeline.
 func (d *Dispatcher) Initialize(ctx context.Context, ep *endpoint.Endpoint) error {
+	d.validators = ep.SenderValidators
+	d.logger = ep.Logger
+
 	var unicast, multicast ax.MessageTypeSet
 
 	for mt := range d.Routes {
@@ -30,8 +37,6 @@ func (d *Dispatcher) Initialize(ctx context.Context, ep *endpoint.Endpoint) erro
 			multicast = multicast.Add(mt)
 		}
 	}
-
-	d.validators = ep.SenderValidators
 
 	if err := ep.InboundTransport.Subscribe(ctx, endpoint.OpSendUnicast, unicast); err != nil {
 		return err
@@ -53,9 +58,13 @@ func (d *Dispatcher) Accept(ctx context.Context, s endpoint.MessageSink, env end
 		Validators: d.validators,
 	}
 
-	mctx := ax.MessageContext{
-		Envelope: env.Envelope,
-	}
+	mctx := ax.NewMessageContext(
+		env.Envelope,
+		observability.NewDomainLogger(
+			d.logger,
+			env.Envelope,
+		),
+	)
 
 	for _, h := range d.Routes.Lookup(env.Type()) {
 		if err := h.HandleMessage(ctx, sender, mctx); err != nil {

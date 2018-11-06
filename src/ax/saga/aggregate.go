@@ -166,7 +166,7 @@ func (a *Aggregate) HandleMessage(
 	a.Handle.Dispatch(
 		i.Data,
 		mctx.Envelope.Message.(ax.Command),
-		mctx.Envelope,
+		mctx,
 		rec,
 	)
 
