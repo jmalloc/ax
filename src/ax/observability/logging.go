@@ -140,7 +140,7 @@ func NewProjectionLogger(
 // Log writes an application log message formatted according to a format
 // specifier.
 //
-// It should be ussed for messages that are intended for people responsible for
+// It should be used for messages that are intended for people responsible for
 // operating the application, such as the end-user or operations staff.
 //
 // f is the format specifier, as per fmt.Printf(), etc.
