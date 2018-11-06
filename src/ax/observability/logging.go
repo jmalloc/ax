@@ -150,7 +150,7 @@ func (l *Logger) Log(f string, v ...interface{}) {
 
 // LogString writes a pre-formatted application log message.
 //
-// It should be ussed for messages that are intended for people responsible for
+// It should be used for messages that are intended for people responsible for
 // operating the application, such as the end-user or operations staff.
 func (l *Logger) LogString(s string) {
 	twelf.Log(l.Next, l.format(s))
