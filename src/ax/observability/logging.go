@@ -34,19 +34,7 @@ const (
 
 // LoggingObserver is an observer that logs about messages.
 type LoggingObserver struct {
-	logger twelf.Logger
-}
-
-// InitializeInbound initializes the observer for inbound messages.
-func (o *LoggingObserver) InitializeInbound(ctx context.Context, ep *endpoint.Endpoint) error {
-	o.logger = ep.Logger
-	return nil
-}
-
-// InitializeOutbound initializes the observer for outbound messages.
-func (o *LoggingObserver) InitializeOutbound(ctx context.Context, ep *endpoint.Endpoint) error {
-	o.logger = ep.Logger
-	return nil
+	Logger twelf.Logger
 }
 
 // BeforeInbound logs information about an inbound message.
@@ -80,7 +68,7 @@ func (o *LoggingObserver) AfterOutbound(ctx context.Context, env endpoint.Outbou
 
 func (o *LoggingObserver) logMessage(typeIcon, statusIcon string, env ax.Envelope) {
 	twelf.LogString(
-		o.logger,
+		o.Logger,
 		formatLogMessage(
 			typeIcon,
 			statusIcon,
@@ -92,7 +80,7 @@ func (o *LoggingObserver) logMessage(typeIcon, statusIcon string, env ax.Envelop
 
 func (o *LoggingObserver) logError(typeIcon string, env ax.Envelope, err error) {
 	twelf.LogString(
-		o.logger,
+		o.Logger,
 		formatLogMessage(
 			typeIcon,
 			errorIcon,
