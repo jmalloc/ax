@@ -31,6 +31,7 @@ import (
 	"github.com/jmalloc/ax/src/axrmq"
 	"github.com/spf13/cobra"
 	"github.com/streadway/amqp"
+	"github.com/uber/jaeger-client-go/config"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -48,6 +49,16 @@ func main() {
 		panic(err)
 	}
 	defer rmq.Close()
+
+	cfg, err := config.FromEnv()
+	if err != nil {
+		panic(err)
+	}
+	tracer, closer, err := cfg.NewTracer()
+	if err != nil {
+		panic(err)
+	}
+	defer closer.Close()
 
 	crudPersister := &crud.Persister{
 		Repository: axmysql.SagaCRUDRepository,
@@ -111,7 +122,8 @@ func main() {
 	}
 
 	transport := &axrmq.Transport{
-		Conn: rmq,
+		Conn:   rmq,
+		Tracer: tracer,
 	}
 
 	ep := &endpoint.Endpoint{

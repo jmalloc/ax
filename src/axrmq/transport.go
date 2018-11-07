@@ -8,6 +8,7 @@ import (
 
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/streadway/amqp"
 )
 
@@ -25,6 +26,7 @@ type Transport struct {
 	Exclusive          bool
 	SendConcurrency    int
 	ReceiveConcurrency int
+	Tracer             opentracing.Tracer
 
 	ep  string
 	pub *publisher
@@ -86,7 +88,7 @@ func (t *Transport) Subscribe(ctx context.Context, op endpoint.Operation, mt ax.
 func (t *Transport) Send(ctx context.Context, env endpoint.OutboundEnvelope) error {
 	var pub amqp.Publishing
 
-	pub, err := marshalMessage(t.ep, env)
+	pub, err := marshalMessage(t.ep, env, t.Tracer)
 	if err != nil {
 		return err
 	}
@@ -117,7 +119,7 @@ func (t *Transport) Receive(ctx context.Context) (env endpoint.InboundEnvelope, 
 			return
 		}
 
-		env, err = unmarshalMessage(del)
+		env, err = unmarshalMessage(del, t.Tracer)
 		if err == nil {
 			ack = &Acknowledger{
 				t.ep,
