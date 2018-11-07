@@ -1,5 +1,5 @@
-hash: 4dabb9eced56a4f0f60e5b1d4e81bc244a37a3c629b6f120f6d0a8758cc17b07
-updated: 2018-11-06T07:20:44.503742+10:00
+hash: 1613e75e76f43a48a195f775f0ef39a1c242f506cbde4f4575f11a2232e12c0f
+updated: 2018-11-07T10:39:53.566197+10:00
 imports:
 - name: github.com/go-sql-driver/mysql
   version: d523deb1b23d913de5bdada721a6071e71283618
@@ -61,6 +61,8 @@ imports:
   - matchers/support/goraph/node
   - matchers/support/goraph/util
   - types
+- name: github.com/opentracing/opentracing-go
+  version: 1949ddbfd147afd4d964a9f00b24eb291e0e7c38
 - name: github.com/satori/go.uuid
   version: f58768cc1a7a7e77a3bd49e98cdd21419399b6a3
 - name: github.com/spf13/cobra
@@ -118,4 +120,6 @@ imports:
   version: c131134a1947e9afd9cecfe11f4c6dff0732ae58
 - name: gopkg.in/yaml.v2
   version: d670f9405373e636a5a2765eea47fac0c9bc91a4
-testImports: []
+testImports:
+- name: github.com/uber/jaeger-client-go
+  version: 1a782e2da844727691fef1757c72eb190c2909f0

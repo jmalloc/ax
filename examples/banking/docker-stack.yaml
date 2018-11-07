@@ -1,0 +1,75 @@
+version: "3.7"
+
+services:
+  rmq:
+    image: rabbitmq:management
+    networks:
+      - backend
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  db:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: banking
+      MYSQL_USER: banking
+      MYSQL_PASSWORD: banking
+    networks:
+      - backend
+    ports:
+      - "3306:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+    configs:
+      - source: account.sql
+        target: /docker-entrypoint-initdb.d/account.sql
+      - source: ax-outbox.sql
+        target: /docker-entrypoint-initdb.d/ax-outbox.sql
+      - source: ax-saga-crud.sql
+        target: /docker-entrypoint-initdb.d/ax-saga-crud.sql
+      - source: ax-saga-keyset.sql
+        target: /docker-entrypoint-initdb.d/ax-saga-keyset.sql
+      - source: ax-saga-snapshot.sql
+        target: /docker-entrypoint-initdb.d/ax-saga-snapshot.sql
+      - source: ax-messagestore.sql
+        target: /docker-entrypoint-initdb.d/ax-messagestore.sql
+      - source: ax-offsetstore.sql
+        target: /docker-entrypoint-initdb.d/ax-offsetstore.sql
+      - source: ax-delayedmessage.sql
+        target: /docker-entrypoint-initdb.d/ax-delayedmessage.sql
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.6
+    networks:
+      - backend
+    ports:
+      - "6831:6831/udp"
+      - "5778:5778"
+      - "16686:16686"
+
+networks:
+  backend:
+    attachable: true
+
+configs:
+  account.sql:
+    file: ./projections/account.sql
+  ax-outbox.sql:
+    file: ../../src/axmysql/outbox/schema.sql
+  ax-saga-crud.sql:
+    file: ../../src/axmysql/saga/crud.sql
+  ax-saga-keyset.sql:
+    file: ../../src/axmysql/saga/keyset.sql
+  ax-saga-snapshot.sql:
+    file: ../../src/axmysql/saga/snapshot.sql
+  ax-messagestore.sql:
+    file: ../../src/axmysql/messagestore/schema.sql
+  ax-offsetstore.sql:
+    file: ../../src/axmysql/projection/offsetstore.sql
+  ax-delayedmessage.sql:
+    file: ../../src/axmysql/delayedmessage/schema.sql
+
+volumes:
+  db-data:
