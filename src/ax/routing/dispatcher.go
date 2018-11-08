@@ -13,9 +13,9 @@ import (
 // appropriate MessageHandler instances according to a "handler table".
 type Dispatcher struct {
 	Routes HandlerTable
+	Logger twelf.Logger
 
 	validators []endpoint.Validator
-	logger     twelf.Logger
 }
 
 // Initialize is called during initialization of the endpoint, after the
@@ -23,7 +23,6 @@ type Dispatcher struct {
 // endpoint as per the needs of the pipeline.
 func (d *Dispatcher) Initialize(ctx context.Context, ep *endpoint.Endpoint) error {
 	d.validators = ep.SenderValidators
-	d.logger = ep.Logger
 
 	var unicast, multicast ax.MessageTypeSet
 
@@ -61,7 +60,7 @@ func (d *Dispatcher) Accept(ctx context.Context, s endpoint.MessageSink, env end
 	mctx := ax.NewMessageContext(
 		env.Envelope,
 		observability.NewDomainLogger(
-			d.logger,
+			d.Logger,
 			env.Envelope,
 		),
 	)

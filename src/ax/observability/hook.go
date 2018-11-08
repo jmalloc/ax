@@ -9,7 +9,7 @@ import (
 // InboundHook is an inbound pipeline stage that invokes hook methods
 // on a set of observers.
 type InboundHook struct {
-	Observers []InboundObserver
+	Observers []Observer
 	Next      endpoint.InboundPipeline
 }
 
@@ -17,12 +17,6 @@ type InboundHook struct {
 // transport is initialized. It can be used to inspect or further configure the
 // endpoint as per the needs of the pipeline.
 func (h *InboundHook) Initialize(ctx context.Context, ep *endpoint.Endpoint) error {
-	for _, o := range h.Observers {
-		if err := o.InitializeInbound(ctx, ep); err != nil {
-			return err
-		}
-	}
-
 	return h.Next.Initialize(ctx, ep)
 }
 
@@ -45,7 +39,7 @@ func (h *InboundHook) Accept(ctx context.Context, s endpoint.MessageSink, env en
 // OutboundHook is an outbound pipeline stage that invokes hook methods
 // on a set of observers.
 type OutboundHook struct {
-	Observers []OutboundObserver
+	Observers []Observer
 	Next      endpoint.OutboundPipeline
 }
 
@@ -53,12 +47,6 @@ type OutboundHook struct {
 // transport is initialized. It can be used to inspect or further configure the
 // endpoint as per the needs of the pipeline.
 func (h *OutboundHook) Initialize(ctx context.Context, ep *endpoint.Endpoint) error {
-	for _, o := range h.Observers {
-		if err := o.InitializeOutbound(ctx, ep); err != nil {
-			return err
-		}
-	}
-
 	return h.Next.Initialize(ctx, ep)
 }
 

@@ -14,15 +14,13 @@ import (
 )
 
 var (
-	ensureLoggingObserverIsInboundObserver  InboundObserver  = &LoggingObserver{}
-	ensureLoggingObserverIsOutboundObserver OutboundObserver = &LoggingObserver{}
+	ensureLoggingObserverIsObserver Observer = &LoggingObserver{}
 )
 
-var _ = Describe("Logger", func() {
+var _ = Describe("LoggingObserver", func() {
 	var (
 		logger   = &twelf.BufferedLogger{}
-		observer = &LoggingObserver{}
-		ep       = &endpoint.Endpoint{
+		observer = &LoggingObserver{
 			Logger: logger,
 		}
 	)
@@ -52,12 +50,6 @@ var _ = Describe("Logger", func() {
 	})
 
 	Context("inbound messages", func() {
-		BeforeEach(func() {
-			if err := observer.InitializeInbound(context.Background(), ep); err != nil {
-				panic(err)
-			}
-		})
-
 		Describe("BeforeInbound", func() {
 			It("logs information about the message", func() {
 				ctx := endpoint.WithEnvelope(context.Background(), in)
@@ -97,12 +89,6 @@ var _ = Describe("Logger", func() {
 	})
 
 	Context("outbound messages", func() {
-		BeforeEach(func() {
-			if err := observer.InitializeOutbound(context.Background(), ep); err != nil {
-				panic(err)
-			}
-		})
-
 		Describe("BeforeOutbound", func() {
 			It("logs information about the message", func() {
 				observer.BeforeOutbound(context.Background(), out)

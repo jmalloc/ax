@@ -88,9 +88,9 @@ func main() {
 		panic(err)
 	}
 
-	loggingObserver := &observability.LoggingObserver{}
-	inboundObservers := []observability.InboundObserver{loggingObserver}
-	outboundObservers := []observability.OutboundObserver{loggingObserver}
+	observers := []observability.Observer{
+		&observability.LoggingObserver{},
+	}
 
 	ds := axmysql.NewDataStore(db)
 
@@ -105,7 +105,7 @@ func main() {
 		DataStore:  ds,
 		Repository: axmysql.DelayedMessageRepository,
 		Out: &observability.OutboundHook{
-			Observers: outboundObservers,
+			Observers: observers,
 			Next:      router,
 		},
 	}
@@ -119,7 +119,7 @@ func main() {
 		InboundTransport:  transport,
 		OutboundTransport: transport,
 		InboundPipeline: &observability.InboundHook{
-			Observers: inboundObservers,
+			Observers: observers,
 			Next: &persistence.Injector{
 				DataStore: ds,
 				Next: &outbox.Deduplicator{
@@ -131,7 +131,7 @@ func main() {
 			},
 		},
 		OutboundPipeline: &observability.OutboundHook{
-			Observers: outboundObservers,
+			Observers: observers,
 			Next: &delayedmessage.Interceptor{
 				Repository: axmysql.DelayedMessageRepository,
 				Next:       router,

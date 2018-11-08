@@ -15,7 +15,7 @@ import (
 
 var _ = Describe("InboundHook", func() {
 	var (
-		observer *mocks.InboundObserverMock
+		observer *mocks.ObserverMock
 		ep       *endpoint.Endpoint
 		next     *mocks.InboundPipelineMock
 		env      endpoint.InboundEnvelope
@@ -24,10 +24,9 @@ var _ = Describe("InboundHook", func() {
 
 	BeforeEach(func() {
 		ep = &endpoint.Endpoint{}
-		observer = &mocks.InboundObserverMock{
-			InitializeInboundFunc: func(context.Context, *endpoint.Endpoint) error { return nil },
-			BeforeInboundFunc:     func(context.Context, endpoint.InboundEnvelope) {},
-			AfterInboundFunc:      func(context.Context, endpoint.InboundEnvelope, error) {},
+		observer = &mocks.ObserverMock{
+			BeforeInboundFunc: func(context.Context, endpoint.InboundEnvelope) {},
+			AfterInboundFunc:  func(context.Context, endpoint.InboundEnvelope, error) {},
 		}
 		next = &mocks.InboundPipelineMock{
 			InitializeFunc: func(context.Context, *endpoint.Endpoint) error { return nil },
@@ -40,28 +39,11 @@ var _ = Describe("InboundHook", func() {
 		}
 		hook = &InboundHook{
 			Next:      next,
-			Observers: []InboundObserver{observer},
+			Observers: []Observer{observer},
 		}
 	})
 
 	Describe("Initialize", func() {
-		It("initializes the observers", func() {
-			err := hook.Initialize(context.Background(), ep)
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(observer.InitializeInboundCalls()).To(HaveLen(1))
-			Expect(observer.InitializeInboundCalls()[0].Ep).To(Equal(ep))
-		})
-
-		It("fails if observer initialization fails", func() {
-			expected := errors.New("<error>")
-			observer.InitializeInboundFunc = func(context.Context, *endpoint.Endpoint) error {
-				return expected
-			}
-
-			err := hook.Initialize(context.Background(), ep)
-			Expect(err).To(Equal(expected))
-		})
-
 		It("initializes the next stage", func() {
 			err := hook.Initialize(context.Background(), ep)
 			Expect(err).ShouldNot(HaveOccurred())
@@ -119,7 +101,7 @@ var _ = Describe("InboundHook", func() {
 
 var _ = Describe("OutboundHook", func() {
 	var (
-		observer *mocks.OutboundObserverMock
+		observer *mocks.ObserverMock
 		ep       *endpoint.Endpoint
 		next     *mocks.OutboundPipelineMock
 		env      endpoint.OutboundEnvelope
@@ -128,10 +110,9 @@ var _ = Describe("OutboundHook", func() {
 
 	BeforeEach(func() {
 		ep = &endpoint.Endpoint{}
-		observer = &mocks.OutboundObserverMock{
-			InitializeOutboundFunc: func(context.Context, *endpoint.Endpoint) error { return nil },
-			BeforeOutboundFunc:     func(context.Context, endpoint.OutboundEnvelope) {},
-			AfterOutboundFunc:      func(context.Context, endpoint.OutboundEnvelope, error) {},
+		observer = &mocks.ObserverMock{
+			BeforeOutboundFunc: func(context.Context, endpoint.OutboundEnvelope) {},
+			AfterOutboundFunc:  func(context.Context, endpoint.OutboundEnvelope, error) {},
 		}
 		next = &mocks.OutboundPipelineMock{
 			InitializeFunc: func(context.Context, *endpoint.Endpoint) error { return nil },
@@ -144,28 +125,11 @@ var _ = Describe("OutboundHook", func() {
 		}
 		hook = &OutboundHook{
 			Next:      next,
-			Observers: []OutboundObserver{observer},
+			Observers: []Observer{observer},
 		}
 	})
 
 	Describe("Initialize", func() {
-		It("initializes the observers", func() {
-			err := hook.Initialize(context.Background(), ep)
-			Expect(err).ShouldNot(HaveOccurred())
-			Expect(observer.InitializeOutboundCalls()).To(HaveLen(1))
-			Expect(observer.InitializeOutboundCalls()[0].Ep).To(Equal(ep))
-		})
-
-		It("fails if observer initialization fails", func() {
-			expected := errors.New("<error>")
-			observer.InitializeOutboundFunc = func(context.Context, *endpoint.Endpoint) error {
-				return expected
-			}
-
-			err := hook.Initialize(context.Background(), ep)
-			Expect(err).To(Equal(expected))
-		})
-
 		It("initializes the next stage", func() {
 			err := hook.Initialize(context.Background(), ep)
 			Expect(err).ShouldNot(HaveOccurred())

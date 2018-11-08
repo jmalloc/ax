@@ -44,8 +44,7 @@ src/axtest/mocks/persistence.go: $(wildcard src/ax/persistence/*.go) | $(MOQ)
 
 src/axtest/mocks/observability.go: $(wildcard src/ax/observability/*.go) | $(MOQ)
 	$(MOQ) -out "$@" -pkg "mocks" src/ax/observability \
-		InboundObserver \
-		OutboundObserver
+		Observer
 
 artifacts/make/%/Makefile:
 	curl -sf https://jmalloc.github.io/makefiles/fetch | bash /dev/stdin $*

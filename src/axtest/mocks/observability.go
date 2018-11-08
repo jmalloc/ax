@@ -10,41 +10,48 @@ import (
 )
 
 var (
-	lockInboundObserverMockAfterInbound      sync.RWMutex
-	lockInboundObserverMockBeforeInbound     sync.RWMutex
-	lockInboundObserverMockInitializeInbound sync.RWMutex
+	lockObserverMockAfterInbound   sync.RWMutex
+	lockObserverMockAfterOutbound  sync.RWMutex
+	lockObserverMockBeforeInbound  sync.RWMutex
+	lockObserverMockBeforeOutbound sync.RWMutex
 )
 
-// InboundObserverMock is a mock implementation of InboundObserver.
+// ObserverMock is a mock implementation of Observer.
 //
-//     func TestSomethingThatUsesInboundObserver(t *testing.T) {
+//     func TestSomethingThatUsesObserver(t *testing.T) {
 //
-//         // make and configure a mocked InboundObserver
-//         mockedInboundObserver := &InboundObserverMock{
+//         // make and configure a mocked Observer
+//         mockedObserver := &ObserverMock{
 //             AfterInboundFunc: func(ctx context.Context, env endpoint.InboundEnvelope, err error)  {
 // 	               panic("TODO: mock out the AfterInbound method")
+//             },
+//             AfterOutboundFunc: func(ctx context.Context, env endpoint.OutboundEnvelope, err error)  {
+// 	               panic("TODO: mock out the AfterOutbound method")
 //             },
 //             BeforeInboundFunc: func(ctx context.Context, env endpoint.InboundEnvelope)  {
 // 	               panic("TODO: mock out the BeforeInbound method")
 //             },
-//             InitializeInboundFunc: func(ctx context.Context, ep *endpoint.Endpoint) error {
-// 	               panic("TODO: mock out the InitializeInbound method")
+//             BeforeOutboundFunc: func(ctx context.Context, env endpoint.OutboundEnvelope)  {
+// 	               panic("TODO: mock out the BeforeOutbound method")
 //             },
 //         }
 //
-//         // TODO: use mockedInboundObserver in code that requires InboundObserver
+//         // TODO: use mockedObserver in code that requires Observer
 //         //       and then make assertions.
 //
 //     }
-type InboundObserverMock struct {
+type ObserverMock struct {
 	// AfterInboundFunc mocks the AfterInbound method.
 	AfterInboundFunc func(ctx context.Context, env endpoint.InboundEnvelope, err error)
+
+	// AfterOutboundFunc mocks the AfterOutbound method.
+	AfterOutboundFunc func(ctx context.Context, env endpoint.OutboundEnvelope, err error)
 
 	// BeforeInboundFunc mocks the BeforeInbound method.
 	BeforeInboundFunc func(ctx context.Context, env endpoint.InboundEnvelope)
 
-	// InitializeInboundFunc mocks the InitializeInbound method.
-	InitializeInboundFunc func(ctx context.Context, ep *endpoint.Endpoint) error
+	// BeforeOutboundFunc mocks the BeforeOutbound method.
+	BeforeOutboundFunc func(ctx context.Context, env endpoint.OutboundEnvelope)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -57,171 +64,6 @@ type InboundObserverMock struct {
 			// Err is the err argument value.
 			Err error
 		}
-		// BeforeInbound holds details about calls to the BeforeInbound method.
-		BeforeInbound []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// Env is the env argument value.
-			Env endpoint.InboundEnvelope
-		}
-		// InitializeInbound holds details about calls to the InitializeInbound method.
-		InitializeInbound []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// Ep is the ep argument value.
-			Ep *endpoint.Endpoint
-		}
-	}
-}
-
-// AfterInbound calls AfterInboundFunc.
-func (mock *InboundObserverMock) AfterInbound(ctx context.Context, env endpoint.InboundEnvelope, err error) {
-	if mock.AfterInboundFunc == nil {
-		panic("InboundObserverMock.AfterInboundFunc: method is nil but InboundObserver.AfterInbound was just called")
-	}
-	callInfo := struct {
-		Ctx context.Context
-		Env endpoint.InboundEnvelope
-		Err error
-	}{
-		Ctx: ctx,
-		Env: env,
-		Err: err,
-	}
-	lockInboundObserverMockAfterInbound.Lock()
-	mock.calls.AfterInbound = append(mock.calls.AfterInbound, callInfo)
-	lockInboundObserverMockAfterInbound.Unlock()
-	mock.AfterInboundFunc(ctx, env, err)
-}
-
-// AfterInboundCalls gets all the calls that were made to AfterInbound.
-// Check the length with:
-//     len(mockedInboundObserver.AfterInboundCalls())
-func (mock *InboundObserverMock) AfterInboundCalls() []struct {
-	Ctx context.Context
-	Env endpoint.InboundEnvelope
-	Err error
-} {
-	var calls []struct {
-		Ctx context.Context
-		Env endpoint.InboundEnvelope
-		Err error
-	}
-	lockInboundObserverMockAfterInbound.RLock()
-	calls = mock.calls.AfterInbound
-	lockInboundObserverMockAfterInbound.RUnlock()
-	return calls
-}
-
-// BeforeInbound calls BeforeInboundFunc.
-func (mock *InboundObserverMock) BeforeInbound(ctx context.Context, env endpoint.InboundEnvelope) {
-	if mock.BeforeInboundFunc == nil {
-		panic("InboundObserverMock.BeforeInboundFunc: method is nil but InboundObserver.BeforeInbound was just called")
-	}
-	callInfo := struct {
-		Ctx context.Context
-		Env endpoint.InboundEnvelope
-	}{
-		Ctx: ctx,
-		Env: env,
-	}
-	lockInboundObserverMockBeforeInbound.Lock()
-	mock.calls.BeforeInbound = append(mock.calls.BeforeInbound, callInfo)
-	lockInboundObserverMockBeforeInbound.Unlock()
-	mock.BeforeInboundFunc(ctx, env)
-}
-
-// BeforeInboundCalls gets all the calls that were made to BeforeInbound.
-// Check the length with:
-//     len(mockedInboundObserver.BeforeInboundCalls())
-func (mock *InboundObserverMock) BeforeInboundCalls() []struct {
-	Ctx context.Context
-	Env endpoint.InboundEnvelope
-} {
-	var calls []struct {
-		Ctx context.Context
-		Env endpoint.InboundEnvelope
-	}
-	lockInboundObserverMockBeforeInbound.RLock()
-	calls = mock.calls.BeforeInbound
-	lockInboundObserverMockBeforeInbound.RUnlock()
-	return calls
-}
-
-// InitializeInbound calls InitializeInboundFunc.
-func (mock *InboundObserverMock) InitializeInbound(ctx context.Context, ep *endpoint.Endpoint) error {
-	if mock.InitializeInboundFunc == nil {
-		panic("InboundObserverMock.InitializeInboundFunc: method is nil but InboundObserver.InitializeInbound was just called")
-	}
-	callInfo := struct {
-		Ctx context.Context
-		Ep  *endpoint.Endpoint
-	}{
-		Ctx: ctx,
-		Ep:  ep,
-	}
-	lockInboundObserverMockInitializeInbound.Lock()
-	mock.calls.InitializeInbound = append(mock.calls.InitializeInbound, callInfo)
-	lockInboundObserverMockInitializeInbound.Unlock()
-	return mock.InitializeInboundFunc(ctx, ep)
-}
-
-// InitializeInboundCalls gets all the calls that were made to InitializeInbound.
-// Check the length with:
-//     len(mockedInboundObserver.InitializeInboundCalls())
-func (mock *InboundObserverMock) InitializeInboundCalls() []struct {
-	Ctx context.Context
-	Ep  *endpoint.Endpoint
-} {
-	var calls []struct {
-		Ctx context.Context
-		Ep  *endpoint.Endpoint
-	}
-	lockInboundObserverMockInitializeInbound.RLock()
-	calls = mock.calls.InitializeInbound
-	lockInboundObserverMockInitializeInbound.RUnlock()
-	return calls
-}
-
-var (
-	lockOutboundObserverMockAfterOutbound      sync.RWMutex
-	lockOutboundObserverMockBeforeOutbound     sync.RWMutex
-	lockOutboundObserverMockInitializeOutbound sync.RWMutex
-)
-
-// OutboundObserverMock is a mock implementation of OutboundObserver.
-//
-//     func TestSomethingThatUsesOutboundObserver(t *testing.T) {
-//
-//         // make and configure a mocked OutboundObserver
-//         mockedOutboundObserver := &OutboundObserverMock{
-//             AfterOutboundFunc: func(ctx context.Context, env endpoint.OutboundEnvelope, err error)  {
-// 	               panic("TODO: mock out the AfterOutbound method")
-//             },
-//             BeforeOutboundFunc: func(ctx context.Context, env endpoint.OutboundEnvelope)  {
-// 	               panic("TODO: mock out the BeforeOutbound method")
-//             },
-//             InitializeOutboundFunc: func(ctx context.Context, ep *endpoint.Endpoint) error {
-// 	               panic("TODO: mock out the InitializeOutbound method")
-//             },
-//         }
-//
-//         // TODO: use mockedOutboundObserver in code that requires OutboundObserver
-//         //       and then make assertions.
-//
-//     }
-type OutboundObserverMock struct {
-	// AfterOutboundFunc mocks the AfterOutbound method.
-	AfterOutboundFunc func(ctx context.Context, env endpoint.OutboundEnvelope, err error)
-
-	// BeforeOutboundFunc mocks the BeforeOutbound method.
-	BeforeOutboundFunc func(ctx context.Context, env endpoint.OutboundEnvelope)
-
-	// InitializeOutboundFunc mocks the InitializeOutbound method.
-	InitializeOutboundFunc func(ctx context.Context, ep *endpoint.Endpoint) error
-
-	// calls tracks calls to the methods.
-	calls struct {
 		// AfterOutbound holds details about calls to the AfterOutbound method.
 		AfterOutbound []struct {
 			// Ctx is the ctx argument value.
@@ -231,6 +73,13 @@ type OutboundObserverMock struct {
 			// Err is the err argument value.
 			Err error
 		}
+		// BeforeInbound holds details about calls to the BeforeInbound method.
+		BeforeInbound []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Env is the env argument value.
+			Env endpoint.InboundEnvelope
+		}
 		// BeforeOutbound holds details about calls to the BeforeOutbound method.
 		BeforeOutbound []struct {
 			// Ctx is the ctx argument value.
@@ -238,20 +87,52 @@ type OutboundObserverMock struct {
 			// Env is the env argument value.
 			Env endpoint.OutboundEnvelope
 		}
-		// InitializeOutbound holds details about calls to the InitializeOutbound method.
-		InitializeOutbound []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// Ep is the ep argument value.
-			Ep *endpoint.Endpoint
-		}
 	}
 }
 
+// AfterInbound calls AfterInboundFunc.
+func (mock *ObserverMock) AfterInbound(ctx context.Context, env endpoint.InboundEnvelope, err error) {
+	if mock.AfterInboundFunc == nil {
+		panic("ObserverMock.AfterInboundFunc: method is nil but Observer.AfterInbound was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Env endpoint.InboundEnvelope
+		Err error
+	}{
+		Ctx: ctx,
+		Env: env,
+		Err: err,
+	}
+	lockObserverMockAfterInbound.Lock()
+	mock.calls.AfterInbound = append(mock.calls.AfterInbound, callInfo)
+	lockObserverMockAfterInbound.Unlock()
+	mock.AfterInboundFunc(ctx, env, err)
+}
+
+// AfterInboundCalls gets all the calls that were made to AfterInbound.
+// Check the length with:
+//     len(mockedObserver.AfterInboundCalls())
+func (mock *ObserverMock) AfterInboundCalls() []struct {
+	Ctx context.Context
+	Env endpoint.InboundEnvelope
+	Err error
+} {
+	var calls []struct {
+		Ctx context.Context
+		Env endpoint.InboundEnvelope
+		Err error
+	}
+	lockObserverMockAfterInbound.RLock()
+	calls = mock.calls.AfterInbound
+	lockObserverMockAfterInbound.RUnlock()
+	return calls
+}
+
 // AfterOutbound calls AfterOutboundFunc.
-func (mock *OutboundObserverMock) AfterOutbound(ctx context.Context, env endpoint.OutboundEnvelope, err error) {
+func (mock *ObserverMock) AfterOutbound(ctx context.Context, env endpoint.OutboundEnvelope, err error) {
 	if mock.AfterOutboundFunc == nil {
-		panic("OutboundObserverMock.AfterOutboundFunc: method is nil but OutboundObserver.AfterOutbound was just called")
+		panic("ObserverMock.AfterOutboundFunc: method is nil but Observer.AfterOutbound was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
@@ -262,16 +143,16 @@ func (mock *OutboundObserverMock) AfterOutbound(ctx context.Context, env endpoin
 		Env: env,
 		Err: err,
 	}
-	lockOutboundObserverMockAfterOutbound.Lock()
+	lockObserverMockAfterOutbound.Lock()
 	mock.calls.AfterOutbound = append(mock.calls.AfterOutbound, callInfo)
-	lockOutboundObserverMockAfterOutbound.Unlock()
+	lockObserverMockAfterOutbound.Unlock()
 	mock.AfterOutboundFunc(ctx, env, err)
 }
 
 // AfterOutboundCalls gets all the calls that were made to AfterOutbound.
 // Check the length with:
-//     len(mockedOutboundObserver.AfterOutboundCalls())
-func (mock *OutboundObserverMock) AfterOutboundCalls() []struct {
+//     len(mockedObserver.AfterOutboundCalls())
+func (mock *ObserverMock) AfterOutboundCalls() []struct {
 	Ctx context.Context
 	Env endpoint.OutboundEnvelope
 	Err error
@@ -281,16 +162,51 @@ func (mock *OutboundObserverMock) AfterOutboundCalls() []struct {
 		Env endpoint.OutboundEnvelope
 		Err error
 	}
-	lockOutboundObserverMockAfterOutbound.RLock()
+	lockObserverMockAfterOutbound.RLock()
 	calls = mock.calls.AfterOutbound
-	lockOutboundObserverMockAfterOutbound.RUnlock()
+	lockObserverMockAfterOutbound.RUnlock()
+	return calls
+}
+
+// BeforeInbound calls BeforeInboundFunc.
+func (mock *ObserverMock) BeforeInbound(ctx context.Context, env endpoint.InboundEnvelope) {
+	if mock.BeforeInboundFunc == nil {
+		panic("ObserverMock.BeforeInboundFunc: method is nil but Observer.BeforeInbound was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Env endpoint.InboundEnvelope
+	}{
+		Ctx: ctx,
+		Env: env,
+	}
+	lockObserverMockBeforeInbound.Lock()
+	mock.calls.BeforeInbound = append(mock.calls.BeforeInbound, callInfo)
+	lockObserverMockBeforeInbound.Unlock()
+	mock.BeforeInboundFunc(ctx, env)
+}
+
+// BeforeInboundCalls gets all the calls that were made to BeforeInbound.
+// Check the length with:
+//     len(mockedObserver.BeforeInboundCalls())
+func (mock *ObserverMock) BeforeInboundCalls() []struct {
+	Ctx context.Context
+	Env endpoint.InboundEnvelope
+} {
+	var calls []struct {
+		Ctx context.Context
+		Env endpoint.InboundEnvelope
+	}
+	lockObserverMockBeforeInbound.RLock()
+	calls = mock.calls.BeforeInbound
+	lockObserverMockBeforeInbound.RUnlock()
 	return calls
 }
 
 // BeforeOutbound calls BeforeOutboundFunc.
-func (mock *OutboundObserverMock) BeforeOutbound(ctx context.Context, env endpoint.OutboundEnvelope) {
+func (mock *ObserverMock) BeforeOutbound(ctx context.Context, env endpoint.OutboundEnvelope) {
 	if mock.BeforeOutboundFunc == nil {
-		panic("OutboundObserverMock.BeforeOutboundFunc: method is nil but OutboundObserver.BeforeOutbound was just called")
+		panic("ObserverMock.BeforeOutboundFunc: method is nil but Observer.BeforeOutbound was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
@@ -299,16 +215,16 @@ func (mock *OutboundObserverMock) BeforeOutbound(ctx context.Context, env endpoi
 		Ctx: ctx,
 		Env: env,
 	}
-	lockOutboundObserverMockBeforeOutbound.Lock()
+	lockObserverMockBeforeOutbound.Lock()
 	mock.calls.BeforeOutbound = append(mock.calls.BeforeOutbound, callInfo)
-	lockOutboundObserverMockBeforeOutbound.Unlock()
+	lockObserverMockBeforeOutbound.Unlock()
 	mock.BeforeOutboundFunc(ctx, env)
 }
 
 // BeforeOutboundCalls gets all the calls that were made to BeforeOutbound.
 // Check the length with:
-//     len(mockedOutboundObserver.BeforeOutboundCalls())
-func (mock *OutboundObserverMock) BeforeOutboundCalls() []struct {
+//     len(mockedObserver.BeforeOutboundCalls())
+func (mock *ObserverMock) BeforeOutboundCalls() []struct {
 	Ctx context.Context
 	Env endpoint.OutboundEnvelope
 } {
@@ -316,43 +232,8 @@ func (mock *OutboundObserverMock) BeforeOutboundCalls() []struct {
 		Ctx context.Context
 		Env endpoint.OutboundEnvelope
 	}
-	lockOutboundObserverMockBeforeOutbound.RLock()
+	lockObserverMockBeforeOutbound.RLock()
 	calls = mock.calls.BeforeOutbound
-	lockOutboundObserverMockBeforeOutbound.RUnlock()
-	return calls
-}
-
-// InitializeOutbound calls InitializeOutboundFunc.
-func (mock *OutboundObserverMock) InitializeOutbound(ctx context.Context, ep *endpoint.Endpoint) error {
-	if mock.InitializeOutboundFunc == nil {
-		panic("OutboundObserverMock.InitializeOutboundFunc: method is nil but OutboundObserver.InitializeOutbound was just called")
-	}
-	callInfo := struct {
-		Ctx context.Context
-		Ep  *endpoint.Endpoint
-	}{
-		Ctx: ctx,
-		Ep:  ep,
-	}
-	lockOutboundObserverMockInitializeOutbound.Lock()
-	mock.calls.InitializeOutbound = append(mock.calls.InitializeOutbound, callInfo)
-	lockOutboundObserverMockInitializeOutbound.Unlock()
-	return mock.InitializeOutboundFunc(ctx, ep)
-}
-
-// InitializeOutboundCalls gets all the calls that were made to InitializeOutbound.
-// Check the length with:
-//     len(mockedOutboundObserver.InitializeOutboundCalls())
-func (mock *OutboundObserverMock) InitializeOutboundCalls() []struct {
-	Ctx context.Context
-	Ep  *endpoint.Endpoint
-} {
-	var calls []struct {
-		Ctx context.Context
-		Ep  *endpoint.Endpoint
-	}
-	lockOutboundObserverMockInitializeOutbound.RLock()
-	calls = mock.calls.InitializeOutbound
-	lockOutboundObserverMockInitializeOutbound.RUnlock()
+	lockObserverMockBeforeOutbound.RUnlock()
 	return calls
 }
