@@ -138,6 +138,7 @@ func main() {
 					Repository: axmysql.OutboxRepository,
 					Next: &routing.Dispatcher{
 						Routes: htable,
+						Tracer: tracer,
 					},
 				},
 			},
@@ -149,6 +150,7 @@ func main() {
 				Next:       router,
 			},
 		},
+		Tracer: tracer,
 	}
 
 	con := &projection.GlobalStoreConsumer{

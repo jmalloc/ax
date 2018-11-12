@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/jmalloc/ax/src/internal/servicegroup"
+	opentracing "github.com/opentracing/opentracing-go"
 )
 
 // receiver receives a message from a transport, forwards it to the inbound
@@ -13,6 +14,7 @@ type receiver struct {
 	In          InboundPipeline
 	Out         OutboundPipeline
 	RetryPolicy RetryPolicy
+	Tracer      opentracing.Tracer
 
 	wg *servicegroup.Group
 }
@@ -53,19 +55,28 @@ func (r *receiver) process(
 	env InboundEnvelope,
 	ack Acknowledger,
 ) error {
-	err := r.In.Accept(
-		WithEnvelope(ctx, env),
-		r.Out,
-		env,
-	)
+	span := startInboundSpan(ctx, env, r.Tracer)
+	defer span.Finish()
+
+	traceReceive(span)
+
+	ctx = opentracing.ContextWithSpan(ctx, span)
+	ctx = WithEnvelope(ctx, env)
+
+	err := r.In.Accept(ctx, r.Out, env)
 
 	if err == nil {
+		traceAck(span)
 		return ack.Ack(ctx)
 	}
 
+	traceError(span, err)
+
 	if d, ok := r.RetryPolicy(env, err); ok {
+		traceRetry(span)
 		return ack.Retry(ctx, err, d)
 	}
 
+	traceReject(span)
 	return ack.Reject(ctx, err)
 }

@@ -1,6 +1,8 @@
-hash: 1613e75e76f43a48a195f775f0ef39a1c242f506cbde4f4575f11a2232e12c0f
-updated: 2018-11-07T10:39:53.566197+10:00
+hash: cbb25f0610e1184d83accd30675a4eec2907dbce47a6d5bd0dc8d93e1bce6ca8
+updated: 2018-11-08T14:47:57.882589+10:00
 imports:
+- name: github.com/codahale/hdrhistogram
+  version: 3a0bb77429bd3a61596f5e8a3172445844342120
 - name: github.com/go-sql-driver/mysql
   version: d523deb1b23d913de5bdada721a6071e71283618
 - name: github.com/golang/protobuf
@@ -63,6 +65,11 @@ imports:
   - types
 - name: github.com/opentracing/opentracing-go
   version: 1949ddbfd147afd4d964a9f00b24eb291e0e7c38
+  subpackages:
+  - ext
+  - log
+- name: github.com/pkg/errors
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/satori/go.uuid
   version: f58768cc1a7a7e77a3bd49e98cdd21419399b6a3
 - name: github.com/spf13/cobra
@@ -73,6 +80,29 @@ imports:
   version: 9f4628dc69009a239427f342caccb0047c7aea01
 - name: github.com/streadway/amqp
   version: 8e4aba63da9fc5571e01c6a45dc809a58cbc5a68
+- name: github.com/uber/jaeger-client-go
+  version: 1a782e2da844727691fef1757c72eb190c2909f0
+  subpackages:
+  - config
+  - internal/baggage
+  - internal/baggage/remote
+  - internal/spanlog
+  - internal/throttler
+  - internal/throttler/remote
+  - log
+  - rpcmetrics
+  - thrift
+  - thrift-gen/agent
+  - thrift-gen/baggage
+  - thrift-gen/jaeger
+  - thrift-gen/sampling
+  - thrift-gen/zipkincore
+  - transport
+  - utils
+- name: github.com/uber/jaeger-lib
+  version: ed3a127ec5fef7ae9ea95b01b542c47fbd999ce5
+  subpackages:
+  - metrics
 - name: go.uber.org/atomic
   version: 1ea20fb1cbb1cc08cbd0d913a96dead89aa18289
 - name: go.uber.org/multierr
@@ -120,6 +150,4 @@ imports:
   version: c131134a1947e9afd9cecfe11f4c6dff0732ae58
 - name: gopkg.in/yaml.v2
   version: d670f9405373e636a5a2765eea47fac0c9bc91a4
-testImports:
-- name: github.com/uber/jaeger-client-go
-  version: 1a782e2da844727691fef1757c72eb190c2909f0
+testImports: []

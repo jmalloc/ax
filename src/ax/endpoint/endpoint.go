@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/jmalloc/ax/src/ax"
+	opentracing "github.com/opentracing/opentracing-go"
 )
 
 // Endpoint is a named source and recipient of messages.
@@ -17,6 +18,7 @@ type Endpoint struct {
 	OutboundPipeline  OutboundPipeline
 	RetryPolicy       RetryPolicy
 	SenderValidators  []Validator
+	Tracer            opentracing.Tracer
 
 	initOnce sync.Once
 }
@@ -30,6 +32,7 @@ func (ep *Endpoint) NewSender(ctx context.Context) (ax.Sender, error) {
 	return SinkSender{
 		Sink:       ep.OutboundPipeline,
 		Validators: ep.SenderValidators,
+		Tracer:     ep.Tracer,
 	}, nil
 }
 
@@ -52,6 +55,7 @@ func (ep *Endpoint) StartReceiving(ctx context.Context) error {
 		In:          ep.InboundPipeline,
 		Out:         ep.OutboundPipeline,
 		RetryPolicy: ep.RetryPolicy,
+		Tracer:      ep.Tracer,
 	}
 
 	return recv.Run(ctx)

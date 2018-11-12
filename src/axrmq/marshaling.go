@@ -176,7 +176,7 @@ func marshalSpanContext(
 		opentracing.Binary,
 		buf,
 	); err != nil {
-		// TODO(jmalloc): add logging - https://github.com/jmalloc/ax/issues/144
+		// TODO: add logging - https://github.com/jmalloc/ax/issues/144
 		// A failed span propagation is worth logging about, but does not stop the
 		// system from sending the message.
 		return
@@ -201,7 +201,7 @@ func unmarshalSpanContext(
 
 	b, ok := v.([]byte)
 	if !ok {
-		// TODO(jmalloc): add logging - https://github.com/jmalloc/ax/issues/144
+		// TODO: add logging - https://github.com/jmalloc/ax/issues/144
 		// A failed span propagation is worth logging about, but does not stop the
 		// system from sending the message.
 		return nil
@@ -215,7 +215,7 @@ func unmarshalSpanContext(
 	if err == opentracing.ErrSpanContextNotFound {
 		return nil
 	} else if err != nil {
-		// TODO(jmalloc): add logging - https://github.com/jmalloc/ax/issues/144
+		// TODO: add logging - https://github.com/jmalloc/ax/issues/144
 		// A failed span propagation is worth logging about, but does not stop the
 		// system from sending the message.
 		return nil
