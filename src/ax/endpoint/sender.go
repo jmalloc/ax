@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/jmalloc/ax/src/ax"
-	opentracing "github.com/opentracing/opentracing-go"
 )
 
 // SinkSender is an implementation of ax.Sender that passes messages to a
@@ -12,7 +11,6 @@ import (
 type SinkSender struct {
 	Sink       MessageSink
 	Validators []Validator
-	Tracer     opentracing.Tracer
 }
 
 // ExecuteCommand sends a command message.
@@ -30,13 +28,18 @@ func (s SinkSender) ExecuteCommand(
 	}
 
 	for _, o := range opts {
-		err = o.ApplyExecuteOption(&env)
-		if err != nil {
+		if err := o.ApplyExecuteOption(&env); err != nil {
 			return ax.Envelope{}, err
 		}
 	}
 
-	return env, s.send(ctx, env, OpSendUnicast)
+	return env, s.Sink.Accept(
+		ctx,
+		OutboundEnvelope{
+			Envelope:  env,
+			Operation: OpSendUnicast,
+		},
+	)
 }
 
 // PublishEvent sends an event message.
@@ -54,21 +57,23 @@ func (s SinkSender) PublishEvent(
 	}
 
 	for _, o := range opts {
-		err = o.ApplyPublishOption(&env)
-		if err != nil {
+		if err := o.ApplyPublishOption(&env); err != nil {
 			return ax.Envelope{}, err
 		}
 	}
 
-	return env, s.send(ctx, env, OpSendMulticast)
+	return env, s.Sink.Accept(
+		ctx,
+		OutboundEnvelope{
+			Envelope:  env,
+			Operation: OpSendMulticast,
+		},
+	)
 }
 
 // newEnvelope returns an envelope containing m.
 // The new envelope is configured as a child of the envelope in ctx, if any.
-func (s SinkSender) newEnvelope(
-	ctx context.Context,
-	m ax.Message,
-) (ax.Envelope, error) {
+func (s SinkSender) newEnvelope(ctx context.Context, m ax.Message) (ax.Envelope, error) {
 	validators := s.Validators
 	if len(validators) == 0 {
 		validators = DefaultValidators
@@ -80,35 +85,9 @@ func (s SinkSender) newEnvelope(
 		}
 	}
 
-	if p, ok := GetEnvelope(ctx); ok {
-		return p.Envelope.NewChild(m), nil
+	if env, ok := GetEnvelope(ctx); ok {
+		return env.Envelope.NewChild(m), nil
 	}
 
 	return ax.NewEnvelope(m), nil
-}
-
-// send sends env through s.Sink.
-func (s SinkSender) send(
-	ctx context.Context,
-	env ax.Envelope,
-	op Operation,
-) error {
-	span := startOutboundSpan(ctx, env, s.Tracer)
-	defer span.Finish()
-
-	traceSend(span)
-
-	if err := s.Sink.Accept(
-		opentracing.ContextWithSpan(ctx, span),
-		OutboundEnvelope{
-			Envelope:    env,
-			Operation:   op,
-			SpanContext: span.Context(),
-		},
-	); err != nil {
-		traceError(span, err)
-		return err
-	}
-
-	return nil
 }

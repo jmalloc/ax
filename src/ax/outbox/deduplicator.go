@@ -6,6 +6,7 @@ import (
 
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/persistence"
+	opentracing "github.com/opentracing/opentracing-go"
 )
 
 // Deduplicator is an inbound pipeline stage that provides message idempotency
@@ -35,7 +36,7 @@ func (d *Deduplicator) Accept(ctx context.Context, s endpoint.MessageSink, env e
 		return errors.New("no data store is available in ctx")
 	}
 
-	messages, ok, err := d.Repository.LoadOutbox(
+	envs, ok, err := d.Repository.LoadOutbox(
 		ctx,
 		ds,
 		env.MessageID,
@@ -44,14 +45,22 @@ func (d *Deduplicator) Accept(ctx context.Context, s endpoint.MessageSink, env e
 		return err
 	}
 
-	if !ok {
-		messages, err = d.forward(ctx, env)
+	span := opentracing.SpanFromContext(ctx)
+
+	if ok {
+		traceFound(span, envs)
+	} else {
+		traceNotFound(span)
+
+		envs, err = d.forward(ctx, env)
 		if err != nil {
 			return err
 		}
+
+		traceSave(span, envs)
 	}
 
-	for _, o := range messages {
+	for _, o := range envs {
 		if err := d.send(ctx, s, o); err != nil {
 			return err
 		}

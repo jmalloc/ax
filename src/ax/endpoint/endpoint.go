@@ -30,9 +30,11 @@ func (ep *Endpoint) NewSender(ctx context.Context) (ax.Sender, error) {
 	}
 
 	return SinkSender{
-		Sink:       ep.OutboundPipeline,
+		Sink: tracingSink{
+			ep.Tracer,
+			ep.OutboundPipeline,
+		},
 		Validators: ep.SenderValidators,
-		Tracer:     ep.Tracer,
 	}, nil
 }
 

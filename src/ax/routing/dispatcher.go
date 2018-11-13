@@ -7,7 +7,6 @@ import (
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/observability"
 	"github.com/jmalloc/twelf/src/twelf"
-	opentracing "github.com/opentracing/opentracing-go"
 )
 
 // Dispatcher is an inbound pipeline stage that routes messages to the
@@ -15,7 +14,6 @@ import (
 type Dispatcher struct {
 	Routes HandlerTable
 	Logger twelf.Logger
-	Tracer opentracing.Tracer
 
 	validators []endpoint.Validator
 }
@@ -57,7 +55,6 @@ func (d *Dispatcher) Accept(ctx context.Context, s endpoint.MessageSink, env end
 	sender := endpoint.SinkSender{
 		Sink:       s,
 		Validators: d.validators,
-		Tracer:     d.Tracer,
 	}
 
 	mctx := ax.NewMessageContext(

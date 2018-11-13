@@ -54,29 +54,34 @@ func (r *receiver) process(
 	ctx context.Context,
 	env InboundEnvelope,
 	ack Acknowledger,
-) error {
+) (err error) {
 	span := startInboundSpan(ctx, env, r.Tracer)
-	defer span.Finish()
+	defer func() {
+		if err != nil {
+			traceError(span, err)
+		}
 
-	traceReceive(span)
+		span.Finish()
+	}()
 
 	ctx = opentracing.ContextWithSpan(ctx, span)
 	ctx = WithEnvelope(ctx, env)
 
-	err := r.In.Accept(ctx, r.Out, env)
+	sink := tracingSink{r.Tracer, r.Out}
+
+	traceReceive(span)
+	err = r.In.Accept(ctx, sink, env)
 
 	if err == nil {
 		traceAck(span)
-		return ack.Ack(ctx)
+		err = ack.Ack(ctx)
+	} else if d, ok := r.RetryPolicy(env, err); ok {
+		traceRetry(span, d)
+		err = ack.Retry(ctx, err, d)
+	} else {
+		traceReject(span)
+		err = ack.Reject(ctx, err)
 	}
 
-	traceError(span, err)
-
-	if d, ok := r.RetryPolicy(env, err); ok {
-		traceRetry(span)
-		return ack.Retry(ctx, err, d)
-	}
-
-	traceReject(span)
-	return ack.Reject(ctx, err)
+	return
 }
