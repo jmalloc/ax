@@ -36,6 +36,10 @@ func spanTagsForEnvelope(env ax.Envelope) opentracing.Tags {
 // traceError marks the given span as an error, and includes error information
 // as a log event.
 func traceError(span opentracing.Span, err error) {
+	if span == nil {
+		return
+	}
+
 	ext.Error.Set(span, true)
 
 	span.LogFields(
@@ -55,7 +59,7 @@ func startInboundSpan(
 		ext.SpanKindConsumer,
 		spanTagsForEnvelope(env.Envelope),
 		opentracing.Tags{
-			string(ext.Component):   "ax.endpoint",
+			string(ext.Component):   "ax",
 			"message.source":        env.SourceEndpoint,
 			"message.attempt.id":    env.AttemptID.Get(),
 			"message.attempt.count": env.AttemptCount,
@@ -85,7 +89,7 @@ func startOutboundSpan(
 		ext.SpanKindProducer,
 		spanTagsForEnvelope(env.Envelope),
 		opentracing.Tags{
-			string(ext.Component): "ax.endpoint",
+			string(ext.Component): "ax",
 		},
 	}
 
@@ -111,37 +115,49 @@ func startOutboundSpan(
 	return span
 }
 
-// traceReceive adds a log event representing the time at which an
+// traceInboundAccept adds a log event representing the time at which an
 // inbound message was received.
-func traceReceive(span opentracing.Span) {
+func traceInboundAccept(span opentracing.Span) {
+	if span == nil {
+		return
+	}
+
 	span.LogFields(
-		log.String("event", "endpoint.receive"),
+		log.String("event", "endpoint.accept-inbound"),
 		log.String("message", "the message is entering the inbound pipeline"),
 	)
 }
 
-// traceAck adds a log event representing the time at which an inbound
+// traceInboundAck adds a log event representing the time at which an inbound
 // message was acknowledged.
-func traceAck(span opentracing.Span) {
+func traceInboundAck(span opentracing.Span) {
+	if span == nil {
+		return
+	}
+
 	span.LogFields(
-		log.String("event", "endpoint.ack"),
+		log.String("event", "transport.ack"),
 		log.String("message", "the message has been processed successfully"),
 	)
 }
 
-// traceRetry adds a log event representing the time at which an inbound
+// traceInboundRetry adds a log event representing the time at which an inbound
 // message was was returned to the queue to be retried.
-func traceRetry(span opentracing.Span, d time.Duration) {
+func traceInboundRetry(span opentracing.Span, d time.Duration) {
+	if span == nil {
+		return
+	}
+
 	if d <= 0 {
 		span.LogFields(
-			log.String("event", "endpoint.retry"),
+			log.String("event", "transport.retry"),
 			log.String("message", "scheduling message for an immediate retry"),
 		)
 	} else {
 		t := time.Now().Add(d)
 
 		span.LogFields(
-			log.String("event", "endpoint.retry"),
+			log.String("event", "transport.retry"),
 			log.String("message", "scheduling message for a delayed retry"),
 			log.String("delay-for", d.String()),
 			log.String("delay-until", t.Format(time.RFC3339Nano)),
@@ -149,21 +165,42 @@ func traceRetry(span opentracing.Span, d time.Duration) {
 	}
 }
 
-// traceReject adds a log event representing the time at which an inbound
+// traceInboundReject adds a log event representing the time at which an inbound
 // message was was rejected due to the retry policy.
-func traceReject(span opentracing.Span) {
+func traceInboundReject(span opentracing.Span) {
+	if span == nil {
+		return
+	}
+
 	span.LogFields(
-		log.String("event", "endpoint.reject"),
+		log.String("event", "transport.reject"),
 		log.String("message", "rejecting message due to retry policy"),
 	)
 }
 
-// traceSend adds a log event representing the time at which an outbound
+// traceOutboundAccept adds a log event representing the time at which an outbound
 // message was sent.
-func traceSend(span opentracing.Span, op Operation) {
+func traceOutboundAccept(span opentracing.Span) {
+	if span == nil {
+		return
+	}
+
 	span.LogFields(
-		log.String("event", "endpoint.send"),
+		log.String("event", "endpoint.accept-outbound"),
 		log.String("message", "the message is entering the outbound pipeline"),
+	)
+}
+
+// traceOutboundSend adds a log event representing the time at which an outbound message
+// is sent via the transport.
+func traceOutboundSend(span opentracing.Span) {
+	if span == nil {
+		return
+	}
+
+	span.LogFields(
+		log.String("event", "transport.send"),
+		log.String("message", "sending the message via the transport"),
 	)
 }
 
@@ -179,7 +216,9 @@ func (s tracingSink) Accept(ctx context.Context, env OutboundEnvelope) error {
 	defer span.Finish()
 
 	env.SpanContext = span.Context()
-	traceSend(span, env.Operation)
+	traceOutboundAccept(span)
+
+	ctx = opentracing.ContextWithSpan(ctx, span)
 
 	if err := s.Next.Accept(ctx, env); err != nil {
 		traceError(span, err)

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jmalloc/ax/src/ax"
+	opentracing "github.com/opentracing/opentracing-go"
 )
 
 // InboundTransport is an interface receiving messages from endpoints.
@@ -46,6 +47,10 @@ func (s *TransportStage) Initialize(ctx context.Context, ep *Endpoint) error {
 
 // Accept sends env via the transport.
 func (s *TransportStage) Accept(ctx context.Context, env OutboundEnvelope) error {
+	traceOutboundSend(
+		opentracing.SpanFromContext(ctx),
+	)
+
 	return s.transport.Send(ctx, env)
 }
 

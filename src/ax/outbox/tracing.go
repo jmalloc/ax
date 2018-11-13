@@ -9,6 +9,10 @@ import (
 // traceFound adds a log a event representing the fact that an outbox has been
 // found for the inbound message.
 func traceFound(span opentracing.Span, envs []endpoint.OutboundEnvelope) {
+	if span == nil {
+		return
+	}
+
 	n := len(envs)
 
 	span.LogFields(
@@ -21,6 +25,10 @@ func traceFound(span opentracing.Span, envs []endpoint.OutboundEnvelope) {
 // traceNotFound adds a log a event representing the fact that no outbox has
 // been found for the inbound message.
 func traceNotFound(span opentracing.Span) {
+	if span == nil {
+		return
+	}
+
 	span.LogFields(
 		log.String("event", "outbox.not-found"),
 		log.String("message", "no outbox found, forwarding message to the next pipeline stage"),
@@ -30,6 +38,10 @@ func traceNotFound(span opentracing.Span) {
 // traceSave adds a log event representing the fact that an outbox has been
 // saved for the inbound message.
 func traceSave(span opentracing.Span, envs []endpoint.OutboundEnvelope) {
+	if span == nil {
+		return
+	}
+
 	n := len(envs)
 
 	span.LogFields(
