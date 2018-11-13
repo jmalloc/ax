@@ -135,7 +135,7 @@ func run() int {
 		OutboundTransport: transport,
 		InboundPipeline: &observability.InboundHook{
 			Observers: observers,
-			Next: &persistence.Injector{
+			Next: &persistence.InboundInjector{
 				DataStore: ds,
 				Next: &outbox.Deduplicator{
 					Repository: axmysql.OutboxRepository,
@@ -145,11 +145,14 @@ func run() int {
 				},
 			},
 		},
-		OutboundPipeline: &observability.OutboundHook{
-			Observers: observers,
-			Next: &delayedmessage.Interceptor{
-				Repository: axmysql.DelayedMessageRepository,
-				Next:       router,
+		OutboundPipeline: &persistence.OutboundInjector{
+			DataStore: ds,
+			Next: &observability.OutboundHook{
+				Observers: observers,
+				Next: &delayedmessage.Interceptor{
+					Repository: axmysql.DelayedMessageRepository,
+					Next:       router,
+				},
 			},
 		},
 		Tracer: tracer,
