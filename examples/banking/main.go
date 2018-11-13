@@ -37,7 +37,10 @@ import (
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
+	os.Exit(run()) // os.Exit bypasses defer statements, perform them in run() instead
+}
 
+func run() int {
 	db, err := sql.Open("mysql", os.Getenv("AX_MYSQL_DSN"))
 	if err != nil {
 		panic(err)
@@ -212,6 +215,8 @@ func main() {
 
 	err = cli.Execute()
 	if err != nil {
-		os.Exit(1)
+		return 1
 	}
+
+	return 0
 }
