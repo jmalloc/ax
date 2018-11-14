@@ -2,8 +2,8 @@ package endpoint
 
 import (
 	"context"
-	"reflect"
 
+	"github.com/jmalloc/ax/src/internal/reflectx"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
 )
@@ -87,7 +87,7 @@ func (o *OutboundRejecter) Accept(
 	return o.Next.Accept(ctx, env)
 }
 
-func traceValidate(span opentracing.Span, validator Validator) {
+func traceValidate(span opentracing.Span, v Validator) {
 	if span == nil {
 		return
 	}
@@ -95,7 +95,7 @@ func traceValidate(span opentracing.Span, validator Validator) {
 	span.LogFields(
 		log.String("event", "rejecter.validate"),
 		log.String("message", "validating the message"),
-		log.String("validator", reflect.TypeOf(validator).String()),
+		log.String("validator", reflectx.PrettyTypeName(v)),
 	)
 }
 

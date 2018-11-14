@@ -2,10 +2,10 @@ package endpoint
 
 import (
 	"context"
-	"reflect"
 	"time"
 
 	"github.com/jmalloc/ax/src/ax"
+	"github.com/jmalloc/ax/src/internal/reflectx"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
@@ -46,7 +46,7 @@ func traceError(span opentracing.Span, err error) {
 	span.LogFields(
 		log.String("event", "error"),
 		log.String("message", err.Error()),
-		log.String("error.kind", reflect.TypeOf(err).String()),
+		log.String("error.kind", reflectx.PrettyTypeName(err)),
 	)
 }
 
