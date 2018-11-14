@@ -118,9 +118,12 @@ func run() int {
 	dms := &delayedmessage.Sender{
 		DataStore:  ds,
 		Repository: axmysql.DelayedMessageRepository,
-		Out: &observability.OutboundHook{
-			Observers: observers,
-			Next:      router,
+		Out: endpoint.OutboundTracer{
+			Tracer: tracer,
+			Next: &observability.OutboundHook{
+				Observers: observers,
+				Next:      router,
+			},
 		},
 	}
 
@@ -145,13 +148,16 @@ func run() int {
 				},
 			},
 		},
-		OutboundPipeline: &persistence.OutboundInjector{
-			DataStore: ds,
-			Next: &observability.OutboundHook{
-				Observers: observers,
-				Next: &delayedmessage.Interceptor{
-					Repository: axmysql.DelayedMessageRepository,
-					Next:       router,
+		OutboundPipeline: endpoint.OutboundTracer{
+			Tracer: tracer,
+			Next: &persistence.OutboundInjector{
+				DataStore: ds,
+				Next: &observability.OutboundHook{
+					Observers: observers,
+					Next: &delayedmessage.Interceptor{
+						Repository: axmysql.DelayedMessageRepository,
+						Next:       router,
+					},
 				},
 			},
 		},

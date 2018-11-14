@@ -29,6 +29,7 @@ func spanTagsForEnvelope(env ax.Envelope) opentracing.Tags {
 		"message.correlation_id": env.CorrelationID.Get(),
 		"message.created_at":     env.CreatedAt,
 		"message.send_at":        env.SendAt,
+		"message.delay":          env.SendAt.Sub(env.CreatedAt).String(),
 		"message.description":    env.Message.MessageDescription(),
 	}
 }
@@ -204,14 +205,21 @@ func traceOutboundSend(span opentracing.Span) {
 	)
 }
 
-// tracingSink is an implementation of MessageSink that traces messages.
-type tracingSink struct {
+// OutboundTracer is an implementation of OutboundPipeline that traces messages.
+type OutboundTracer struct {
 	Tracer opentracing.Tracer
-	Next   MessageSink
+	Next   OutboundPipeline
+}
+
+// Initialize is called during initialization of the endpoint, after the
+// transport is initialized. It can be used to inspect or further
+// configure the endpoint as per the needs of the pipeline.
+func (s OutboundTracer) Initialize(ctx context.Context, ep *Endpoint) error {
+	return s.Next.Initialize(ctx, ep)
 }
 
 // Accept processes the message encapsulated in env.
-func (s tracingSink) Accept(ctx context.Context, env OutboundEnvelope) error {
+func (s OutboundTracer) Accept(ctx context.Context, env OutboundEnvelope) error {
 	span := startOutboundSpan(ctx, env, s.Tracer)
 	defer span.Finish()
 

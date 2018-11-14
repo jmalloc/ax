@@ -61,11 +61,9 @@ func (r *receiver) process(
 	ctx = opentracing.ContextWithSpan(ctx, span)
 	ctx = WithEnvelope(ctx, env)
 
-	sink := tracingSink{r.Tracer, r.Out}
-
 	traceInboundAccept(span)
 
-	err := r.In.Accept(ctx, sink, env)
+	err := r.In.Accept(ctx, r.Out, env)
 
 	if err == nil {
 		traceInboundAck(span)
