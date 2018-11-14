@@ -10,14 +10,15 @@ import (
 
 var _ = Describe("Delay", func() {
 	It("returns an option that delays sending", func() {
-		env := Envelope{}
-		t := time.Now()
+		env := Envelope{
+			CreatedAt: time.Now(),
+		}
 		d := 10 * time.Second
 		opt := Delay(d)
 
 		err := opt.ApplyExecuteOption(&env)
 		Expect(err).ShouldNot(HaveOccurred())
-		Expect(env.SendAt).To(BeTemporally("~", t.Add(d)))
+		Expect(env.SendAt).To(BeTemporally("~", env.CreatedAt.Add(d)))
 	})
 })
 
