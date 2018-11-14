@@ -7,6 +7,7 @@ import (
 
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
+	opentracing "github.com/opentracing/opentracing-go"
 )
 
 // Router is an outbound pipeline stage that choses a destination endpoint for
@@ -33,8 +34,20 @@ func (r *Router) Initialize(ctx context.Context, ep *endpoint.Endpoint) error {
 // Accept populates the evn.DestinationEndpoint field of unicast messages that
 // do not already have a DestinationEndpoint specified.
 func (r *Router) Accept(ctx context.Context, env endpoint.OutboundEnvelope) error {
-	if err := r.ensureDestination(&env); err != nil {
-		return err
+	span := opentracing.SpanFromContext(ctx)
+
+	if env.Operation == endpoint.OpSendUnicast {
+		if env.DestinationEndpoint == "" {
+			if err := r.ensureDestination(&env); err != nil {
+				return err
+			}
+
+			traceSelect(span, env.DestinationEndpoint)
+		} else {
+			tracePreserve(span, env.DestinationEndpoint)
+		}
+	} else {
+		traceForward(span)
 	}
 
 	return r.Next.Accept(ctx, env)
@@ -42,10 +55,6 @@ func (r *Router) Accept(ctx context.Context, env endpoint.OutboundEnvelope) erro
 
 // ensureDestintion ensures that env.DestinationEndpoint is set if required.
 func (r *Router) ensureDestination(env *endpoint.OutboundEnvelope) error {
-	if env.Operation != endpoint.OpSendUnicast || env.DestinationEndpoint != "" {
-		return nil
-	}
-
 	mt := env.Type()
 
 	if ep, ok := r.cache.Load(mt.Name); ok {

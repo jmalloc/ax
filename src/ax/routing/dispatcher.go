@@ -7,6 +7,7 @@ import (
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/observability"
 	"github.com/jmalloc/twelf/src/twelf"
+	opentracing "github.com/opentracing/opentracing-go"
 )
 
 // Dispatcher is an inbound pipeline stage that routes messages to the
@@ -57,6 +58,8 @@ func (d *Dispatcher) Accept(ctx context.Context, s endpoint.MessageSink, env end
 		Validators: d.validators,
 	}
 
+	span := opentracing.SpanFromContext(ctx)
+
 	mctx := ax.NewMessageContext(
 		env.Envelope,
 		observability.NewDomainLogger(
@@ -66,6 +69,8 @@ func (d *Dispatcher) Accept(ctx context.Context, s endpoint.MessageSink, env end
 	)
 
 	for _, h := range d.Routes.Lookup(env.Type()) {
+		traceDispatch(span, h)
+
 		if err := h.HandleMessage(ctx, sender, mctx); err != nil {
 			return err
 		}
