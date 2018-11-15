@@ -2,9 +2,12 @@ package endpoint
 
 import (
 	"context"
+	"time"
 
 	"github.com/jmalloc/ax/src/internal/servicegroup"
+	"github.com/jmalloc/ax/src/internal/tracing"
 	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 )
 
 // receiver receives a message from a transport, forwards it to the inbound
@@ -55,37 +58,95 @@ func (r *receiver) process(
 	env InboundEnvelope,
 	ack Acknowledger,
 ) error {
-	span := startInboundSpan(ctx, env, r.Tracer)
+	span := startInboundSpan(env, r.Tracer)
 	defer span.Finish()
 
 	ctx = opentracing.ContextWithSpan(ctx, span)
-	ctx = WithEnvelope(ctx, env)
 
-	traceInboundAccept(span)
+	tracing.LogEventS(
+		span,
+		"receive",
+		"the message has been received from the transport",
+	)
 
-	err := r.In.Accept(ctx, r.Out, env)
+	acceptErr := r.In.Accept(
+		WithEnvelope(ctx, env),
+		r.Out,
+		env,
+	)
 
-	if err == nil {
-		traceInboundAck(span)
-		err = ack.Ack(ctx)
-	} else {
-		// trace the error from the pipeline
-		traceError(span, err)
-
-		if d, ok := r.RetryPolicy(env, err); ok {
-			traceInboundRetry(span, d)
-			err = ack.Retry(ctx, err, d)
-		} else {
-			traceInboundReject(span)
-			err = ack.Reject(ctx, err)
-		}
+	if acceptErr != nil {
+		tracing.LogErrorS(span, acceptErr)
 	}
 
-	if err != nil {
-		// trace the error from the acknowledger
-		traceError(span, err)
+	if err := r.ack(ctx, ack, env, acceptErr); err != nil {
+		tracing.LogErrorS(span, err)
 		return err
 	}
 
 	return nil
+}
+
+func (r *receiver) ack(
+	ctx context.Context,
+	ack Acknowledger,
+	env InboundEnvelope,
+	err error,
+) error {
+	if err == nil {
+		tracing.LogEvent(
+			ctx,
+			"ack",
+			"acknowledging successfully processed message",
+		)
+
+		return ack.Ack(ctx)
+	}
+
+	if d, ok := r.RetryPolicy(env, err); ok {
+		tracing.LogEvent(
+			ctx,
+			"retry",
+			"scheduling failed message for retry",
+			tracing.Duration("delay-for", d),
+			tracing.Time("delay-until", time.Now().Add(d)),
+		)
+
+		return ack.Retry(ctx, err, d)
+	}
+
+	tracing.LogEvent(
+		ctx,
+		"reject",
+		"rejecting failed message as per retry policy",
+	)
+
+	return ack.Reject(ctx, err)
+}
+
+// startInboundSpan starts an OpenTracing span representing an inbound message.
+func startInboundSpan(env InboundEnvelope, tr opentracing.Tracer) opentracing.Span {
+	opts := []opentracing.StartSpanOption{
+		ext.SpanKindConsumer,
+		spanTagsForEnvelope(env.Envelope),
+		opentracing.Tags{
+			string(ext.Component):   "ax",
+			"message.source":        env.SourceEndpoint,
+			"message.attempt.id":    env.AttemptID.Get(),
+			"message.attempt.count": env.AttemptCount,
+		},
+	}
+
+	if env.SpanContext != nil {
+		opts = append(
+			opts,
+			opentracing.ChildOf(env.SpanContext),
+		)
+	}
+
+	return tracing.StartSpan(
+		tr,
+		env.Type().String(),
+		opts...,
+	)
 }

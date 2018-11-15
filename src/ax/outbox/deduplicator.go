@@ -6,7 +6,8 @@ import (
 
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/persistence"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/jmalloc/ax/src/internal/tracing"
+	"github.com/opentracing/opentracing-go/log"
 )
 
 // Deduplicator is an inbound pipeline stage that provides message idempotency
@@ -45,19 +46,34 @@ func (d *Deduplicator) Accept(ctx context.Context, s endpoint.MessageSink, env e
 		return err
 	}
 
-	span := opentracing.SpanFromContext(ctx)
-
 	if ok {
-		traceFound(span, envs)
+		tracing.LogEvent(
+			ctx,
+			"outbox-loaded",
+			"found an outbox, the message has already been processed",
+			log.Int("pending-outbound-messages", len(envs)),
+			tracing.TypeName("pipeline-stage", d),
+		)
 	} else {
-		traceNotFound(span)
+		tracing.LogEvent(
+			ctx,
+			"outbox-not-found",
+			"no outbox found, forwarding message to the next pipeline stage",
+			tracing.TypeName("pipeline-stage", d),
+		)
 
 		envs, err = d.forward(ctx, env)
 		if err != nil {
 			return err
 		}
 
-		traceSave(span, envs)
+		tracing.LogEvent(
+			ctx,
+			"outbox-saved",
+			"message processed successfully, saving outbox",
+			log.Int("pending-outbound-messages", len(envs)),
+			tracing.TypeName("pipeline-stage", d),
+		)
 	}
 
 	for _, o := range envs {

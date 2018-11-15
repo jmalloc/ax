@@ -4,8 +4,7 @@ import (
 	"context"
 	"time"
 
-	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/log"
+	"github.com/jmalloc/ax/src/internal/tracing"
 )
 
 // DefaultTimeout is the default timeout duration to use if none is given.
@@ -36,22 +35,12 @@ func (tl TimeLimiter) Accept(ctx context.Context, sink MessageSink, env InboundE
 	ctx, cancel := context.WithTimeout(ctx, to)
 	defer cancel()
 
-	traceTimeLimit(
-		opentracing.SpanFromContext(ctx),
-		to,
+	tracing.LogEvent(
+		ctx,
+		"limit-processing-time",
+		"added processing timeout, forwarding message to the next pipeline stage",
+		tracing.Duration("timeout", to),
 	)
 
 	return tl.Next.Accept(ctx, sink, env)
-}
-
-func traceTimeLimit(span opentracing.Span, d time.Duration) {
-	if span == nil {
-		return
-	}
-
-	span.LogFields(
-		log.String("event", "time-limiter.limit"),
-		log.String("message", "added timeout, forwarding message to the next pipeline stage"),
-		log.String("timeout", d.String()),
-	)
 }

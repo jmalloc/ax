@@ -4,9 +4,7 @@ import (
 	"context"
 
 	"github.com/jmalloc/ax/src/ax/endpoint"
-	"github.com/jmalloc/ax/src/internal/reflectx"
-	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/log"
+	"github.com/jmalloc/ax/src/internal/tracing"
 )
 
 // InboundInjector is an implementation of endpoint.InboundPipeline that injects
@@ -33,10 +31,7 @@ func (i *InboundInjector) Accept(
 ) error {
 	ctx = WithDataStore(ctx, i.DataStore)
 
-	traceInject(
-		opentracing.SpanFromContext(ctx),
-		i.DataStore,
-	)
+	traceInject(ctx, i, i.DataStore)
 
 	return i.Next.Accept(ctx, s, env)
 }
@@ -53,6 +48,9 @@ type OutboundInjector struct {
 // endpoint as per the needs of the pipeline.
 func (i *OutboundInjector) Initialize(ctx context.Context, ep *endpoint.Endpoint) error {
 	ctx = WithDataStore(ctx, i.DataStore)
+
+	traceInject(ctx, i, i.DataStore)
+
 	return i.Next.Initialize(ctx, ep)
 }
 
@@ -63,23 +61,14 @@ func (i *OutboundInjector) Accept(
 	env endpoint.OutboundEnvelope,
 ) error {
 	ctx = WithDataStore(ctx, i.DataStore)
-
-	traceInject(
-		opentracing.SpanFromContext(ctx),
-		i.DataStore,
-	)
-
 	return i.Next.Accept(ctx, env)
 }
 
-func traceInject(span opentracing.Span, ds DataStore) {
-	if span == nil {
-		return
-	}
-
-	span.LogFields(
-		log.String("event", "persistence.inject"),
-		log.String("message", "added data-store to context, forwarding message to the next pipeline stage"),
-		log.String("data-store", reflectx.PrettyTypeName(ds)),
+func traceInject(ctx context.Context, ps interface{}, ds DataStore) {
+	tracing.LogEvent(
+		ctx,
+		"inject-data-store",
+		"added data-store to context, forwarding message to the next pipeline stage",
+		tracing.TypeName("pipeline-stage", ps),
 	)
 }

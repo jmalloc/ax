@@ -3,8 +3,7 @@ package endpoint
 import (
 	"context"
 
-	"github.com/jmalloc/ax/src/internal/reflectx"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/jmalloc/ax/src/internal/tracing"
 	"github.com/opentracing/opentracing-go/log"
 )
 
@@ -33,17 +32,15 @@ func (i *InboundRejecter) Accept(
 	sink MessageSink,
 	env InboundEnvelope,
 ) error {
-	span := opentracing.SpanFromContext(ctx)
-
 	for _, v := range i.Validators {
-		traceValidate(span, v)
+		traceValidate(ctx, v)
 
 		if err := v.Validate(ctx, env.Message); err != nil {
 			return err
 		}
 	}
 
-	traceValidated(span)
+	traceValidated(ctx, i.Validators)
 
 	return i.Next.Accept(ctx, sink, env)
 }
@@ -72,40 +69,33 @@ func (o *OutboundRejecter) Accept(
 	ctx context.Context,
 	env OutboundEnvelope,
 ) error {
-	span := opentracing.SpanFromContext(ctx)
-
 	for _, v := range o.Validators {
-		traceValidate(span, v)
+		traceValidate(ctx, v)
 
 		if err := v.Validate(ctx, env.Message); err != nil {
 			return err
 		}
 	}
 
-	traceValidated(span)
+	traceValidated(ctx, o.Validators)
 
 	return o.Next.Accept(ctx, env)
 }
 
-func traceValidate(span opentracing.Span, v Validator) {
-	if span == nil {
-		return
-	}
-
-	span.LogFields(
-		log.String("event", "rejecter.validate"),
-		log.String("message", "validating the message"),
-		log.String("validator", reflectx.PrettyTypeName(v)),
+func traceValidate(ctx context.Context, v Validator) {
+	tracing.LogEvent(
+		ctx,
+		"validate",
+		"validating the message",
+		tracing.TypeName("validator", v),
 	)
 }
 
-func traceValidated(span opentracing.Span) {
-	if span == nil {
-		return
-	}
-
-	span.LogFields(
-		log.String("event", "rejecter.validated"),
-		log.String("message", "the message is valid, forwarding message to the next pipeline stage"),
+func traceValidated(ctx context.Context, v []Validator) {
+	tracing.LogEvent(
+		ctx,
+		"validated",
+		"the message is valid, forwarding message to the next pipeline stage",
+		log.Int("validator-count", len(v)),
 	)
 }

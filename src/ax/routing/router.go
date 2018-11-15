@@ -7,7 +7,8 @@ import (
 
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/jmalloc/ax/src/internal/tracing"
+	"github.com/opentracing/opentracing-go/log"
 )
 
 // Router is an outbound pipeline stage that choses a destination endpoint for
@@ -34,20 +35,38 @@ func (r *Router) Initialize(ctx context.Context, ep *endpoint.Endpoint) error {
 // Accept populates the evn.DestinationEndpoint field of unicast messages that
 // do not already have a DestinationEndpoint specified.
 func (r *Router) Accept(ctx context.Context, env endpoint.OutboundEnvelope) error {
-	span := opentracing.SpanFromContext(ctx)
-
 	if env.Operation == endpoint.OpSendUnicast {
 		if env.DestinationEndpoint == "" {
 			if err := r.ensureDestination(&env); err != nil {
 				return err
 			}
 
-			traceSelect(span, env.DestinationEndpoint)
+			tracing.LogEvent(
+				ctx,
+				"route",
+				"destination endpoint selected, forwarding message to the next pipeline stage",
+				log.String("endpoint", env.DestinationEndpoint),
+				tracing.TypeName("pipeline-stage", r),
+			)
+
 		} else {
-			tracePreserve(span, env.DestinationEndpoint)
+			tracing.LogEvent(
+				ctx,
+				"route",
+				"destination endpoint already present in message, forwarding message to the next pipeline stage",
+				log.String("endpoint", env.DestinationEndpoint),
+				tracing.TypeName("pipeline-stage", r),
+			)
+
+			tracing.SetTag(ctx, "message.destination", env.DestinationEndpoint)
 		}
 	} else {
-		traceForward(span)
+		tracing.LogEvent(
+			ctx,
+			"route",
+			"message does not require a single destination, forwarding message to the next pipeline stage",
+			tracing.TypeName("pipeline-stage", r),
+		)
 	}
 
 	return r.Next.Accept(ctx, env)

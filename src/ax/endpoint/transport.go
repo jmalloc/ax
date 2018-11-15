@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jmalloc/ax/src/ax"
+	"github.com/jmalloc/ax/src/internal/tracing"
 	opentracing "github.com/opentracing/opentracing-go"
 )
 
@@ -47,9 +48,17 @@ func (s *TransportStage) Initialize(ctx context.Context, ep *Endpoint) error {
 
 // Accept sends env via the transport.
 func (s *TransportStage) Accept(ctx context.Context, env OutboundEnvelope) error {
-	traceOutboundSend(
-		opentracing.SpanFromContext(ctx),
-	)
+	if span := opentracing.SpanFromContext(ctx); span != nil {
+		tracing.LogEventS(
+			span,
+			"send",
+			"sending the message via the transport",
+			tracing.TypeName("pipeline-stage", s),
+		)
+
+		// if there is a span in the context, propagate it via the transport
+		env.SpanContext = span.Context()
+	}
 
 	return s.transport.Send(ctx, env)
 }

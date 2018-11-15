@@ -6,7 +6,7 @@ import (
 
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/persistence"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/jmalloc/ax/src/internal/tracing"
 )
 
 // Interceptor is an outbound pipeline stage that intercepts messages that are
@@ -31,9 +31,14 @@ func (i *Interceptor) Accept(ctx context.Context, env endpoint.OutboundEnvelope)
 		return i.Next.Accept(ctx, env)
 	}
 
-	span := opentracing.SpanFromContext(ctx)
-
-	traceIntercept(span, env.Envelope)
+	tracing.LogEvent(
+		ctx,
+		"delay",
+		"intercepting the message to be sent after a delay",
+		tracing.Duration("delay-for", env.Delay()),
+		tracing.Time("delay-until", env.SendAt),
+		tracing.TypeName("pipeline-stage", i),
+	)
 
 	tx, com, err := persistence.GetOrBeginTx(ctx)
 	if err != nil {
