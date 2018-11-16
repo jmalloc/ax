@@ -15,6 +15,10 @@ func StartChildOf(
 	opts ...opentracing.StartSpanOption,
 ) opentracing.Span {
 	if p := opentracing.SpanFromContext(ctx); p != nil {
+		if tr == nil {
+			tr = p.Tracer()
+		}
+
 		opts = append(
 			opts,
 			opentracing.ChildOf(p.Context()),
@@ -32,6 +36,10 @@ func StartFollowsFrom(
 	opts ...opentracing.StartSpanOption,
 ) opentracing.Span {
 	if p := opentracing.SpanFromContext(ctx); p != nil {
+		if tr == nil {
+			tr = p.Tracer()
+		}
+
 		opts = append(
 			opts,
 			opentracing.FollowsFrom(p.Context()),
