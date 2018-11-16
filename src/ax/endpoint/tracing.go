@@ -36,9 +36,9 @@ func (s OutboundTracer) Accept(ctx context.Context, env OutboundEnvelope) error 
 
 	switch env.Operation {
 	case OpSendUnicast:
-		span.SetTag("message.operation", "send-unicast")
+		span.SetTag("operation", "send-unicast")
 	case OpSendMulticast:
-		span.SetTag("message.operation", "send-multicast")
+		span.SetTag("operation", "send-multicast")
 	}
 
 	ctx = opentracing.ContextWithSpan(ctx, span)
@@ -55,12 +55,15 @@ func (s OutboundTracer) Accept(ctx context.Context, env OutboundEnvelope) error 
 // envelope. It is used for both inbound and outbound traces.
 func spanTagsForEnvelope(env ax.Envelope) opentracing.Tags {
 	return opentracing.Tags{
-		"message.id":             env.MessageID.Get(),
-		"message.causation_id":   env.CausationID.Get(),
-		"message.correlation_id": env.CorrelationID.Get(),
-		"message.created_at":     env.CreatedAt,
-		"message.send_at":        env.SendAt,
-		"message.delay":          env.SendAt.Sub(env.CreatedAt).String(),
-		"message.description":    env.Message.MessageDescription(),
+		"message_id":           env.MessageID.Get(),
+		"causation_id":         env.CausationID.Get(),
+		"correlation_id":       env.CorrelationID.Get(),
+		"message_short_id":     env.MessageID.String(),
+		"causation_short_id":   env.CausationID.String(),
+		"correlation_short_id": env.CorrelationID.String(),
+		"description":          env.Message.MessageDescription(),
+		"created_at":           env.CreatedAt,
+		"send_at":              env.SendAt,
+		"delay":                env.SendAt.Sub(env.CreatedAt).String(),
 	}
 }

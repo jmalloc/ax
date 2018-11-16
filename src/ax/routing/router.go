@@ -8,6 +8,7 @@ import (
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/internal/tracing"
+	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
 )
 
@@ -45,8 +46,8 @@ func (r *Router) Accept(ctx context.Context, env endpoint.OutboundEnvelope) erro
 				ctx,
 				"route",
 				"destination endpoint selected, forwarding message to the next pipeline stage",
-				log.String("endpoint", env.DestinationEndpoint),
-				tracing.TypeName("pipeline-stage", r),
+				log.String("destination_endpoint", env.DestinationEndpoint),
+				tracing.TypeName("pipeline_stage", r),
 			)
 
 		} else {
@@ -54,18 +55,19 @@ func (r *Router) Accept(ctx context.Context, env endpoint.OutboundEnvelope) erro
 				ctx,
 				"route",
 				"destination endpoint already present in message, forwarding message to the next pipeline stage",
-				log.String("endpoint", env.DestinationEndpoint),
-				tracing.TypeName("pipeline-stage", r),
+				log.String("destination_endpoint", env.DestinationEndpoint),
+				tracing.TypeName("pipeline_stage", r),
 			)
 
-			tracing.SetTag(ctx, "message.destination", env.DestinationEndpoint)
+			tracing.SetTag(ctx, "destination_endpoint", env.DestinationEndpoint)
+			tracing.SetTag(ctx, string(ext.MessageBusDestination), env.DestinationEndpoint)
 		}
 	} else {
 		tracing.LogEvent(
 			ctx,
 			"route",
 			"message does not require a single destination, forwarding message to the next pipeline stage",
-			tracing.TypeName("pipeline-stage", r),
+			tracing.TypeName("pipeline_stage", r),
 		)
 	}
 

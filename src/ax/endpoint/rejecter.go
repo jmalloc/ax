@@ -96,6 +96,6 @@ func traceValidated(ctx context.Context, v []Validator) {
 		ctx,
 		"validated",
 		"the message is valid, forwarding message to the next pipeline stage",
-		log.Int("validator-count", len(v)),
+		log.Int("validator_count", len(v)),
 	)
 }

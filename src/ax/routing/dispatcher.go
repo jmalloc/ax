@@ -71,8 +71,8 @@ func (d *Dispatcher) Accept(ctx context.Context, s endpoint.MessageSink, env end
 			ctx,
 			"dispatch",
 			"dispatching message to handler",
-			tracing.TypeName("message-handler", h),
-			tracing.TypeName("pipeline-stage", d),
+			tracing.TypeName("handler", h),
+			tracing.TypeName("pipeline_stage", d),
 		)
 
 		if err := h.HandleMessage(ctx, sender, mctx); err != nil {

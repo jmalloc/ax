@@ -67,8 +67,8 @@ func (i *OutboundInjector) Accept(
 func traceInject(ctx context.Context, ps interface{}, ds DataStore) {
 	tracing.LogEvent(
 		ctx,
-		"inject-data-store",
-		"added data-store to context, forwarding message to the next pipeline stage",
-		tracing.TypeName("pipeline-stage", ps),
+		"inject_data_store",
+		"added data store to context, forwarding message to the next pipeline stage",
+		tracing.TypeName("pipeline_stage", ps),
 	)
 }

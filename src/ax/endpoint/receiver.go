@@ -108,8 +108,8 @@ func (r *receiver) ack(
 			ctx,
 			"retry",
 			"scheduling failed message for retry",
-			tracing.Duration("delay-for", d),
-			tracing.Time("delay-until", time.Now().Add(d)),
+			tracing.Duration("delay_for", d),
+			tracing.Time("delay_until", time.Now().Add(d)),
 		)
 
 		return ack.Retry(ctx, err, d)
@@ -130,10 +130,11 @@ func startInboundSpan(env InboundEnvelope, tr opentracing.Tracer) opentracing.Sp
 		ext.SpanKindConsumer,
 		spanTagsForEnvelope(env.Envelope),
 		opentracing.Tags{
-			string(ext.Component):   "ax",
-			"message.source":        env.SourceEndpoint,
-			"message.attempt.id":    env.AttemptID.Get(),
-			"message.attempt.count": env.AttemptCount,
+			string(ext.Component): "ax",
+			"source_endpoint":     env.SourceEndpoint,
+			"attempt_id":          env.AttemptID.Get(),
+			"attempt_short_id":    env.AttemptID.String(),
+			"attempt_count":       env.AttemptCount,
 		},
 	}
 

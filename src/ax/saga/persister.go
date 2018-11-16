@@ -33,7 +33,9 @@ type UnitOfWork interface {
 	Instance() Instance
 
 	// Save persists changes to the instance.
+	//
 	// It returns true if any changes have occurred.
+	// On success, the Instance().Revision is updated to match the new revision.
 	Save(ctx context.Context) (bool, error)
 
 	// SaveAndComplete persists changes to a completed instance.
@@ -41,6 +43,9 @@ type UnitOfWork interface {
 	// The precise behavior is implementation defined. Typically meta-data about
 	// the instance is discarded. The implementation may completely remove any
 	// record of the instance.
+	//
+	// On success, the Instance().Revision is updated to match the revision
+	// produced by the save.
 	SaveAndComplete(ctx context.Context) error
 
 	// Close is called when the unit-of-work has ended, regardless of whether

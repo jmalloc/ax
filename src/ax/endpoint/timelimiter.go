@@ -37,7 +37,7 @@ func (tl TimeLimiter) Accept(ctx context.Context, sink MessageSink, env InboundE
 
 	tracing.LogEvent(
 		ctx,
-		"limit-processing-time",
+		"set_timeout",
 		"added processing timeout, forwarding message to the next pipeline stage",
 		tracing.Duration("timeout", to),
 	)

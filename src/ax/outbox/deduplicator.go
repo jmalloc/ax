@@ -49,17 +49,17 @@ func (d *Deduplicator) Accept(ctx context.Context, s endpoint.MessageSink, env e
 	if ok {
 		tracing.LogEvent(
 			ctx,
-			"outbox-loaded",
-			"found an outbox, the message has already been processed",
-			log.Int("pending-outbound-messages", len(envs)),
-			tracing.TypeName("pipeline-stage", d),
+			"outbox_present",
+			"the message has already been processed",
+			log.Int("unpublished_messages", len(envs)),
+			tracing.TypeName("pipeline_stage", d),
 		)
 	} else {
 		tracing.LogEvent(
 			ctx,
-			"outbox-not-found",
-			"no outbox found, forwarding message to the next pipeline stage",
-			tracing.TypeName("pipeline-stage", d),
+			"outbox_not_present",
+			"forwarding message to the next pipeline stage",
+			tracing.TypeName("pipeline_stage", d),
 		)
 
 		envs, err = d.forward(ctx, env)
@@ -69,10 +69,10 @@ func (d *Deduplicator) Accept(ctx context.Context, s endpoint.MessageSink, env e
 
 		tracing.LogEvent(
 			ctx,
-			"outbox-saved",
-			"message processed successfully, saving outbox",
-			log.Int("pending-outbound-messages", len(envs)),
-			tracing.TypeName("pipeline-stage", d),
+			"outbox_saved",
+			"message processed successfully",
+			log.Int("unpublished_messages", len(envs)),
+			tracing.TypeName("pipeline_stage", d),
 		)
 	}
 

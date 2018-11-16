@@ -53,7 +53,7 @@ func (s *TransportStage) Accept(ctx context.Context, env OutboundEnvelope) error
 			span,
 			"send",
 			"sending the message via the transport",
-			tracing.TypeName("pipeline-stage", s),
+			tracing.TypeName("pipeline_stage", s),
 		)
 
 		// if there is a span in the context, propagate it via the transport

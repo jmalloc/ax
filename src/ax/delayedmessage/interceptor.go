@@ -35,9 +35,9 @@ func (i *Interceptor) Accept(ctx context.Context, env endpoint.OutboundEnvelope)
 		ctx,
 		"delay",
 		"intercepting the message to be sent after a delay",
-		tracing.Duration("delay-for", env.Delay()),
-		tracing.Time("delay-until", env.SendAt),
-		tracing.TypeName("pipeline-stage", i),
+		tracing.Duration("delay_for", env.Delay()),
+		tracing.Time("delay_until", env.SendAt),
+		tracing.TypeName("pipeline_stage", i),
 	)
 
 	tx, com, err := persistence.GetOrBeginTx(ctx)
