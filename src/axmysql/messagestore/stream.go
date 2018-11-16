@@ -27,7 +27,9 @@ type Stream struct {
 	Limit        uint64
 	PollInterval time.Duration
 
-	rows *sql.Rows
+	rows     *sql.Rows
+	rowLimit uint64
+	rowCount uint64
 }
 
 // Next advances the stream to the next message.
@@ -64,17 +66,26 @@ func (s *Stream) Next(ctx context.Context) error {
 //
 // It returns false if there are no more messages in the stream.
 func (s *Stream) TryNext(ctx context.Context) (bool, error) {
-	if s.rows != nil {
-		if s.advance() {
+	for {
+		if s.rows == nil {
+			if err := s.fetchRows(ctx); err != nil {
+				return false, err
+			}
+		}
+
+		if s.rows.Next() {
+			s.NextOffset++
+			s.rowCount++
 			return true, nil
 		}
-	}
 
-	if err := s.fetchRows(ctx); err != nil {
-		return false, err
-	}
+		more := s.rowCount == s.rowLimit
+		err := s.replaceRows(nil, 0)
 
-	return s.advance(), nil
+		if !more || err != nil {
+			return false, err
+		}
+	}
 }
 
 // Get returns the message at the current offset in the stream.
@@ -130,7 +141,7 @@ func (s *Stream) Offset() (uint64, error) {
 
 // Close closes the stream.
 func (s *Stream) Close() error {
-	return s.replaceRows(nil)
+	return s.replaceRows(nil, 0)
 }
 
 // fetchRows selects the next batch of messages from the stream.
@@ -145,31 +156,22 @@ func (s *Stream) fetchRows(ctx context.Context) error {
 		return err
 	}
 
-	return s.replaceRows(rows)
+	return s.replaceRows(rows, n)
 }
 
 // replaceRows replaces s.rows with r, closing the existing s.rows value if it
 // is not nil.
-func (s *Stream) replaceRows(r *sql.Rows) error {
-	if s.rows != nil {
-		prev := s.rows
-		s.rows = nil
+func (s *Stream) replaceRows(r *sql.Rows, n uint64) error {
+	prev := s.rows
+	s.rows = r
+	s.rowLimit = n
+	s.rowCount = 0
 
+	if prev != nil {
 		if err := prev.Close(); err != nil {
 			return err
 		}
 	}
 
-	s.rows = r
 	return nil
-}
-
-// advance moves to the next row in s.rows.
-func (s *Stream) advance() bool {
-	if s.rows.Next() {
-		s.NextOffset++
-		return true
-	}
-
-	return false
 }
