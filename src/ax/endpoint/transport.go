@@ -9,7 +9,7 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 )
 
-// InboundTransport is an interface receiving messages from endpoints.
+// InboundTransport is an interface for receiving messages from endpoints.
 type InboundTransport interface {
 	// Initialize sets up the transport to communicate as an endpoint named ep.
 	Initialize(ctx context.Context, ep string) error
