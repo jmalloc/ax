@@ -74,6 +74,7 @@ var _ = Describe("MessageHandler", func() {
 					&endpoint.SinkSender{},
 					ax.NewMessageContext(
 						ax.NewEnvelope(m),
+						nil, // span
 						twelf.SilentLogger,
 					),
 				)
