@@ -2,6 +2,9 @@ package endpoint
 
 import (
 	"context"
+
+	"github.com/jmalloc/ax/src/internal/tracing"
+	"github.com/opentracing/opentracing-go/log"
 )
 
 // InboundRejecter is an inbound pipeline stage that validates messages before
@@ -30,10 +33,14 @@ func (i *InboundRejecter) Accept(
 	env InboundEnvelope,
 ) error {
 	for _, v := range i.Validators {
+		traceValidate(ctx, v)
+
 		if err := v.Validate(ctx, env.Message); err != nil {
 			return err
 		}
 	}
+
+	traceValidated(ctx, i.Validators)
 
 	return i.Next.Accept(ctx, sink, env)
 }
@@ -63,10 +70,32 @@ func (o *OutboundRejecter) Accept(
 	env OutboundEnvelope,
 ) error {
 	for _, v := range o.Validators {
+		traceValidate(ctx, v)
+
 		if err := v.Validate(ctx, env.Message); err != nil {
 			return err
 		}
 	}
 
+	traceValidated(ctx, o.Validators)
+
 	return o.Next.Accept(ctx, env)
+}
+
+func traceValidate(ctx context.Context, v Validator) {
+	tracing.LogEvent(
+		ctx,
+		"validate",
+		"validating the message",
+		tracing.TypeName("validator", v),
+	)
+}
+
+func traceValidated(ctx context.Context, v []Validator) {
+	tracing.LogEvent(
+		ctx,
+		"validated",
+		"the message is valid, forwarding message to the next pipeline stage",
+		log.Int("validator_count", len(v)),
+	)
 }

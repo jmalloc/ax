@@ -6,6 +6,7 @@ import (
 
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/persistence"
+	"github.com/jmalloc/ax/src/internal/tracing"
 )
 
 // Interceptor is an outbound pipeline stage that intercepts messages that are
@@ -29,6 +30,15 @@ func (i *Interceptor) Accept(ctx context.Context, env endpoint.OutboundEnvelope)
 	if !env.SendAt.After(time.Now()) {
 		return i.Next.Accept(ctx, env)
 	}
+
+	tracing.LogEvent(
+		ctx,
+		"delay",
+		"intercepting the message to be sent after a delay",
+		tracing.Duration("delay_for", env.Delay()),
+		tracing.Time("delay_until", env.SendAt),
+		tracing.TypeName("pipeline_stage", i),
+	)
 
 	tx, com, err := persistence.GetOrBeginTx(ctx)
 	if err != nil {

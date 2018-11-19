@@ -163,6 +163,16 @@ func (e Envelope) Type() MessageType {
 	return TypeOf(e.Message)
 }
 
+// Delay returns the delay between the messages creation time and the time at
+// which it is to be sent.
+func (e Envelope) Delay() time.Duration {
+	if e.SendAt.After(e.CreatedAt) {
+		return e.SendAt.Sub(e.CreatedAt)
+	}
+
+	return 0
+}
+
 // Equal returns true if e and env contain the same data.
 func (e Envelope) Equal(env Envelope) bool {
 	return e.MessageID == env.MessageID &&

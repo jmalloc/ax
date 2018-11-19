@@ -1,12 +1,15 @@
 package axrmq
 
 import (
+	"bytes"
 	"fmt"
 	"time"
 
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
 	"github.com/jmalloc/ax/src/ax/marshaling"
+	"github.com/jmalloc/ax/src/internal/bufferpool"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/streadway/amqp"
 )
 
@@ -18,10 +21,18 @@ const (
 	// sendAtHeader is the name of the AMQP message header that carries the
 	// ax.Envelope.SendAt field.
 	sendAtHeader = "ax-send-at"
+
+	// spanContextHeader is the name of the AMQP message header that carries the
+	// OpenTracing span-context.
+	spanContextHeader = "ax-span-context"
 )
 
 // marshalMessage marshals a message envelope to an AMQP "publishing" message.
-func marshalMessage(ep string, env endpoint.OutboundEnvelope) (amqp.Publishing, error) {
+func marshalMessage(
+	ep string,
+	env endpoint.OutboundEnvelope,
+	tr opentracing.Tracer,
+) (amqp.Publishing, error) {
 	pub := amqp.Publishing{
 		AppId:         ep,
 		MessageId:     env.MessageID.Get(),
@@ -39,6 +50,8 @@ func marshalMessage(ep string, env endpoint.OutboundEnvelope) (amqp.Publishing, 
 		pub.Headers[sendAtHeader] = marshaling.MarshalTime(env.SendAt)
 	}
 
+	marshalSpanContext(pub.Headers, env.SpanContext, tr)
+
 	var err error
 	pub.ContentType, pub.Body, err = ax.MarshalMessage(env.Message)
 
@@ -47,7 +60,10 @@ func marshalMessage(ep string, env endpoint.OutboundEnvelope) (amqp.Publishing, 
 
 // unmarshalMessage unmarshals a message envelope from an AMQP "delivery"
 // message.
-func unmarshalMessage(del amqp.Delivery) (endpoint.InboundEnvelope, error) {
+func unmarshalMessage(
+	del amqp.Delivery,
+	tr opentracing.Tracer,
+) (endpoint.InboundEnvelope, error) {
 	env := endpoint.InboundEnvelope{
 		SourceEndpoint: del.AppId,
 		AttemptID:      endpoint.GenerateAttemptID(),
@@ -79,6 +95,8 @@ func unmarshalMessage(del amqp.Delivery) (endpoint.InboundEnvelope, error) {
 	} else if !ok {
 		env.SendAt = env.CreatedAt
 	}
+
+	env.SpanContext = unmarshalSpanContext(del.Headers, tr)
 
 	env.Message, err = ax.UnmarshalMessage(del.ContentType, del.Body)
 
@@ -137,4 +155,71 @@ func unmarshalTimeFromHeader(headers amqp.Table, n string, t *time.Time) (bool, 
 	}
 
 	return true, marshaling.UnmarshalTime(s, t)
+}
+
+// marshalSpanContext marshals an OpenTracing span context into AMQP headers.
+func marshalSpanContext(
+	headers amqp.Table,
+	sc opentracing.SpanContext,
+	tr opentracing.Tracer,
+) {
+	if tr == nil || sc == nil {
+		return
+	}
+
+	// buf is not returned to the pool, as the underlying slice is retained in the
+	// AMQP headers.
+	buf := bufferpool.Get()
+
+	if err := tr.Inject(
+		sc,
+		opentracing.Binary,
+		buf,
+	); err != nil {
+		// TODO: add logging - https://github.com/jmalloc/ax/issues/144
+		// A failed span propagation is worth logging about, but does not stop the
+		// system from sending the message.
+		return
+	}
+
+	headers[spanContextHeader] = buf.Bytes()
+}
+
+// unmarshalSpanContext unmarshals an OpenTracing span context from AMQP headers.
+func unmarshalSpanContext(
+	headers amqp.Table,
+	tr opentracing.Tracer,
+) opentracing.SpanContext {
+	if tr == nil {
+		return nil
+	}
+
+	v, ok := headers[spanContextHeader]
+	if !ok {
+		return nil
+	}
+
+	b, ok := v.([]byte)
+	if !ok {
+		// TODO: add logging - https://github.com/jmalloc/ax/issues/144
+		// A failed span propagation is worth logging about, but does not stop the
+		// system from sending the message.
+		return nil
+	}
+
+	buf := bytes.NewBuffer(b)
+	defer bufferpool.Put(buf)
+
+	sc, err := tr.Extract(opentracing.Binary, buf)
+
+	if err == opentracing.ErrSpanContextNotFound {
+		return nil
+	} else if err != nil {
+		// TODO: add logging - https://github.com/jmalloc/ax/issues/144
+		// A failed span propagation is worth logging about, but does not stop the
+		// system from sending the message.
+		return nil
+	}
+
+	return sc
 }

@@ -12,7 +12,11 @@ banking:
 	protoc --go_out=. examples/banking/domain/*.proto
 	protoc --go_out=. examples/banking/workflows/*.proto
 	AX_RMQ_DSN="amqp://localhost" \
-	AX_MYSQL_DSN="ax:ax@tcp(127.0.0.1:3306)/ax" \
+	AX_MYSQL_DSN="banking:banking@tcp(127.0.0.1:3306)/banking" \
+	JAEGER_SERVICE_NAME="ax.examples.banking" \
+	JAEGER_SAMPLER_TYPE="const" \
+	JAEGER_SAMPLER_PARAM="1" \
+	JAEGER_REPORTER_LOG_SPANS=true \
 		go run examples/banking/main.go $(RUN_ARGS)
 
 %.pb.go: %.proto

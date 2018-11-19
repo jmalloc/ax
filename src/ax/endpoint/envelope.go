@@ -3,6 +3,7 @@ package endpoint
 import (
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/ident"
+	opentracing "github.com/opentracing/opentracing-go"
 )
 
 // AttemptID uniquely identifies an attempt to process a message.
@@ -56,6 +57,9 @@ type InboundEnvelope struct {
 	// The attempt count may be reset if a message is manually re-queued after
 	// being rejected by the retry policy.
 	AttemptCount uint
+
+	// SpanContext is the tracing context that was propagated with the message.
+	SpanContext opentracing.SpanContext
 }
 
 // OutboundEnvelope is a specialization of ax.Envelope for messages that are
@@ -72,6 +76,9 @@ type OutboundEnvelope struct {
 	// DestinationEndpoint is the endpoint to which the message is sent when
 	// Operation is OpSendUnicast. The field is ignored for other operations.
 	DestinationEndpoint string
+
+	// SpanContext is the tracing context to propagate with the message.
+	SpanContext opentracing.SpanContext
 }
 
 // Operation is an enumeration of transport operations that can be performed

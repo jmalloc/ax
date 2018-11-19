@@ -78,12 +78,24 @@ func (w *unitOfWork) Save(ctx context.Context) (bool, error) {
 		return false, nil
 	}
 
-	return true, w.repository.SaveSagaInstance(ctx, w.tx, w.key, w.instance)
+	if err := w.repository.SaveSagaInstance(ctx, w.tx, w.key, w.instance); err != nil {
+		return false, err
+	}
+
+	w.instance.Revision++
+
+	return true, nil
 }
 
 // SaveAndComplete deletes the saga instance.
 func (w *unitOfWork) SaveAndComplete(ctx context.Context) error {
-	return w.repository.DeleteSagaInstance(ctx, w.tx, w.key, w.instance)
+	if err := w.repository.DeleteSagaInstance(ctx, w.tx, w.key, w.instance); err != nil {
+		return err
+	}
+
+	w.instance.Revision++
+
+	return nil
 }
 
 // Close is called when the unit-of-work has ended, regardless of whether

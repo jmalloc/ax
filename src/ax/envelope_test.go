@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-
 	"github.com/golang/protobuf/ptypes"
 	. "github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/axtest/testmessages"
@@ -109,6 +108,42 @@ var _ = Describe("Envelope", func() {
 
 		It("returns the type of the message in the envelope", func() {
 			Expect(env.Type()).To(Equal(TypeOf(message)))
+		})
+	})
+
+	Describe("Delay", func() {
+		It("returns 0 when the timestamps are equal", func() {
+			t := time.Now()
+
+			env := Envelope{
+				CreatedAt: t,
+				SendAt:    t,
+			}
+
+			Expect(env.Delay()).To(Equal(time.Duration(0)))
+		})
+
+		It("returns 0 when the send-at timestamp is before the created-at timestamp", func() {
+			t := time.Now()
+
+			env := Envelope{
+				CreatedAt: t,
+				SendAt:    t.Add(-10),
+			}
+
+			Expect(env.Delay()).To(Equal(time.Duration(0)))
+		})
+
+		It("returns the delay send-at timestamp is after the created-at timestamp", func() {
+			d := time.Duration(10)
+			t := time.Now()
+
+			env := Envelope{
+				CreatedAt: t,
+				SendAt:    t.Add(d),
+			}
+
+			Expect(env.Delay()).To(Equal(d))
 		})
 	})
 

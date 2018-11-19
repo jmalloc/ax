@@ -7,6 +7,9 @@ import (
 
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
+	"github.com/jmalloc/ax/src/internal/tracing"
+	"github.com/opentracing/opentracing-go/ext"
+	"github.com/opentracing/opentracing-go/log"
 )
 
 // Router is an outbound pipeline stage that choses a destination endpoint for
@@ -33,8 +36,39 @@ func (r *Router) Initialize(ctx context.Context, ep *endpoint.Endpoint) error {
 // Accept populates the evn.DestinationEndpoint field of unicast messages that
 // do not already have a DestinationEndpoint specified.
 func (r *Router) Accept(ctx context.Context, env endpoint.OutboundEnvelope) error {
-	if err := r.ensureDestination(&env); err != nil {
-		return err
+	if env.Operation == endpoint.OpSendUnicast {
+		if env.DestinationEndpoint == "" {
+			if err := r.ensureDestination(&env); err != nil {
+				return err
+			}
+
+			tracing.LogEvent(
+				ctx,
+				"route",
+				"destination endpoint selected, forwarding message to the next pipeline stage",
+				log.String("destination_endpoint", env.DestinationEndpoint),
+				tracing.TypeName("pipeline_stage", r),
+			)
+
+		} else {
+			tracing.LogEvent(
+				ctx,
+				"route",
+				"destination endpoint already present in message, forwarding message to the next pipeline stage",
+				log.String("destination_endpoint", env.DestinationEndpoint),
+				tracing.TypeName("pipeline_stage", r),
+			)
+
+			tracing.SetTag(ctx, "destination_endpoint", env.DestinationEndpoint)
+			tracing.SetTag(ctx, string(ext.MessageBusDestination), env.DestinationEndpoint)
+		}
+	} else {
+		tracing.LogEvent(
+			ctx,
+			"route",
+			"message does not require a single destination, forwarding message to the next pipeline stage",
+			tracing.TypeName("pipeline_stage", r),
+		)
 	}
 
 	return r.Next.Accept(ctx, env)
@@ -42,10 +76,6 @@ func (r *Router) Accept(ctx context.Context, env endpoint.OutboundEnvelope) erro
 
 // ensureDestintion ensures that env.DestinationEndpoint is set if required.
 func (r *Router) ensureDestination(env *endpoint.OutboundEnvelope) error {
-	if env.Operation != endpoint.OpSendUnicast || env.DestinationEndpoint != "" {
-		return nil
-	}
-
 	mt := env.Type()
 
 	if ep, ok := r.cache.Load(mt.Name); ok {

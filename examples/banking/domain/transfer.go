@@ -49,6 +49,11 @@ func (t *Transfer) WhenCompleted(m *messages.TransferCompleted) {
 	t.IsComplete = true
 }
 
+// IsInstanceComplete returns true if the transfer has completed processing.
+func (t *Transfer) IsInstanceComplete() bool {
+	return t.IsComplete
+}
+
 // InstanceDescription returns a human-readable description of the aggregate
 // instance.
 func (t *Transfer) InstanceDescription() string {

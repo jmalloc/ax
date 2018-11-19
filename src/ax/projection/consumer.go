@@ -8,6 +8,7 @@ import (
 	"github.com/jmalloc/ax/src/ax/observability"
 	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/twelf/src/twelf"
+	opentracing "github.com/opentracing/opentracing-go"
 )
 
 // GlobalStoreConsumer reads messages from all streams in a message store and
@@ -71,6 +72,7 @@ func (c *GlobalStoreConsumer) processNextMessage(ctx context.Context) error {
 	if c.types.Has(env.Type()) {
 		mctx := ax.NewMessageContext(
 			env,
+			opentracing.SpanFromContext(ctx),
 			observability.NewProjectionLogger(
 				c.Logger,
 				env,

@@ -31,12 +31,16 @@ import (
 	"github.com/jmalloc/ax/src/axrmq"
 	"github.com/spf13/cobra"
 	"github.com/streadway/amqp"
+	"github.com/uber/jaeger-client-go/config"
 	"golang.org/x/sync/errgroup"
 )
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
+	os.Exit(run()) // os.Exit bypasses defer statements, perform them in run() instead
+}
 
+func run() int {
 	db, err := sql.Open("mysql", os.Getenv("AX_MYSQL_DSN"))
 	if err != nil {
 		panic(err)
@@ -48,6 +52,16 @@ func main() {
 		panic(err)
 	}
 	defer rmq.Close()
+
+	cfg, err := config.FromEnv()
+	if err != nil {
+		panic(err)
+	}
+	tracer, closer, err := cfg.NewTracer()
+	if err != nil {
+		panic(err)
+	}
+	defer closer.Close()
 
 	crudPersister := &crud.Persister{
 		Repository: axmysql.SagaCRUDRepository,
@@ -104,14 +118,18 @@ func main() {
 	dms := &delayedmessage.Sender{
 		DataStore:  ds,
 		Repository: axmysql.DelayedMessageRepository,
-		Out: &observability.OutboundHook{
-			Observers: observers,
-			Next:      router,
+		Out: endpoint.OutboundTracer{
+			Tracer: tracer,
+			Next: &observability.OutboundHook{
+				Observers: observers,
+				Next:      router,
+			},
 		},
 	}
 
 	transport := &axrmq.Transport{
-		Conn: rmq,
+		Conn:   rmq,
+		Tracer: tracer,
 	}
 
 	ep := &endpoint.Endpoint{
@@ -120,7 +138,7 @@ func main() {
 		OutboundTransport: transport,
 		InboundPipeline: &observability.InboundHook{
 			Observers: observers,
-			Next: &persistence.Injector{
+			Next: &persistence.InboundInjector{
 				DataStore: ds,
 				Next: &outbox.Deduplicator{
 					Repository: axmysql.OutboxRepository,
@@ -130,13 +148,20 @@ func main() {
 				},
 			},
 		},
-		OutboundPipeline: &observability.OutboundHook{
-			Observers: observers,
-			Next: &delayedmessage.Interceptor{
-				Repository: axmysql.DelayedMessageRepository,
-				Next:       router,
+		OutboundPipeline: endpoint.OutboundTracer{
+			Tracer: tracer,
+			Next: &persistence.OutboundInjector{
+				DataStore: ds,
+				Next: &observability.OutboundHook{
+					Observers: observers,
+					Next: &delayedmessage.Interceptor{
+						Repository: axmysql.DelayedMessageRepository,
+						Next:       router,
+					},
+				},
 			},
 		},
+		Tracer: tracer,
 	}
 
 	con := &projection.GlobalStoreConsumer{
@@ -199,6 +224,8 @@ func main() {
 
 	err = cli.Execute()
 	if err != nil {
-		os.Exit(1)
+		return 1
 	}
+
+	return 0
 }

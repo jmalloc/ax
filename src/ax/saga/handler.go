@@ -5,6 +5,8 @@ import (
 
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/persistence"
+	"github.com/jmalloc/ax/src/internal/tracing"
+	"github.com/opentracing/opentracing-go/log"
 )
 
 // MessageHandler is an implementation of routing.MessageHandler that loads a
@@ -41,15 +43,41 @@ func (h *MessageHandler) HandleMessage(ctx context.Context, s ax.Sender, mctx ax
 	// begin a new unit of work.
 	// if ok is false the message is not map to any instance and is ignored.
 	w, ok, err := h.begin(ctx, tx, s, mctx.Envelope)
-	if !ok || err != nil {
+	if err != nil {
 		return err
 	}
+
+	if !ok {
+		h.logEvent(
+			ctx,
+			"saga_not_mapped",
+			"this message does not map to any saga instance",
+			nil,
+		)
+
+		return nil
+	}
+
 	defer w.Close()
 
-	// call the not-found handler if the instance is new but the message is not a
-	// trigger.
-	if w.Instance().Revision == 0 && !h.isTrigger(mctx.Envelope) {
-		return h.Saga.HandleNotFound(ctx, s, mctx)
+	if w.Instance().Revision == 0 {
+		if h.isTrigger(mctx.Envelope) {
+			h.logEvent(
+				ctx,
+				"saga_created",
+				"this message has triggered a new saga instance",
+				w,
+			)
+		} else {
+			h.logEvent(
+				ctx,
+				"saga_not_found",
+				"this message maps to a non-existent saga instance",
+				w,
+			)
+
+			return h.Saga.HandleNotFound(ctx, s, mctx)
+		}
 	}
 
 	// otherwise, forward the message to the saga for handling.
@@ -111,9 +139,29 @@ func (h *MessageHandler) forward(ctx context.Context, w UnitOfWork, mctx ax.Mess
 
 // save persists changes to the saga instance.
 func (h *MessageHandler) save(ctx context.Context, tx persistence.Tx, w UnitOfWork) error {
+	revBefore := w.Instance().Revision
+
 	ok, err := w.Save(ctx)
-	if !ok || err != nil {
+	if err != nil {
 		return err
+	}
+
+	if ok {
+		h.logEvent(
+			ctx,
+			"saga_saved",
+			"this message caused a change to the saga instance",
+			w,
+			log.Uint64("revision_before", uint64(revBefore)),
+		)
+	} else {
+		h.logEvent(
+			ctx,
+			"saga_not_saved",
+			"this message did not cause any change to the saga instance",
+			w,
+			log.Uint64("revision_before", uint64(revBefore)),
+		)
 	}
 
 	return h.Mapper.UpdateMapping(ctx, h.Saga, tx, w.Instance())
@@ -121,9 +169,19 @@ func (h *MessageHandler) save(ctx context.Context, tx persistence.Tx, w UnitOfWo
 
 // complete saves a completed saga instance.
 func (h *MessageHandler) complete(ctx context.Context, tx persistence.Tx, w UnitOfWork) error {
+	revBefore := w.Instance().Revision
+
 	if err := w.SaveAndComplete(ctx); err != nil {
 		return err
 	}
+
+	h.logEvent(
+		ctx,
+		"saga_completed",
+		"this message completed the saga instance",
+		w,
+		log.Uint64("revision_before", uint64(revBefore)),
+	)
 
 	return h.Mapper.DeleteMapping(ctx, h.Saga, tx, w.Instance())
 }
@@ -133,4 +191,44 @@ func (h *MessageHandler) complete(ctx context.Context, tx persistence.Tx, w Unit
 func (h *MessageHandler) isTrigger(env ax.Envelope) bool {
 	triggers, _ := h.Saga.MessageTypes()
 	return triggers.Has(env.Type())
+}
+
+func (h *MessageHandler) logEvent(
+	ctx context.Context,
+	event, message string,
+	w UnitOfWork,
+	fields ...log.Field,
+) {
+	fields = append(
+		fields,
+		tracing.TypeName("saga", h.Saga),
+	)
+
+	if w == nil {
+		fields = append(
+			fields,
+			tracing.TypeName("data", h.Saga.NewData()),
+		)
+	} else {
+		fields = append(
+			fields,
+			log.String("instance_id", w.Instance().InstanceID.Get()),
+			tracing.TypeName("data", w.Instance().Data),
+		)
+
+		if w.Instance().Revision > 0 {
+			fields = append(
+				fields,
+				log.Uint64("revision_after", uint64(w.Instance().Revision)),
+				log.String("description", w.Instance().Data.InstanceDescription()),
+			)
+		}
+	}
+
+	tracing.LogEvent(
+		ctx,
+		event,
+		message,
+		fields...,
+	)
 }

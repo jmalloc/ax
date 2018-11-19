@@ -2,8 +2,12 @@ package endpoint
 
 import (
 	"context"
+	"time"
 
 	"github.com/jmalloc/ax/src/internal/servicegroup"
+	"github.com/jmalloc/ax/src/internal/tracing"
+	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 )
 
 // receiver receives a message from a transport, forwards it to the inbound
@@ -13,6 +17,7 @@ type receiver struct {
 	In          InboundPipeline
 	Out         OutboundPipeline
 	RetryPolicy RetryPolicy
+	Tracer      opentracing.Tracer
 
 	wg *servicegroup.Group
 }
@@ -53,19 +58,96 @@ func (r *receiver) process(
 	env InboundEnvelope,
 	ack Acknowledger,
 ) error {
-	err := r.In.Accept(
+	span := startInboundSpan(env, r.Tracer)
+	defer span.Finish()
+
+	ctx = opentracing.ContextWithSpan(ctx, span)
+
+	tracing.LogEventS(
+		span,
+		"receive",
+		"the message has been received from the transport",
+	)
+
+	acceptErr := r.In.Accept(
 		WithEnvelope(ctx, env),
 		r.Out,
 		env,
 	)
 
+	if acceptErr != nil {
+		tracing.LogErrorS(span, acceptErr)
+	}
+
+	if err := r.ack(ctx, ack, env, acceptErr); err != nil {
+		tracing.LogErrorS(span, err)
+		return err
+	}
+
+	return nil
+}
+
+func (r *receiver) ack(
+	ctx context.Context,
+	ack Acknowledger,
+	env InboundEnvelope,
+	err error,
+) error {
 	if err == nil {
+		tracing.LogEvent(
+			ctx,
+			"ack",
+			"acknowledging successfully processed message",
+		)
+
 		return ack.Ack(ctx)
 	}
 
 	if d, ok := r.RetryPolicy(env, err); ok {
+		tracing.LogEvent(
+			ctx,
+			"retry",
+			"scheduling failed message for retry",
+			tracing.Duration("delay_for", d),
+			tracing.Time("delay_until", time.Now().Add(d)),
+		)
+
 		return ack.Retry(ctx, err, d)
 	}
 
+	tracing.LogEvent(
+		ctx,
+		"reject",
+		"rejecting failed message as per retry policy",
+	)
+
 	return ack.Reject(ctx, err)
+}
+
+// startInboundSpan starts an OpenTracing span representing an inbound message.
+func startInboundSpan(env InboundEnvelope, tr opentracing.Tracer) opentracing.Span {
+	opts := []opentracing.StartSpanOption{
+		ext.SpanKindConsumer,
+		spanTagsForEnvelope(env.Envelope),
+		opentracing.Tags{
+			string(ext.Component): "ax",
+			"source_endpoint":     env.SourceEndpoint,
+			"attempt_id":          env.AttemptID.Get(),
+			"attempt_short_id":    env.AttemptID.String(),
+			"attempt_count":       env.AttemptCount,
+		},
+	}
+
+	if env.SpanContext != nil {
+		opts = append(
+			opts,
+			opentracing.ChildOf(env.SpanContext),
+		)
+	}
+
+	return tracing.StartSpan(
+		tr,
+		env.Type().String(),
+		opts...,
+	)
 }

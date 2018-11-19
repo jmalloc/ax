@@ -3,6 +3,8 @@ package endpoint
 import (
 	"context"
 	"time"
+
+	"github.com/jmalloc/ax/src/internal/tracing"
 )
 
 // DefaultTimeout is the default timeout duration to use if none is given.
@@ -29,7 +31,16 @@ func (tl TimeLimiter) Accept(ctx context.Context, sink MessageSink, env InboundE
 	if to == 0 {
 		to = DefaultTimeout
 	}
+
 	ctx, cancel := context.WithTimeout(ctx, to)
 	defer cancel()
+
+	tracing.LogEvent(
+		ctx,
+		"set_timeout",
+		"added processing timeout, forwarding message to the next pipeline stage",
+		tracing.Duration("timeout", to),
+	)
+
 	return tl.Next.Accept(ctx, sink, env)
 }
