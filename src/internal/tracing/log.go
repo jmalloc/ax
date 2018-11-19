@@ -80,6 +80,6 @@ func Duration(k string, d time.Duration) log.Field {
 }
 
 // Time returns a log field containing a human-readable representation of t.
-func Time(k string, d time.Time) log.Field {
-	return log.String(k, d.Format(time.RFC3339Nano))
+func Time(k string, t time.Time) log.Field {
+	return log.String(k, t.Format(time.RFC3339Nano))
 }
