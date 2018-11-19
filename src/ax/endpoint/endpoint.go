@@ -50,11 +50,11 @@ func (ep *Endpoint) StartReceiving(ctx context.Context) error {
 	}
 
 	recv := &receiver{
-		Transport:   ep.InboundTransport,
-		In:          ep.InboundPipeline,
-		Out:         ep.OutboundPipeline,
-		RetryPolicy: ep.RetryPolicy,
-		Tracer:      ep.Tracer,
+		Transport:        ep.InboundTransport,
+		InboundPipeline:  ep.InboundPipeline,
+		OutboundPipeline: ep.OutboundPipeline,
+		RetryPolicy:      ep.RetryPolicy,
+		Tracer:           ep.Tracer,
 	}
 
 	return recv.Run(ctx)

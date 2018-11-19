@@ -13,11 +13,11 @@ import (
 // receiver receives a message from a transport, forwards it to the inbound
 // pipeline, then acknowledges the message.
 type receiver struct {
-	Transport   InboundTransport
-	In          InboundPipeline
-	Out         OutboundPipeline
-	RetryPolicy RetryPolicy
-	Tracer      opentracing.Tracer
+	Transport        InboundTransport
+	InboundPipeline  InboundPipeline
+	OutboundPipeline OutboundPipeline
+	RetryPolicy      RetryPolicy
+	Tracer           opentracing.Tracer
 
 	wg *servicegroup.Group
 }
@@ -69,9 +69,9 @@ func (r *receiver) process(
 		"the message has been received from the transport",
 	)
 
-	acceptErr := r.In.Accept(
+	acceptErr := r.InboundPipeline.Accept(
 		WithEnvelope(ctx, env),
-		r.Out,
+		r.OutboundPipeline,
 		env,
 	)
 

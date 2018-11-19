@@ -18,10 +18,10 @@ type state func(ctx context.Context) (state, error)
 // Sender is a service that sends delayed messages when they become ready to be
 // sent.
 type Sender struct {
-	DataStore    persistence.DataStore
-	Repository   Repository
-	Out          endpoint.OutboundPipeline
-	PollInterval time.Duration
+	DataStore        persistence.DataStore
+	Repository       Repository
+	OutboundPipeline endpoint.OutboundPipeline
+	PollInterval     time.Duration
 }
 
 // Run sends messages as they become ready to send until ctx is canceled or an
@@ -63,7 +63,7 @@ func (s *Sender) tick(ctx context.Context) error {
 
 // send sends a message and marks it as sent.
 func (s *Sender) send(ctx context.Context, env endpoint.OutboundEnvelope) error {
-	if err := s.Out.Accept(ctx, env); err != nil {
+	if err := s.OutboundPipeline.Accept(ctx, env); err != nil {
 		return err
 	}
 

@@ -118,7 +118,7 @@ func run() int {
 	dms := &delayedmessage.Sender{
 		DataStore:  ds,
 		Repository: axmysql.DelayedMessageRepository,
-		Out: endpoint.OutboundTracer{
+		OutboundPipeline: endpoint.OutboundTracer{
 			Tracer: tracer,
 			Next: &observability.OutboundHook{
 				Observers: observers,
