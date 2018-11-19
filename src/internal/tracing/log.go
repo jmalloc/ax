@@ -56,7 +56,7 @@ func LogErrorS(s opentracing.Span, err error, fields ...log.Field) {
 	s.LogFields(fields...)
 }
 
-// TypeName returns a log field contaning the name of v's type.
+// TypeName returns a log field containing the name of v's type.
 func TypeName(k string, v interface{}) log.Field {
 	t := reflect.TypeOf(v)
 
