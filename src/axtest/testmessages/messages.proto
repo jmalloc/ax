@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package axtest.testmessages;
-option go_package = "testmessages";
+option go_package = "github.com/jmalloc/ax/src/axtest/testmessages";
 
 // Message is a protocol buffers message that implements ax.Message.
 message Message {
