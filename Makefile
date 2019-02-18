@@ -20,7 +20,7 @@ banking:
 		go run examples/banking/main.go $(RUN_ARGS)
 
 %.pb.go: %.proto
-	protoc --go_out=. $(@D)/*.proto
+	protoc --go_out=paths=source_relative:. $(@D)/*.proto
 
 MOQ := $(GOPATH)/bin/moq
 $(MOQ): | vendor # ensure dependencies are installed before trying to build mocks
