@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package ax;
-option go_package = "ax";
+option go_package = "github.com/jmalloc/ax/src/ax";
 
 import "google/protobuf/any.proto";
 import "google/protobuf/timestamp.proto";
