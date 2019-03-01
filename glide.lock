@@ -1,12 +1,12 @@
-hash: afe89809977d7bdd5900c508b292ede1a78c348b478ca9878b0829d5cec22243
-updated: 2019-02-19T09:03:59.120476+10:00
+hash: 6dd45f8261a7b64d63d45b95562fc274f43ad37fc74e2061b9a41df67d265488
+updated: 2019-03-01T10:06:33.919149+10:00
 imports:
 - name: github.com/codahale/hdrhistogram
   version: 3a0bb77429bd3a61596f5e8a3172445844342120
 - name: github.com/go-sql-driver/mysql
   version: 72cd26f257d44c1114970e19afddcd812016007e
 - name: github.com/golang/protobuf
-  version: 347cf4a86c1cb8d262994d8ef5924d4576c5b331
+  version: c823c79ea1570fb5ff454033735a8e68575d1d0f
   subpackages:
   - jsonpb
   - proto
@@ -16,7 +16,7 @@ imports:
   - ptypes/struct
   - ptypes/timestamp
 - name: github.com/hpcloud/tail
-  version: a1dbeea552b7c8df4b542c66073e393de198a800
+  version: a30252cb686a21eb2d0b98132633053ec2f7f1e5
   subpackages:
   - ratelimiter
   - util
@@ -73,13 +73,13 @@ imports:
 - name: github.com/satori/go.uuid
   version: f58768cc1a7a7e77a3bd49e98cdd21419399b6a3
 - name: github.com/spf13/cobra
-  version: ef82de70bb3f60c65fb8eebacbb2d122ef517385
+  version: 7547e83b2d85fd1893c7d76916f67689d761fecb
 - name: github.com/spf13/pflag
-  version: 583c0c0531f06d5278b7d917446061adc344b5cd
+  version: 24fa6976df40757dce6aea913e7b81ade90530e1
 - name: github.com/stoewer/go-strcase
   version: 9f4628dc69009a239427f342caccb0047c7aea01
 - name: github.com/streadway/amqp
-  version: 8e4aba63da9fc5571e01c6a45dc809a58cbc5a68
+  version: 884228600bc96c993ab12fb81ba78bf0c280e88a
 - name: github.com/uber/jaeger-client-go
   version: 1a782e2da844727691fef1757c72eb190c2909f0
   subpackages:
@@ -108,22 +108,22 @@ imports:
 - name: go.uber.org/multierr
   version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
 - name: golang.org/x/net
-  version: f5dfe339be1d06f81b22525fe34671ee7d2c8904
+  version: 3a22650c66bd7f4fb6d1e8072ffd7b75c8a27898
   subpackages:
   - context
   - html
   - html/atom
   - html/charset
 - name: golang.org/x/sync
-  version: 1d60e4601c6fd243af51cc01ddf169918a5407ca
+  version: 37e7f081c4d4c64e13b10787722085407fe5d15f
   subpackages:
   - errgroup
 - name: golang.org/x/sys
-  version: 37707fdb30a5b38865cfb95e5aab41707daec7fd
+  version: ec7b60b042fd2c54ad5ceaac0c891bd88843f4a2
   subpackages:
   - unix
 - name: golang.org/x/text
-  version: 4e4a3210bb54bb31f6ab2cdca2edcc0b50c420c1
+  version: 6c92c7dc7f53607809182301b96e4cc1975143f1
   subpackages:
   - encoding
   - encoding/charmap
@@ -135,19 +135,21 @@ imports:
   - encoding/simplifiedchinese
   - encoding/traditionalchinese
   - encoding/unicode
+  - internal/language
+  - internal/language/compact
   - internal/tag
   - internal/utf8internal
   - language
   - runes
   - transform
 - name: google.golang.org/appengine
-  version: 962cbd1200af94a5a35ba8d512e9f91271b4d01a
+  version: 54a98f90d1c46b7731eb8fb305d2a321c30ef610
   subpackages:
   - cloudsql
-- name: gopkg.in/fsnotify/fsnotify.v1
-  version: c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9
+- name: gopkg.in/fsnotify.v1
+  version: 7be54206639f256967dd82fa767397ba5f8f48f5
 - name: gopkg.in/tomb.v1
   version: c131134a1947e9afd9cecfe11f4c6dff0732ae58
 - name: gopkg.in/yaml.v2
-  version: d670f9405373e636a5a2765eea47fac0c9bc91a4
+  version: 51d6538a90f86fe93ac480b35f37b2be17fef232
 testImports: []
