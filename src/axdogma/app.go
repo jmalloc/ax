@@ -53,7 +53,19 @@ func (v *visitor) VisitProcessConfig(_ context.Context, cfg *config.ProcessConfi
 }
 
 func (v *visitor) VisitIntegrationConfig(_ context.Context, cfg *config.IntegrationConfig) error {
-	panic("not implemented")
+	a := &IntegrationAdaptor{
+		Handler: cfg.Handler,
+	}
+
+	for mt := range cfg.ConsumedMessageTypes() {
+		a.CommandTypes.Add(
+			convertMessageType(mt),
+		)
+	}
+
+	v.handlers = append(v.handlers, a)
+
+	return nil
 }
 
 func (v *visitor) VisitProjectionConfig(_ context.Context, cfg *config.ProjectionConfig) error {
@@ -62,7 +74,7 @@ func (v *visitor) VisitProjectionConfig(_ context.Context, cfg *config.Projectio
 		Handler: cfg.Handler,
 	}
 
-	for mt := range cfg.EventTypes() {
+	for mt := range cfg.ConsumedMessageTypes() {
 		a.EventTypes.Add(
 			convertMessageType(mt),
 		)

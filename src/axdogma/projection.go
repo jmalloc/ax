@@ -2,6 +2,7 @@ package axdogma
 
 import (
 	"context"
+	"time"
 
 	"github.com/dogmatiq/dogma"
 	"github.com/jmalloc/ax/src/ax"
@@ -43,7 +44,23 @@ func (a *ProjectionAdaptor) MessageTypes() ax.MessageTypeSet {
 func (a *ProjectionAdaptor) ApplyMessage(ctx context.Context, mctx ax.MessageContext) error {
 	return a.Handler.HandleEvent(
 		ctx,
-		&mctx, // ax.MessageContext already implements dogma.ProjectionEventScope
+		&projectionEventScope{mctx},
 		mctx.Envelope.Message,
 	)
+}
+
+type projectionEventScope struct {
+	mctx ax.MessageContext
+}
+
+func (s *projectionEventScope) Key() string {
+	return s.mctx.Envelope.MessageID.String()
+}
+
+func (s *projectionEventScope) Time() time.Time {
+	return s.mctx.Envelope.SendAt
+}
+
+func (s *projectionEventScope) Log(f string, v ...interface{}) {
+	s.mctx.Log(f, v...)
 }
