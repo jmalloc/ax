@@ -61,7 +61,7 @@ func (a *AggregateAdaptor) HandleMessage(
 ) (err error) {
 	defer unwrap(&err)
 
-	sc := &aggregateCommandScope{
+	sc := &aggregateScope{
 		ctx:      ctx,
 		sender:   s,
 		mctx:     mctx,
@@ -116,7 +116,7 @@ func (a *AggregateAdaptor) ApplyEvent(d saga.Data, env ax.Envelope) {
 	d.(dogma.AggregateRoot).ApplyEvent(env.Message)
 }
 
-type aggregateCommandScope struct {
+type aggregateScope struct {
 	ctx      context.Context
 	sender   ax.Sender
 	mctx     ax.MessageContext
@@ -124,11 +124,11 @@ type aggregateCommandScope struct {
 	exists   bool
 }
 
-func (s *aggregateCommandScope) InstanceID() string {
+func (s *aggregateScope) InstanceID() string {
 	return s.instance.InstanceID.String()
 }
 
-func (s *aggregateCommandScope) Create() bool {
+func (s *aggregateScope) Create() bool {
 	if s.exists {
 		return false
 	}
@@ -138,7 +138,7 @@ func (s *aggregateCommandScope) Create() bool {
 	return true
 }
 
-func (s *aggregateCommandScope) Destroy() {
+func (s *aggregateScope) Destroy() {
 	if !s.exists {
 		panic("can not destroy non-existent instance")
 	}
@@ -146,7 +146,7 @@ func (s *aggregateCommandScope) Destroy() {
 	s.exists = false
 }
 
-func (s *aggregateCommandScope) Root() dogma.AggregateRoot {
+func (s *aggregateScope) Root() dogma.AggregateRoot {
 	if !s.exists {
 		panic("can not access aggregate root of non-existent instance")
 	}
@@ -154,7 +154,7 @@ func (s *aggregateCommandScope) Root() dogma.AggregateRoot {
 	return s.instance.Data.(dogma.AggregateRoot)
 }
 
-func (s *aggregateCommandScope) RecordEvent(m dogma.Message) {
+func (s *aggregateScope) RecordEvent(m dogma.Message) {
 	if !s.exists {
 		panic("can not record event against non-existent instance")
 	}
@@ -165,6 +165,6 @@ func (s *aggregateCommandScope) RecordEvent(m dogma.Message) {
 	}
 }
 
-func (s *aggregateCommandScope) Log(f string, v ...interface{}) {
+func (s *aggregateScope) Log(f string, v ...interface{}) {
 	s.mctx.Log(f, v...)
 }

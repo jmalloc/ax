@@ -36,7 +36,7 @@ func (a *IntegrationAdaptor) HandleMessage(
 	s ax.Sender,
 	mctx ax.MessageContext,
 ) error {
-	sc := &integrationCommandScope{
+	sc := &integrationScope{
 		mctx: mctx,
 	}
 
@@ -57,15 +57,15 @@ func (a *IntegrationAdaptor) HandleMessage(
 	return nil
 }
 
-type integrationCommandScope struct {
+type integrationScope struct {
 	mctx   ax.MessageContext
 	events []ax.Event
 }
 
-func (s *integrationCommandScope) RecordEvent(m dogma.Message) {
+func (s *integrationScope) RecordEvent(m dogma.Message) {
 	s.events = append(s.events, m.(ax.Event))
 }
 
-func (s *integrationCommandScope) Log(f string, v ...interface{}) {
+func (s *integrationScope) Log(f string, v ...interface{}) {
 	s.mctx.Log(f, v...)
 }

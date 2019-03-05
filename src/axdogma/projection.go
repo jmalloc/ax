@@ -44,23 +44,23 @@ func (a *ProjectionAdaptor) MessageTypes() ax.MessageTypeSet {
 func (a *ProjectionAdaptor) ApplyMessage(ctx context.Context, mctx ax.MessageContext) error {
 	return a.Handler.HandleEvent(
 		ctx,
-		&projectionEventScope{mctx},
+		&projectionScope{mctx},
 		mctx.Envelope.Message,
 	)
 }
 
-type projectionEventScope struct {
+type projectionScope struct {
 	mctx ax.MessageContext
 }
 
-func (s *projectionEventScope) Key() string {
+func (s *projectionScope) Key() string {
 	return s.mctx.Envelope.MessageID.String()
 }
 
-func (s *projectionEventScope) Time() time.Time {
+func (s *projectionScope) Time() time.Time {
 	return s.mctx.Envelope.SendAt
 }
 
-func (s *projectionEventScope) Log(f string, v ...interface{}) {
+func (s *projectionScope) Log(f string, v ...interface{}) {
 	s.mctx.Log(f, v...)
 }
