@@ -117,13 +117,11 @@ func (a *AggregateAdaptor) ApplyEvent(d saga.Data, env ax.Envelope) {
 }
 
 type aggregateCommandScope struct {
-	ctx       context.Context
-	sender    ax.Sender
-	mctx      ax.MessageContext
-	instance  saga.Instance
-	exists    bool
-	created   bool
-	destroyed bool
+	ctx      context.Context
+	sender   ax.Sender
+	mctx     ax.MessageContext
+	instance saga.Instance
+	exists   bool
 }
 
 func (s *aggregateCommandScope) InstanceID() string {
@@ -136,7 +134,6 @@ func (s *aggregateCommandScope) Create() bool {
 	}
 
 	s.exists = true
-	s.created = true
 
 	return true
 }
@@ -147,7 +144,6 @@ func (s *aggregateCommandScope) Destroy() {
 	}
 
 	s.exists = false
-	s.destroyed = true
 }
 
 func (s *aggregateCommandScope) Root() dogma.AggregateRoot {
