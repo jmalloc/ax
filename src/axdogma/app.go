@@ -64,7 +64,20 @@ func (v *visitor) VisitAggregateConfig(_ context.Context, cfg *config.AggregateC
 }
 
 func (v *visitor) VisitProcessConfig(_ context.Context, cfg *config.ProcessConfig) error {
-	panic("not implemented")
+	a := &ProcessAdaptor{
+		Name:    cfg.HandlerName,
+		Handler: cfg.Handler,
+	}
+
+	for mt := range cfg.ConsumedMessageTypes() {
+		a.EventTypes.Add(
+			convertMessageType(mt),
+		)
+	}
+
+	v.app.Processes = append(v.app.Processes, a)
+
+	return nil
 }
 
 func (v *visitor) VisitIntegrationConfig(_ context.Context, cfg *config.IntegrationConfig) error {
