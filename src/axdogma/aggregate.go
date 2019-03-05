@@ -7,6 +7,7 @@ import (
 	"github.com/dogmatiq/dogma"
 	"github.com/jmalloc/ax/src/ax"
 	"github.com/jmalloc/ax/src/ax/endpoint"
+	"github.com/jmalloc/ax/src/ax/persistence"
 	"github.com/jmalloc/ax/src/ax/saga"
 )
 
@@ -167,4 +168,46 @@ func (s *aggregateScope) RecordEvent(m dogma.Message) {
 
 func (s *aggregateScope) Log(f string, v ...interface{}) {
 	s.mctx.Log(f, v...)
+}
+
+// AggregateMapper is a saga.Mapper that maps messages to instances using a
+// Dogma aggregate's RouteCommandToInstance() method.
+type AggregateMapper struct{}
+
+var _ saga.Mapper = &AggregateMapper{}
+
+// MapMessageToInstance returns the ID of the saga instance that is the
+// target of the given message.
+//
+// It returns false if the message should be ignored.
+func (m *AggregateMapper) MapMessageToInstance(
+	_ context.Context,
+	sg saga.Saga,
+	_ persistence.Tx,
+	env ax.Envelope,
+) (saga.InstanceID, bool, error) {
+	id := sg.(*AggregateAdaptor).Handler.RouteCommandToInstance(env.Message)
+	return saga.MustParseInstanceID(id), true, nil
+}
+
+// UpdateMapping notifies the mapper that an instance has been modified,
+// allowing it to update it's mapping information, if necessary.
+func (m *AggregateMapper) UpdateMapping(
+	context.Context,
+	saga.Saga,
+	persistence.Tx,
+	saga.Instance,
+) error {
+	return nil
+}
+
+// DeleteMapping notifies the mapper that an instance has been completed,
+// allowing it to remove it's mapping information, if necessary.
+func (m *AggregateMapper) DeleteMapping(
+	context.Context,
+	saga.Saga,
+	persistence.Tx,
+	saga.Instance,
+) error {
+	return nil
 }
