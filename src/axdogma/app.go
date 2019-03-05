@@ -7,31 +7,33 @@ import (
 	"github.com/dogmatiq/enginekit/config"
 	"github.com/jmalloc/ax/src/ax/projection"
 	"github.com/jmalloc/ax/src/ax/routing"
+	"github.com/jmalloc/ax/src/ax/saga"
 )
 
-// FromApp builds a set of Ax message handlers and projectors for the given
-// Dogma application.
-func FromApp(
-	app dogma.Application,
-) (
-	[]routing.MessageHandler,
-	[]projection.Projector,
-	error,
-) {
+// App contains Dogma application components adapted to Ax interfaces.
+type App struct {
+	Aggregates   []saga.Saga
+	Processes    []saga.Saga
+	Integrations []routing.MessageHandler
+	Projections  []projection.Projector
+}
+
+// New returns a structure that contains a Dogma application's aggregates,
+// processes, integrations and projections adapted into the most appropriate Ax
+// type.
+func New(app dogma.Application) (*App, error) {
 	cfg, err := config.NewApplicationConfig(app)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	v := &visitor{}
 	err = cfg.Accept(context.Background(), v)
-
-	return v.handlers, v.projectors, err
+	return &v.app, err
 }
 
 type visitor struct {
-	handlers   []routing.MessageHandler
-	projectors []projection.Projector
+	app App
 }
 
 func (v *visitor) VisitApplicationConfig(ctx context.Context, cfg *config.ApplicationConfig) error {
@@ -45,7 +47,20 @@ func (v *visitor) VisitApplicationConfig(ctx context.Context, cfg *config.Applic
 }
 
 func (v *visitor) VisitAggregateConfig(_ context.Context, cfg *config.AggregateConfig) error {
-	panic("not implemented")
+	a := &AggregateAdaptor{
+		Name:    cfg.HandlerName,
+		Handler: cfg.Handler,
+	}
+
+	for mt := range cfg.ConsumedMessageTypes() {
+		a.CommandTypes.Add(
+			convertMessageType(mt),
+		)
+	}
+
+	v.app.Aggregates = append(v.app.Aggregates, a)
+
+	return nil
 }
 
 func (v *visitor) VisitProcessConfig(_ context.Context, cfg *config.ProcessConfig) error {
@@ -63,7 +78,7 @@ func (v *visitor) VisitIntegrationConfig(_ context.Context, cfg *config.Integrat
 		)
 	}
 
-	v.handlers = append(v.handlers, a)
+	v.app.Integrations = append(v.app.Integrations, a)
 
 	return nil
 }
@@ -80,7 +95,7 @@ func (v *visitor) VisitProjectionConfig(_ context.Context, cfg *config.Projectio
 		)
 	}
 
-	v.projectors = append(v.projectors, a)
+	v.app.Projections = append(v.app.Projections, a)
 
 	return nil
 }
