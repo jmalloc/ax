@@ -42,3 +42,29 @@ func (r byFieldResolver) InstanceIDForMessage(env ax.Envelope) (saga.InstanceID,
 
 	return id, true
 }
+
+// WithPrefix returns a mapper that wraps around m and adds a prefix string to the
+// instance ID returned by m's Resolver.
+//
+// If m's Resolver does not return a valid instance ID, no prefix is added.
+func WithPrefix(prefix string, m *Mapper) *Mapper {
+	return &Mapper{
+		withPrefixResolver{
+			pre: prefix,
+			m:   m,
+		},
+	}
+}
+
+type withPrefixResolver struct {
+	pre string
+	m   *Mapper
+}
+
+func (r withPrefixResolver) InstanceIDForMessage(env ax.Envelope) (saga.InstanceID, bool) {
+	id, ok := r.m.Resolver.InstanceIDForMessage(env)
+	if !ok {
+		return id, false
+	}
+	return saga.MustParseInstanceID(r.pre + "-" + id.Get()), true
+}
