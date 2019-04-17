@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS ax_delayed_message (
     created_at     VARBINARY(255) NOT NULL,
     send_at        VARBINARY(255) NOT NULL,
     content_type   VARBINARY(255) NOT NULL,
-    data           LARGEBLOB NOT NULL,
+    data           LONGBLOB NOT NULL,
     operation      INTEGER NOT NULL,
     destination    VARBINARY(255) NOT NULL,
 

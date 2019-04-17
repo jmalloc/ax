@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS ax_messagestore_message (
     created_at     VARBINARY(255) NOT NULL,
     send_at        VARBINARY(255) NOT NULL,
     content_type   VARBINARY(255) NOT NULL,
-    data           LARGEBLOB NOT NULL,
+    data           LONGBLOB NOT NULL,
 
     PRIMARY KEY (global_offset, insert_time),
     INDEX (stream_id, stream_offset),
