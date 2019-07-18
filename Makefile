@@ -1,8 +1,7 @@
-REQ += $(shell find src -name "*.proto")
-REQ += src/axtest/mocks/endpoint.go
-REQ += src/axtest/mocks/routing.go
-REQ += src/axtest/mocks/persistence.go
-REQ += src/axtest/mocks/observability.go
+GENERATED_FILES += src/axtest/mocks/endpoint.go
+GENERATED_FILES += src/axtest/mocks/routing.go
+GENERATED_FILES += src/axtest/mocks/persistence.go
+GENERATED_FILES += src/axtest/mocks/observability.go
 
 -include artifacts/make/go/Makefile
 
@@ -18,9 +17,6 @@ banking:
 	JAEGER_SAMPLER_PARAM="1" \
 	JAEGER_REPORTER_LOG_SPANS=true \
 		go run examples/banking/main.go $(RUN_ARGS)
-
-%.pb.go: %.proto
-	protoc --go_out=paths=source_relative:. $(@D)/*.proto
 
 MOQ := $(GOPATH)/bin/moq
 $(MOQ): | vendor # ensure dependencies are installed before trying to build mocks
@@ -50,5 +46,5 @@ src/axtest/mocks/observability.go: $(wildcard src/ax/observability/*.go) | $(MOQ
 	$(MOQ) -out "$@" -pkg "mocks" src/ax/observability \
 		Observer
 
-artifacts/make/%/Makefile:
-	curl -sf https://jmalloc.github.io/makefiles/fetch | bash /dev/stdin $*
+artifacts/make/%:
+	curl -sf https://make-files.github.io/fetch | bash /dev/stdin $*
