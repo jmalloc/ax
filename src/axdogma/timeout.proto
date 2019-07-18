@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package axdogma;
+option go_package = "github.com/jmalloc/ax/src/axdogma";
+
+import "google/protobuf/any.proto";
+
+message Timeout {
+    string process = 1;
+    string process_id = 2;
+    google.protobuf.Any message = 3;
+}
