@@ -23,3 +23,7 @@ import:
   version: ^1.0.2
 - package: github.com/uber/jaeger-client-go
   version: ^2.15.0
+- package: github.com/dogmatiq/dogma
+  version: ^0.3.0
+- package: github.com/dogmatiq/enginekit
+  version: ^0.3.0
