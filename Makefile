@@ -19,7 +19,7 @@ banking:
 		go run examples/banking/main.go $(RUN_ARGS)
 
 MOQ := $(GOPATH)/bin/moq
-$(MOQ): | vendor # ensure dependencies are installed before trying to build mocks
+$(MOQ):
 	go get -u github.com/matryer/moq
 
 src/axtest/mocks/endpoint.go: $(wildcard src/ax/endpoint/*.go) | $(MOQ)
