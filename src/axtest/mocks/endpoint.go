@@ -15,6 +15,10 @@ var (
 	lockInboundPipelineMockInitialize sync.RWMutex
 )
 
+// Ensure, that InboundPipelineMock does implement InboundPipeline.
+// If this is not the case, regenerate this file with moq.
+var _ endpoint.InboundPipeline = &InboundPipelineMock{}
+
 // InboundPipelineMock is a mock implementation of InboundPipeline.
 //
 //     func TestSomethingThatUsesInboundPipeline(t *testing.T) {
@@ -22,15 +26,15 @@ var (
 //         // make and configure a mocked InboundPipeline
 //         mockedInboundPipeline := &InboundPipelineMock{
 //             AcceptFunc: func(ctx context.Context, sink endpoint.MessageSink, env endpoint.InboundEnvelope) error {
-// 	               panic("TODO: mock out the Accept method")
+// 	               panic("mock out the Accept method")
 //             },
 //             InitializeFunc: func(ctx context.Context, ep *endpoint.Endpoint) error {
-// 	               panic("TODO: mock out the Initialize method")
+// 	               panic("mock out the Initialize method")
 //             },
 //         }
 //
-//         // TODO: use mockedInboundPipeline in code that requires InboundPipeline
-//         //       and then make assertions.
+//         // use mockedInboundPipeline in code that requires InboundPipeline
+//         // and then make assertions.
 //
 //     }
 type InboundPipelineMock struct {
@@ -139,6 +143,10 @@ var (
 	lockMessageSinkMockAccept sync.RWMutex
 )
 
+// Ensure, that MessageSinkMock does implement MessageSink.
+// If this is not the case, regenerate this file with moq.
+var _ endpoint.MessageSink = &MessageSinkMock{}
+
 // MessageSinkMock is a mock implementation of MessageSink.
 //
 //     func TestSomethingThatUsesMessageSink(t *testing.T) {
@@ -146,12 +154,12 @@ var (
 //         // make and configure a mocked MessageSink
 //         mockedMessageSink := &MessageSinkMock{
 //             AcceptFunc: func(ctx context.Context, env endpoint.OutboundEnvelope) error {
-// 	               panic("TODO: mock out the Accept method")
+// 	               panic("mock out the Accept method")
 //             },
 //         }
 //
-//         // TODO: use mockedMessageSink in code that requires MessageSink
-//         //       and then make assertions.
+//         // use mockedMessageSink in code that requires MessageSink
+//         // and then make assertions.
 //
 //     }
 type MessageSinkMock struct {
@@ -210,6 +218,10 @@ var (
 	lockOutboundPipelineMockInitialize sync.RWMutex
 )
 
+// Ensure, that OutboundPipelineMock does implement OutboundPipeline.
+// If this is not the case, regenerate this file with moq.
+var _ endpoint.OutboundPipeline = &OutboundPipelineMock{}
+
 // OutboundPipelineMock is a mock implementation of OutboundPipeline.
 //
 //     func TestSomethingThatUsesOutboundPipeline(t *testing.T) {
@@ -217,15 +229,15 @@ var (
 //         // make and configure a mocked OutboundPipeline
 //         mockedOutboundPipeline := &OutboundPipelineMock{
 //             AcceptFunc: func(ctx context.Context, env endpoint.OutboundEnvelope) error {
-// 	               panic("TODO: mock out the Accept method")
+// 	               panic("mock out the Accept method")
 //             },
 //             InitializeFunc: func(ctx context.Context, ep *endpoint.Endpoint) error {
-// 	               panic("TODO: mock out the Initialize method")
+// 	               panic("mock out the Initialize method")
 //             },
 //         }
 //
-//         // TODO: use mockedOutboundPipeline in code that requires OutboundPipeline
-//         //       and then make assertions.
+//         // use mockedOutboundPipeline in code that requires OutboundPipeline
+//         // and then make assertions.
 //
 //     }
 type OutboundPipelineMock struct {
@@ -332,6 +344,10 @@ var (
 	lockSelfValidatingMessageMockValidate           sync.RWMutex
 )
 
+// Ensure, that SelfValidatingMessageMock does implement SelfValidatingMessage.
+// If this is not the case, regenerate this file with moq.
+var _ endpoint.SelfValidatingMessage = &SelfValidatingMessageMock{}
+
 // SelfValidatingMessageMock is a mock implementation of SelfValidatingMessage.
 //
 //     func TestSomethingThatUsesSelfValidatingMessage(t *testing.T) {
@@ -339,24 +355,24 @@ var (
 //         // make and configure a mocked SelfValidatingMessage
 //         mockedSelfValidatingMessage := &SelfValidatingMessageMock{
 //             MessageDescriptionFunc: func() string {
-// 	               panic("TODO: mock out the MessageDescription method")
+// 	               panic("mock out the MessageDescription method")
 //             },
 //             ProtoMessageFunc: func()  {
-// 	               panic("TODO: mock out the ProtoMessage method")
+// 	               panic("mock out the ProtoMessage method")
 //             },
 //             ResetFunc: func()  {
-// 	               panic("TODO: mock out the Reset method")
+// 	               panic("mock out the Reset method")
 //             },
 //             StringFunc: func() string {
-// 	               panic("TODO: mock out the String method")
+// 	               panic("mock out the String method")
 //             },
 //             ValidateFunc: func() error {
-// 	               panic("TODO: mock out the Validate method")
+// 	               panic("mock out the Validate method")
 //             },
 //         }
 //
-//         // TODO: use mockedSelfValidatingMessage in code that requires SelfValidatingMessage
-//         //       and then make assertions.
+//         // use mockedSelfValidatingMessage in code that requires SelfValidatingMessage
+//         // and then make assertions.
 //
 //     }
 type SelfValidatingMessageMock struct {
@@ -531,6 +547,10 @@ var (
 	lockInboundTransportMockSubscribe  sync.RWMutex
 )
 
+// Ensure, that InboundTransportMock does implement InboundTransport.
+// If this is not the case, regenerate this file with moq.
+var _ endpoint.InboundTransport = &InboundTransportMock{}
+
 // InboundTransportMock is a mock implementation of InboundTransport.
 //
 //     func TestSomethingThatUsesInboundTransport(t *testing.T) {
@@ -538,18 +558,18 @@ var (
 //         // make and configure a mocked InboundTransport
 //         mockedInboundTransport := &InboundTransportMock{
 //             InitializeFunc: func(ctx context.Context, ep string) error {
-// 	               panic("TODO: mock out the Initialize method")
+// 	               panic("mock out the Initialize method")
 //             },
 //             ReceiveFunc: func(ctx context.Context) (endpoint.InboundEnvelope, endpoint.Acknowledger, error) {
-// 	               panic("TODO: mock out the Receive method")
+// 	               panic("mock out the Receive method")
 //             },
 //             SubscribeFunc: func(ctx context.Context, op endpoint.Operation, mt ax.MessageTypeSet) error {
-// 	               panic("TODO: mock out the Subscribe method")
+// 	               panic("mock out the Subscribe method")
 //             },
 //         }
 //
-//         // TODO: use mockedInboundTransport in code that requires InboundTransport
-//         //       and then make assertions.
+//         // use mockedInboundTransport in code that requires InboundTransport
+//         // and then make assertions.
 //
 //     }
 type InboundTransportMock struct {
@@ -698,6 +718,10 @@ var (
 	lockOutboundTransportMockSend       sync.RWMutex
 )
 
+// Ensure, that OutboundTransportMock does implement OutboundTransport.
+// If this is not the case, regenerate this file with moq.
+var _ endpoint.OutboundTransport = &OutboundTransportMock{}
+
 // OutboundTransportMock is a mock implementation of OutboundTransport.
 //
 //     func TestSomethingThatUsesOutboundTransport(t *testing.T) {
@@ -705,15 +729,15 @@ var (
 //         // make and configure a mocked OutboundTransport
 //         mockedOutboundTransport := &OutboundTransportMock{
 //             InitializeFunc: func(ctx context.Context, ep string) error {
-// 	               panic("TODO: mock out the Initialize method")
+// 	               panic("mock out the Initialize method")
 //             },
 //             SendFunc: func(ctx context.Context, env endpoint.OutboundEnvelope) error {
-// 	               panic("TODO: mock out the Send method")
+// 	               panic("mock out the Send method")
 //             },
 //         }
 //
-//         // TODO: use mockedOutboundTransport in code that requires OutboundTransport
-//         //       and then make assertions.
+//         // use mockedOutboundTransport in code that requires OutboundTransport
+//         // and then make assertions.
 //
 //     }
 type OutboundTransportMock struct {
@@ -816,6 +840,10 @@ var (
 	lockValidatorMockValidate sync.RWMutex
 )
 
+// Ensure, that ValidatorMock does implement Validator.
+// If this is not the case, regenerate this file with moq.
+var _ endpoint.Validator = &ValidatorMock{}
+
 // ValidatorMock is a mock implementation of Validator.
 //
 //     func TestSomethingThatUsesValidator(t *testing.T) {
@@ -823,12 +851,12 @@ var (
 //         // make and configure a mocked Validator
 //         mockedValidator := &ValidatorMock{
 //             ValidateFunc: func(ctx context.Context, m ax.Message) error {
-// 	               panic("TODO: mock out the Validate method")
+// 	               panic("mock out the Validate method")
 //             },
 //         }
 //
-//         // TODO: use mockedValidator in code that requires Validator
-//         //       and then make assertions.
+//         // use mockedValidator in code that requires Validator
+//         // and then make assertions.
 //
 //     }
 type ValidatorMock struct {

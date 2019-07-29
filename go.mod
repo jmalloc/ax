@@ -24,6 +24,7 @@ require (
 	github.com/uber/jaeger-lib v1.5.0 // indirect
 	go.uber.org/atomic v1.3.2 // indirect
 	go.uber.org/multierr v1.1.0
-	golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4
+	golang.org/x/net v0.0.0-20190620200207-3b0461eec859 // indirect
+	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	google.golang.org/appengine v1.1.0 // indirect
 )

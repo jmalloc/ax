@@ -6,6 +6,7 @@ package mocks
 import (
 	"context"
 	"github.com/jmalloc/ax/src/ax"
+	"github.com/jmalloc/ax/src/ax/routing"
 	"sync"
 )
 
@@ -14,6 +15,10 @@ var (
 	lockMessageHandlerMockMessageTypes  sync.RWMutex
 )
 
+// Ensure, that MessageHandlerMock does implement MessageHandler.
+// If this is not the case, regenerate this file with moq.
+var _ routing.MessageHandler = &MessageHandlerMock{}
+
 // MessageHandlerMock is a mock implementation of MessageHandler.
 //
 //     func TestSomethingThatUsesMessageHandler(t *testing.T) {
@@ -21,15 +26,15 @@ var (
 //         // make and configure a mocked MessageHandler
 //         mockedMessageHandler := &MessageHandlerMock{
 //             HandleMessageFunc: func(ctx context.Context, s ax.Sender, mctx ax.MessageContext) error {
-// 	               panic("TODO: mock out the HandleMessage method")
+// 	               panic("mock out the HandleMessage method")
 //             },
 //             MessageTypesFunc: func() ax.MessageTypeSet {
-// 	               panic("TODO: mock out the MessageTypes method")
+// 	               panic("mock out the MessageTypes method")
 //             },
 //         }
 //
-//         // TODO: use mockedMessageHandler in code that requires MessageHandler
-//         //       and then make assertions.
+//         // use mockedMessageHandler in code that requires MessageHandler
+//         // and then make assertions.
 //
 //     }
 type MessageHandlerMock struct {

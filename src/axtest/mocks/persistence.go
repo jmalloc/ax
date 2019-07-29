@@ -14,6 +14,10 @@ var (
 	lockCommitterMockRollback sync.RWMutex
 )
 
+// Ensure, that CommitterMock does implement Committer.
+// If this is not the case, regenerate this file with moq.
+var _ persistence.Committer = &CommitterMock{}
+
 // CommitterMock is a mock implementation of Committer.
 //
 //     func TestSomethingThatUsesCommitter(t *testing.T) {
@@ -21,15 +25,15 @@ var (
 //         // make and configure a mocked Committer
 //         mockedCommitter := &CommitterMock{
 //             CommitFunc: func() error {
-// 	               panic("TODO: mock out the Commit method")
+// 	               panic("mock out the Commit method")
 //             },
 //             RollbackFunc: func() error {
-// 	               panic("TODO: mock out the Rollback method")
+// 	               panic("mock out the Rollback method")
 //             },
 //         }
 //
-//         // TODO: use mockedCommitter in code that requires Committer
-//         //       and then make assertions.
+//         // use mockedCommitter in code that requires Committer
+//         // and then make assertions.
 //
 //     }
 type CommitterMock struct {
@@ -106,6 +110,10 @@ var (
 	lockDataStoreMockBeginTx sync.RWMutex
 )
 
+// Ensure, that DataStoreMock does implement DataStore.
+// If this is not the case, regenerate this file with moq.
+var _ persistence.DataStore = &DataStoreMock{}
+
 // DataStoreMock is a mock implementation of DataStore.
 //
 //     func TestSomethingThatUsesDataStore(t *testing.T) {
@@ -113,12 +121,12 @@ var (
 //         // make and configure a mocked DataStore
 //         mockedDataStore := &DataStoreMock{
 //             BeginTxFunc: func(ctx context.Context) (persistence.Tx, persistence.Committer, error) {
-// 	               panic("TODO: mock out the BeginTx method")
+// 	               panic("mock out the BeginTx method")
 //             },
 //         }
 //
-//         // TODO: use mockedDataStore in code that requires DataStore
-//         //       and then make assertions.
+//         // use mockedDataStore in code that requires DataStore
+//         // and then make assertions.
 //
 //     }
 type DataStoreMock struct {
@@ -170,6 +178,10 @@ var (
 	lockTxMockDataStore sync.RWMutex
 )
 
+// Ensure, that TxMock does implement Tx.
+// If this is not the case, regenerate this file with moq.
+var _ persistence.Tx = &TxMock{}
+
 // TxMock is a mock implementation of Tx.
 //
 //     func TestSomethingThatUsesTx(t *testing.T) {
@@ -177,12 +189,12 @@ var (
 //         // make and configure a mocked Tx
 //         mockedTx := &TxMock{
 //             DataStoreFunc: func() persistence.DataStore {
-// 	               panic("TODO: mock out the DataStore method")
+// 	               panic("mock out the DataStore method")
 //             },
 //         }
 //
-//         // TODO: use mockedTx in code that requires Tx
-//         //       and then make assertions.
+//         // use mockedTx in code that requires Tx
+//         // and then make assertions.
 //
 //     }
 type TxMock struct {

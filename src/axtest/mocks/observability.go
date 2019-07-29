@@ -6,6 +6,7 @@ package mocks
 import (
 	"context"
 	"github.com/jmalloc/ax/src/ax/endpoint"
+	"github.com/jmalloc/ax/src/ax/observability"
 	"sync"
 )
 
@@ -16,6 +17,10 @@ var (
 	lockObserverMockBeforeOutbound sync.RWMutex
 )
 
+// Ensure, that ObserverMock does implement Observer.
+// If this is not the case, regenerate this file with moq.
+var _ observability.Observer = &ObserverMock{}
+
 // ObserverMock is a mock implementation of Observer.
 //
 //     func TestSomethingThatUsesObserver(t *testing.T) {
@@ -23,21 +28,21 @@ var (
 //         // make and configure a mocked Observer
 //         mockedObserver := &ObserverMock{
 //             AfterInboundFunc: func(ctx context.Context, env endpoint.InboundEnvelope, err error)  {
-// 	               panic("TODO: mock out the AfterInbound method")
+// 	               panic("mock out the AfterInbound method")
 //             },
 //             AfterOutboundFunc: func(ctx context.Context, env endpoint.OutboundEnvelope, err error)  {
-// 	               panic("TODO: mock out the AfterOutbound method")
+// 	               panic("mock out the AfterOutbound method")
 //             },
 //             BeforeInboundFunc: func(ctx context.Context, env endpoint.InboundEnvelope)  {
-// 	               panic("TODO: mock out the BeforeInbound method")
+// 	               panic("mock out the BeforeInbound method")
 //             },
 //             BeforeOutboundFunc: func(ctx context.Context, env endpoint.OutboundEnvelope)  {
-// 	               panic("TODO: mock out the BeforeOutbound method")
+// 	               panic("mock out the BeforeOutbound method")
 //             },
 //         }
 //
-//         // TODO: use mockedObserver in code that requires Observer
-//         //       and then make assertions.
+//         // use mockedObserver in code that requires Observer
+//         // and then make assertions.
 //
 //     }
 type ObserverMock struct {
