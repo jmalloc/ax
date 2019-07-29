@@ -53,7 +53,7 @@ func (v *visitor) VisitAggregateConfig(_ context.Context, cfg *config.AggregateC
 	}
 
 	for mt := range cfg.ConsumedMessageTypes() {
-		a.CommandTypes.Add(
+		a.CommandTypes = a.CommandTypes.Add(
 			convertMessageType(mt),
 		)
 	}
@@ -70,7 +70,7 @@ func (v *visitor) VisitProcessConfig(_ context.Context, cfg *config.ProcessConfi
 	}
 
 	for mt := range cfg.ConsumedMessageTypes() {
-		a.EventTypes.Add(
+		a.EventTypes = a.EventTypes.Add(
 			convertMessageType(mt),
 		)
 	}
@@ -86,7 +86,7 @@ func (v *visitor) VisitIntegrationConfig(_ context.Context, cfg *config.Integrat
 	}
 
 	for mt := range cfg.ConsumedMessageTypes() {
-		a.CommandTypes.Add(
+		a.CommandTypes = a.CommandTypes.Add(
 			convertMessageType(mt),
 		)
 	}
@@ -103,7 +103,7 @@ func (v *visitor) VisitProjectionConfig(_ context.Context, cfg *config.Projectio
 	}
 
 	for mt := range cfg.ConsumedMessageTypes() {
-		a.EventTypes.Add(
+		a.EventTypes = a.EventTypes.Add(
 			convertMessageType(mt),
 		)
 	}
