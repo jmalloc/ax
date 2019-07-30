@@ -4,10 +4,10 @@ go 1.12
 
 require (
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
-	github.com/dogmatiq/dogma v0.3.0
-	github.com/dogmatiq/enginekit v0.3.0
+	github.com/dogmatiq/dogma v0.4.0
+	github.com/dogmatiq/enginekit v0.5.2
 	github.com/go-sql-driver/mysql v1.4.1
-	github.com/golang/protobuf v1.3.0
+	github.com/golang/protobuf v1.3.1
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jmalloc/twelf v0.0.0-20181105211840-fb3651c5f97f
 	github.com/onsi/ginkgo v1.7.0
