@@ -47,4 +47,4 @@ src/axtest/mocks/observability.go: $(wildcard src/ax/observability/*.go) | $(MOQ
 		Observer
 
 artifacts/make/%:
-	curl -sf https://make-files.github.io/fetch | bash /dev/stdin $*
+	curl -sfL https://makefiles.dev/fetch | bash /dev/stdin $*
