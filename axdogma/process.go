@@ -127,6 +127,10 @@ func (s *processScope) InstanceID() string {
 	return s.instance.InstanceID.String()
 }
 
+func (s *processScope) RecordedAt() time.Time {
+	return s.mctx.Envelope.SendAt
+}
+
 func (s *processScope) Begin() bool {
 	if s.exists {
 		return false

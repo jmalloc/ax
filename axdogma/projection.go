@@ -53,11 +53,7 @@ type projectionScope struct {
 	mctx ax.MessageContext
 }
 
-func (s *projectionScope) Key() string {
-	return s.mctx.Envelope.MessageID.String()
-}
-
-func (s *projectionScope) Time() time.Time {
+func (s *projectionScope) RecordedAt() time.Time {
 	return s.mctx.Envelope.SendAt
 }
 
