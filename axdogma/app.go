@@ -37,7 +37,7 @@ type visitor struct {
 }
 
 func (v *visitor) VisitApplicationConfig(ctx context.Context, cfg *config.ApplicationConfig) error {
-	for _, hcfg := range cfg.Handlers {
+	for _, hcfg := range cfg.HandlersByName {
 		if err := hcfg.Accept(ctx, v); err != nil {
 			return err
 		}
