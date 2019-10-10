@@ -4,8 +4,8 @@ go 1.13
 
 require (
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
-	github.com/dogmatiq/dogma v0.4.0
-	github.com/dogmatiq/enginekit v0.5.2
+	github.com/dogmatiq/dogma v0.6.0
+	github.com/dogmatiq/enginekit v0.6.0
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/golang/protobuf v1.3.1
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
