@@ -2,6 +2,7 @@ package axdogma
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/dogmatiq/dogma"
@@ -42,11 +43,35 @@ func (a *ProjectionAdaptor) MessageTypes() ax.MessageTypeSet {
 // It may panic if env.Message is not one of the types described by
 // MessageTypes().
 func (a *ProjectionAdaptor) ApplyMessage(ctx context.Context, mctx ax.MessageContext) error {
-	return a.Handler.HandleEvent(
+	res, err := mctx.Envelope.MessageID.MarshalText()
+	if err != nil {
+		return err
+	}
+
+	cur, err := a.Handler.ResourceVersion(ctx, res)
+	if err != nil {
+		return err
+	}
+
+	// This message has already been handled.
+	if len(cur) != 0 {
+		return nil
+	}
+
+	ok, err := a.Handler.HandleEvent(
 		ctx,
+		res, cur, []byte{1},
 		&projectionScope{mctx},
 		mctx.Envelope.Message,
 	)
+	if err != nil {
+		return err
+	}
+	if ok {
+		return nil
+	}
+
+	return errors.New("optimsitic concurrency conflict occurred while updating projection")
 }
 
 type projectionScope struct {
