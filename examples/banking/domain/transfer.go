@@ -3,10 +3,10 @@ package domain
 import (
 	"fmt"
 
+	"github.com/jmalloc/ax"
 	"github.com/jmalloc/ax/examples/banking/format"
 	"github.com/jmalloc/ax/examples/banking/messages"
-	"github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/ax/ident"
+	"github.com/jmalloc/ax/ident"
 )
 
 // DoTransfer begins a new funds transfer between two accounts.

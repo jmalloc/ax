@@ -3,9 +3,9 @@ package workflows
 import (
 	"fmt"
 
+	"github.com/jmalloc/ax"
 	"github.com/jmalloc/ax/examples/banking/messages"
-	"github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/ax/ident"
+	"github.com/jmalloc/ax/ident"
 )
 
 // BeginWhenTransferStarted responds to m.

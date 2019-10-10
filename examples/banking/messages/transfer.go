@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jmalloc/ax/examples/banking/format"
-	"github.com/jmalloc/ax/src/ax/ident"
+	"github.com/jmalloc/ax/ident"
 )
 
 // IsCommand marks the message as a command.

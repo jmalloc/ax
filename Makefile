@@ -1,16 +1,20 @@
-REQ += $(shell find src -name "*.proto")
-REQ += src/axtest/mocks/endpoint.go
-REQ += src/axtest/mocks/routing.go
-REQ += src/axtest/mocks/persistence.go
-REQ += src/axtest/mocks/observability.go
+# Mock generation is disabled until this PR is merged:
+# https://github.com/matryer/moq/pull/105
+#
+# Until then, we will just leave the existing mocks committed without
+# regenerating them.
+#
+# GENERATED_FILES += axtest/mocks/endpoint.go
+# GENERATED_FILES += axtest/mocks/routing.go
+# GENERATED_FILES += axtest/mocks/persistence.go
+# GENERATED_FILES += axtest/mocks/observability.go
 
--include artifacts/make/go/Makefile
+-include .makefiles/Makefile
+-include .makefiles/pkg/protobuf/v1/Makefile
+-include .makefiles/pkg/go/v1/Makefile
 
 .PHONY: banking
-banking:
-	protoc --go_out=paths=source_relative:. examples/banking/messages/*.proto
-	protoc --go_out=paths=source_relative:. examples/banking/domain/*.proto
-	protoc --go_out=paths=source_relative:. examples/banking/workflows/*.proto
+banking: $(GENERATED_FILES)
 	AX_RMQ_DSN="amqp://localhost" \
 	AX_MYSQL_DSN="banking:banking@tcp(127.0.0.1:3306)/banking" \
 	JAEGER_SERVICE_NAME="ax.examples.banking" \
@@ -19,15 +23,12 @@ banking:
 	JAEGER_REPORTER_LOG_SPANS=true \
 		go run examples/banking/main.go $(RUN_ARGS)
 
-%.pb.go: %.proto
-	protoc --go_out=paths=source_relative:. $(@D)/*.proto
-
 MOQ := $(GOPATH)/bin/moq
-$(MOQ): | vendor # ensure dependencies are installed before trying to build mocks
+$(MOQ):
 	go get -u github.com/matryer/moq
 
-src/axtest/mocks/endpoint.go: $(wildcard src/ax/endpoint/*.go) | $(MOQ)
-	$(MOQ) -out "$@" -pkg "mocks" src/ax/endpoint \
+axtest/mocks/endpoint.go: $(wildcard endpoint/*.go) | $(MOQ)
+	$(MOQ) -out "$@" -pkg "mocks" endpoint \
 		InboundPipeline \
 		MessageSink \
 		OutboundPipeline \
@@ -36,19 +37,19 @@ src/axtest/mocks/endpoint.go: $(wildcard src/ax/endpoint/*.go) | $(MOQ)
 		OutboundTransport \
 		Validator
 
-src/axtest/mocks/routing.go: $(wildcard src/ax/routing/*.go)  | $(MOQ)
-	$(MOQ) -out "$@" -pkg "mocks" src/ax/routing \
+axtest/mocks/routing.go: $(wildcard routing/*.go) | $(MOQ)
+	$(MOQ) -out "$@" -pkg "mocks" routing \
 		MessageHandler
 
-src/axtest/mocks/persistence.go: $(wildcard src/ax/persistence/*.go) | $(MOQ)
-	$(MOQ) -out "$@" -pkg "mocks" src/ax/persistence \
+axtest/mocks/persistence.go: $(wildcard persistence/*.go) | $(MOQ)
+	$(MOQ) -out "$@" -pkg "mocks" persistence \
 		Committer \
 		DataStore \
 		Tx
 
-src/axtest/mocks/observability.go: $(wildcard src/ax/observability/*.go) | $(MOQ)
-	$(MOQ) -out "$@" -pkg "mocks" src/ax/observability \
+axtest/mocks/observability.go: $(wildcard observability/*.go) | $(MOQ)
+	$(MOQ) -out "$@" -pkg "mocks" observability \
 		Observer
 
-artifacts/make/%/Makefile:
-	curl -sf https://jmalloc.github.io/makefiles/fetch | bash /dev/stdin $*
+.makefiles/%:
+	@curl -sfL https://makefiles.dev/v1 | bash /dev/stdin "$@"

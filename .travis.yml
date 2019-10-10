@@ -1,14 +1,16 @@
 sudo: required
 language: go
-go: '1.10'
+go: '1.13'
 addons:
   mariadb: '10.2'
 env:
-- AX_MYSQL_DSN="travis@tcp(127.0.0.1:3306)/ax"
+  global:
+  - AX_MYSQL_DSN="travis@tcp(127.0.0.1:3306)/ax"
 before_install:
 - mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql mysql
 - mysql -e 'CREATE DATABASE ax;'
+- mysql -e 'CREATE USER travis@localhost;'
+- mysql -e 'GRANT ALL ON ax.* TO travis@localhost;'
 - go get -u github.com/golang/protobuf/protoc-gen-go
-- bash .travis/install-protobuf.sh
 script: make ci
 after_script: bash <(curl -s https://codecov.io/bash)

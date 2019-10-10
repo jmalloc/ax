@@ -1,5 +1,11 @@
 # Changelog
 
+## Next Release
+
+- **[IMPROVED]** Switch to using Go modules instead of Glide.
+- **[BC]** Move all source files out of the `src` folder. The `src/ax` package
+  has been moved to the root of the repository.
+
 ## 0.3.0 (2018-11-20)
 
 - **[BC]** The method signatures and naming conventions supported by `saga.NewAggregate()` have changed, see the documentation for details

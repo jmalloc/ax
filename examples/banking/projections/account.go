@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/jmalloc/ax"
+	"github.com/jmalloc/ax/axmysql"
 	"github.com/jmalloc/ax/examples/banking/messages"
-	"github.com/jmalloc/ax/src/ax"
-	"github.com/jmalloc/ax/src/ax/projection"
-	"github.com/jmalloc/ax/src/axmysql"
+	"github.com/jmalloc/ax/projection"
 )
 
 type account struct{}
