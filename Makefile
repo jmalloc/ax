@@ -1,7 +1,13 @@
-GENERATED_FILES += axtest/mocks/endpoint.go
-GENERATED_FILES += axtest/mocks/routing.go
-GENERATED_FILES += axtest/mocks/persistence.go
-GENERATED_FILES += axtest/mocks/observability.go
+# Mock generation is disabled until this PR is merged:
+# https://github.com/matryer/moq/pull/105
+#
+# Until then, we will just leave the existing mocks committed without
+# regenerating them.
+#
+# GENERATED_FILES += axtest/mocks/endpoint.go
+# GENERATED_FILES += axtest/mocks/routing.go
+# GENERATED_FILES += axtest/mocks/persistence.go
+# GENERATED_FILES += axtest/mocks/observability.go
 
 -include .makefiles/Makefile
 -include .makefiles/pkg/protobuf/v1/Makefile
@@ -21,8 +27,8 @@ MOQ := $(GOPATH)/bin/moq
 $(MOQ):
 	go get -u github.com/matryer/moq
 
-axtest/mocks/endpoint.go: $(wildcard src/ax/endpoint/*.go) | $(MOQ)
-	$(MOQ) -out "$@" -pkg "mocks" src/ax/endpoint \
+axtest/mocks/endpoint.go: $(wildcard endpoint/*.go) | $(MOQ)
+	$(MOQ) -out "$@" -pkg "mocks" endpoint \
 		InboundPipeline \
 		MessageSink \
 		OutboundPipeline \
@@ -31,18 +37,18 @@ axtest/mocks/endpoint.go: $(wildcard src/ax/endpoint/*.go) | $(MOQ)
 		OutboundTransport \
 		Validator
 
-axtest/mocks/routing.go: $(wildcard src/ax/routing/*.go)  | $(MOQ)
-	$(MOQ) -out "$@" -pkg "mocks" src/ax/routing \
+axtest/mocks/routing.go: $(wildcard routing/*.go) | $(MOQ)
+	$(MOQ) -out "$@" -pkg "mocks" routing \
 		MessageHandler
 
-axtest/mocks/persistence.go: $(wildcard src/ax/persistence/*.go) | $(MOQ)
-	$(MOQ) -out "$@" -pkg "mocks" src/ax/persistence \
+axtest/mocks/persistence.go: $(wildcard persistence/*.go) | $(MOQ)
+	$(MOQ) -out "$@" -pkg "mocks" persistence \
 		Committer \
 		DataStore \
 		Tx
 
-axtest/mocks/observability.go: $(wildcard src/ax/observability/*.go) | $(MOQ)
-	$(MOQ) -out "$@" -pkg "mocks" src/ax/observability \
+axtest/mocks/observability.go: $(wildcard observability/*.go) | $(MOQ)
+	$(MOQ) -out "$@" -pkg "mocks" observability \
 		Observer
 
 .makefiles/%:
