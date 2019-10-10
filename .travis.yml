@@ -1,16 +1,14 @@
 sudo: required
 language: go
-go: '1.12'
+go: '1.13'
 addons:
   mariadb: '10.2'
 env:
   global:
-  - GO111MODULE=on
   - AX_MYSQL_DSN="travis@tcp(127.0.0.1:3306)/ax"
 before_install:
 - mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql mysql
 - mysql -e 'CREATE DATABASE ax;'
 - go get -u github.com/golang/protobuf/protoc-gen-go
-- bash <(curl -sfL https://makefiles.dev/travis-ci/bin/install-protoc)
 script: make ci
 after_script: bash <(curl -s https://codecov.io/bash)

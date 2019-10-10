@@ -3,7 +3,8 @@ GENERATED_FILES += src/axtest/mocks/routing.go
 GENERATED_FILES += src/axtest/mocks/persistence.go
 GENERATED_FILES += src/axtest/mocks/observability.go
 
--include artifacts/make/go/Makefile
+-include .makefiles/Makefile
+-include .makefiles/pkg/go/v1/Makefile
 
 .PHONY: banking
 banking:
@@ -46,5 +47,5 @@ src/axtest/mocks/observability.go: $(wildcard src/ax/observability/*.go) | $(MOQ
 	$(MOQ) -out "$@" -pkg "mocks" src/ax/observability \
 		Observer
 
-artifacts/make/%:
-	curl -sfL https://makefiles.dev/fetch | bash /dev/stdin $*
+.makefiles/%:
+	@curl -sfL https://makefiles.dev/v1 | bash /dev/stdin "$@"
