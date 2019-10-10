@@ -57,19 +57,19 @@ configs:
   account.sql:
     file: ./projections/account.sql
   ax-outbox.sql:
-    file: ../../src/axmysql/outbox/schema.sql
+    file: ../../axmysql/outbox/schema.sql
   ax-saga-crud.sql:
-    file: ../../src/axmysql/saga/crud.sql
+    file: ../../axmysql/saga/crud.sql
   ax-saga-keyset.sql:
-    file: ../../src/axmysql/saga/keyset.sql
+    file: ../../axmysql/saga/keyset.sql
   ax-saga-snapshot.sql:
-    file: ../../src/axmysql/saga/snapshot.sql
+    file: ../../axmysql/saga/snapshot.sql
   ax-messagestore.sql:
-    file: ../../src/axmysql/messagestore/schema.sql
+    file: ../../axmysql/messagestore/schema.sql
   ax-offsetstore.sql:
-    file: ../../src/axmysql/projection/offsetstore.sql
+    file: ../../axmysql/projection/offsetstore.sql
   ax-delayedmessage.sql:
-    file: ../../src/axmysql/delayedmessage/schema.sql
+    file: ../../axmysql/delayedmessage/schema.sql
 
 volumes:
   db-data:

@@ -1,7 +1,7 @@
-GENERATED_FILES += src/axtest/mocks/endpoint.go
-GENERATED_FILES += src/axtest/mocks/routing.go
-GENERATED_FILES += src/axtest/mocks/persistence.go
-GENERATED_FILES += src/axtest/mocks/observability.go
+GENERATED_FILES += axtest/mocks/endpoint.go
+GENERATED_FILES += axtest/mocks/routing.go
+GENERATED_FILES += axtest/mocks/persistence.go
+GENERATED_FILES += axtest/mocks/observability.go
 
 -include .makefiles/Makefile
 -include .makefiles/pkg/protobuf/v1/Makefile
@@ -21,7 +21,7 @@ MOQ := $(GOPATH)/bin/moq
 $(MOQ):
 	go get -u github.com/matryer/moq
 
-src/axtest/mocks/endpoint.go: $(wildcard src/ax/endpoint/*.go) | $(MOQ)
+axtest/mocks/endpoint.go: $(wildcard src/ax/endpoint/*.go) | $(MOQ)
 	$(MOQ) -out "$@" -pkg "mocks" src/ax/endpoint \
 		InboundPipeline \
 		MessageSink \
@@ -31,17 +31,17 @@ src/axtest/mocks/endpoint.go: $(wildcard src/ax/endpoint/*.go) | $(MOQ)
 		OutboundTransport \
 		Validator
 
-src/axtest/mocks/routing.go: $(wildcard src/ax/routing/*.go)  | $(MOQ)
+axtest/mocks/routing.go: $(wildcard src/ax/routing/*.go)  | $(MOQ)
 	$(MOQ) -out "$@" -pkg "mocks" src/ax/routing \
 		MessageHandler
 
-src/axtest/mocks/persistence.go: $(wildcard src/ax/persistence/*.go) | $(MOQ)
+axtest/mocks/persistence.go: $(wildcard src/ax/persistence/*.go) | $(MOQ)
 	$(MOQ) -out "$@" -pkg "mocks" src/ax/persistence \
 		Committer \
 		DataStore \
 		Tx
 
-src/axtest/mocks/observability.go: $(wildcard src/ax/observability/*.go) | $(MOQ)
+axtest/mocks/observability.go: $(wildcard src/ax/observability/*.go) | $(MOQ)
 	$(MOQ) -out "$@" -pkg "mocks" src/ax/observability \
 		Observer
 

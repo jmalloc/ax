@@ -1,5 +1,0 @@
-syntax = "proto3";
-
-option go_package = "github.com/jmalloc/ax/src/axtest/testmessages";
-
-message NoPackage {}
