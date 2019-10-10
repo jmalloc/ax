@@ -48,7 +48,7 @@ func (v *visitor) VisitApplicationConfig(ctx context.Context, cfg *config.Applic
 
 func (v *visitor) VisitAggregateConfig(_ context.Context, cfg *config.AggregateConfig) error {
 	a := &AggregateAdaptor{
-		Name:    cfg.HandlerName,
+		Key:     cfg.HandlerKey,
 		Handler: cfg.Handler,
 	}
 
@@ -65,7 +65,7 @@ func (v *visitor) VisitAggregateConfig(_ context.Context, cfg *config.AggregateC
 
 func (v *visitor) VisitProcessConfig(_ context.Context, cfg *config.ProcessConfig) error {
 	a := &ProcessAdaptor{
-		Name:    cfg.HandlerName,
+		Key:     cfg.HandlerKey,
 		Handler: cfg.Handler,
 	}
 
@@ -98,7 +98,7 @@ func (v *visitor) VisitIntegrationConfig(_ context.Context, cfg *config.Integrat
 
 func (v *visitor) VisitProjectionConfig(_ context.Context, cfg *config.ProjectionConfig) error {
 	a := &ProjectionAdaptor{
-		Name:    cfg.HandlerName,
+		Key:     cfg.HandlerKey,
 		Handler: cfg.Handler,
 	}
 

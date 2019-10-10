@@ -16,7 +16,7 @@ import (
 type AggregateAdaptor struct {
 	saga.IgnoreNotFound
 
-	Name         string
+	Key          string
 	CommandTypes ax.MessageTypeSet
 	Handler      dogma.AggregateMessageHandler
 
@@ -32,7 +32,7 @@ var _ saga.Saga = &AggregateAdaptor{}
 // implementation that owns it. Persistence keys should not be changed once
 // a saga has active instances.
 func (a *AggregateAdaptor) PersistenceKey() string {
-	return a.Name
+	return a.Key
 }
 
 // MessageTypes returns the set of messages that are routed to this saga.

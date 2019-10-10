@@ -17,7 +17,7 @@ import (
 type ProcessAdaptor struct {
 	saga.IgnoreNotFound
 
-	Name       string
+	Key        string
 	EventTypes ax.MessageTypeSet
 	Handler    dogma.ProcessMessageHandler
 
@@ -33,7 +33,7 @@ var _ saga.Saga = &ProcessAdaptor{}
 // implementation that owns it. Persistence keys should not be changed once
 // a saga has active instances.
 func (a *ProcessAdaptor) PersistenceKey() string {
-	return a.Name
+	return a.Key
 }
 
 // MessageTypes returns the set of messages that are routed to this saga.

@@ -13,7 +13,7 @@ import (
 // ProjectionAdaptor adapts a dogma.ProjectionMessageHandler to Ax's
 // projection.Projector interface.
 type ProjectionAdaptor struct {
-	Name       string
+	Key        string
 	EventTypes ax.MessageTypeSet
 	Handler    dogma.ProjectionMessageHandler
 }
@@ -26,7 +26,7 @@ var _ projection.Projector = &ProjectionAdaptor{}
 // implementation that owns it. Persistence keys should not be changed once
 // a projection has been started.
 func (a *ProjectionAdaptor) PersistenceKey() string {
-	return a.Name
+	return a.Key
 }
 
 // MessageTypes returns the set of messages that the projector intends
