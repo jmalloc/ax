@@ -4,13 +4,11 @@ GENERATED_FILES += src/axtest/mocks/persistence.go
 GENERATED_FILES += src/axtest/mocks/observability.go
 
 -include .makefiles/Makefile
+-include .makefiles/pkg/protobuf/v1/Makefile
 -include .makefiles/pkg/go/v1/Makefile
 
 .PHONY: banking
-banking:
-	protoc --go_out=paths=source_relative:. examples/banking/messages/*.proto
-	protoc --go_out=paths=source_relative:. examples/banking/domain/*.proto
-	protoc --go_out=paths=source_relative:. examples/banking/workflows/*.proto
+banking: $(GENERATED_FILES)
 	AX_RMQ_DSN="amqp://localhost" \
 	AX_MYSQL_DSN="banking:banking@tcp(127.0.0.1:3306)/banking" \
 	JAEGER_SERVICE_NAME="ax.examples.banking" \
