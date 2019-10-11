@@ -63,6 +63,12 @@ func (a *ProcessAdaptor) HandleMessage(
 ) (err error) {
 	defer unwrap(&err)
 
+	if d := a.Handler.TimeoutHint(mctx.Envelope.Message); d != 0 {
+		var cancel func()
+		ctx, cancel = context.WithTimeout(ctx, d)
+		defer cancel()
+	}
+
 	sc := &processScope{
 		ctx:      ctx,
 		sender:   s,

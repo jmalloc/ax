@@ -43,6 +43,12 @@ func (a *ProjectionAdaptor) MessageTypes() ax.MessageTypeSet {
 // It may panic if env.Message is not one of the types described by
 // MessageTypes().
 func (a *ProjectionAdaptor) ApplyMessage(ctx context.Context, mctx ax.MessageContext) error {
+	if d := a.Handler.TimeoutHint(mctx.Envelope.Message); d != 0 {
+		var cancel func()
+		ctx, cancel = context.WithTimeout(ctx, d)
+		defer cancel()
+	}
+
 	res, err := mctx.Envelope.MessageID.MarshalText()
 	if err != nil {
 		return err

@@ -36,6 +36,12 @@ func (a *IntegrationAdaptor) HandleMessage(
 	s ax.Sender,
 	mctx ax.MessageContext,
 ) error {
+	if d := a.Handler.TimeoutHint(mctx.Envelope.Message); d != 0 {
+		var cancel func()
+		ctx, cancel = context.WithTimeout(ctx, d)
+		defer cancel()
+	}
+
 	sc := &integrationScope{
 		mctx: mctx,
 	}
