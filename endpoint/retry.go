@@ -79,17 +79,17 @@ func NewIndefiniteRetryPolicy(i uint, d, dmax time.Duration, randomize float64) 
 	return func(env InboundEnvelope, _ error) (time.Duration, bool) {
 		n := env.AttemptCount
 
-		// Retry immediately if we haven't yet exhausted the immediate attempt
-		// limit.
-		if n < i {
-			return 0, true
-		}
-
 		// If the attempt count is unknown, always retry, but always use the
 		// maximum backoff period.
 		if n == 0 {
 			lastDelay = dmax
 			return randomizeDuration(dmax, randomize), true
+		}
+
+		// Retry immediately if we haven't yet exhausted the immediate attempt
+		// limit.
+		if n < i {
+			return 0, true
 		}
 
 		// lastDelay has already been set to dmax, randomize dmax and return
