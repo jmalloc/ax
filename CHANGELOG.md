@@ -1,7 +1,12 @@
 # Changelog
 
-## Next Release
+## 0.4.0 (2019-10-18)
 
+- **[BC]** `endpoint.NewExponentialBackoffPolicy()` now allows for indefinite retries
+- **[IMPROVED]** The default retry policy now retries indefinitely
+- **[ADDED]** Added rudimentary support for [Dogma](http://github.com/dogmatiq/dogma) application interfaces
+- **[FIXED]** Use `LONGBLOB` instead of `BLOB` for binary storage in `axmysql`
+- **[ADDED]** `direct.WithPrefix()` for mapping messages to saga IDs that are prefixed with some fixed value
 - **[IMPROVED]** Switch to using Go modules instead of Glide.
 - **[BC]** Move all source files out of the `src` folder. The `src/ax` package
   has been moved to the root of the repository.
