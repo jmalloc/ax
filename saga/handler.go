@@ -171,8 +171,10 @@ func (h *MessageHandler) save(ctx context.Context, tx persistence.Tx, w UnitOfWo
 func (h *MessageHandler) complete(ctx context.Context, tx persistence.Tx, w UnitOfWork) error {
 	revBefore := w.Instance().Revision
 
-	if err := w.SaveAndComplete(ctx); err != nil {
-		return err
+	if revBefore != 0 {
+		if err := w.SaveAndComplete(ctx); err != nil {
+			return err
+		}
 	}
 
 	h.logEvent(
@@ -183,7 +185,11 @@ func (h *MessageHandler) complete(ctx context.Context, tx persistence.Tx, w Unit
 		log.Uint64("revision_before", uint64(revBefore)),
 	)
 
-	return h.Mapper.DeleteMapping(ctx, h.Saga, tx, w.Instance())
+	if revBefore != 0 {
+		return h.Mapper.DeleteMapping(ctx, h.Saga, tx, w.Instance())
+	}
+
+	return nil
 }
 
 // isTrigger returns true if env contains a message type that can trigger a new
