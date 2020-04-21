@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1 (2020-04-21)
+
+- **[FIX]** Fix unexpected OCC failure when a saga instance is completed by its beginning message (thanks @danilvpetrov)
+
 ## 0.4.0 (2019-10-18)
 
 - **[BC]** `endpoint.NewExponentialBackoffPolicy()` now allows for indefinite retries
