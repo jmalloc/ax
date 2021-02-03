@@ -146,8 +146,12 @@ func insertMessage(
 		return err
 	}
 
-	// Truncate the message to 255 characters to fit within the column.
-	descrTrunc := env.Message.MessageDescription()[:255]
+	descr := env.Message.MessageDescription()
+	// Truncate the message to 255 characters to fit within the column, if
+	// required.
+	if len(env.Message.MessageDescription()) > 255 {
+		descr = descr[:255]
+	}
 
 	_, err = tx.ExecContext(
 		ctx,
@@ -166,7 +170,7 @@ func insertMessage(
 		g,
 		id,
 		o,
-		descrTrunc,
+		descr,
 		env.MessageID,
 		env.CausationID,
 		env.CorrelationID,
