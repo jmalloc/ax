@@ -164,6 +164,13 @@ func (CRUDRepository) insertInstance(
 	contentType string,
 	data []byte,
 ) (bool, error) {
+	descr := i.Data.InstanceDescription()
+	// Truncate the message to 255 characters to fit within the column, if
+	// required.
+	if len(descr) > 255 {
+		descr = descr[:255]
+	}
+
 	_, err := tx.ExecContext(
 		ctx,
 		`INSERT INTO ax_saga_instance SET
@@ -175,7 +182,7 @@ func (CRUDRepository) insertInstance(
 			data = ?`,
 		i.InstanceID,
 		pk,
-		i.Data.InstanceDescription(),
+		descr,
 		contentType,
 		data,
 	)

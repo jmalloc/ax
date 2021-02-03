@@ -149,7 +149,7 @@ func insertMessage(
 	descr := env.Message.MessageDescription()
 	// Truncate the message to 255 characters to fit within the column, if
 	// required.
-	if len(env.Message.MessageDescription()) > 255 {
+	if len(descr) > 255 {
 		descr = descr[:255]
 	}
 
