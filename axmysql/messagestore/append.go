@@ -146,6 +146,12 @@ func insertMessage(
 		return err
 	}
 
+	// Truncate the message to 255 characters to fit in the schema restriction;
+	// see
+	// https://github.com/jmalloc/ax/blob/v0.4.0/axmysql/messagestore/schema.sql#L37
+	// for details.
+	descrTrunc := env.Message.MessageDescription()[:255]
+
 	_, err = tx.ExecContext(
 		ctx,
 		`INSERT INTO ax_messagestore_message SET
@@ -163,7 +169,7 @@ func insertMessage(
 		g,
 		id,
 		o,
-		env.Message.MessageDescription(),
+		descrTrunc,
 		env.MessageID,
 		env.CausationID,
 		env.CorrelationID,
