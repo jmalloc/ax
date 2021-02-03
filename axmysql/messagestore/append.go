@@ -146,10 +146,7 @@ func insertMessage(
 		return err
 	}
 
-	// Truncate the message to 255 characters to fit in the schema restriction;
-	// see
-	// https://github.com/jmalloc/ax/blob/v0.4.0/axmysql/messagestore/schema.sql#L37
-	// for details.
+	// Truncate the message to 255 characters to fit within the column.
 	descrTrunc := env.Message.MessageDescription()[:255]
 
 	_, err = tx.ExecContext(
