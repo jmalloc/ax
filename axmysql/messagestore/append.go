@@ -146,6 +146,13 @@ func insertMessage(
 		return err
 	}
 
+	descr := env.Message.MessageDescription()
+	// Truncate the message to 255 characters to fit within the column, if
+	// required.
+	if len(descr) > 255 {
+		descr = descr[:255]
+	}
+
 	_, err = tx.ExecContext(
 		ctx,
 		`INSERT INTO ax_messagestore_message SET
@@ -163,7 +170,7 @@ func insertMessage(
 		g,
 		id,
 		o,
-		env.Message.MessageDescription(),
+		descr,
 		env.MessageID,
 		env.CausationID,
 		env.CorrelationID,

@@ -92,6 +92,13 @@ func (SnapshotRepository) SaveSagaSnapshot(
 		return err
 	}
 
+	descr := i.Data.InstanceDescription()
+	// Truncate the message to 255 characters to fit within the column, if
+	// required.
+	if len(descr) > 255 {
+		descr = descr[:255]
+	}
+
 	_, err = tx.ExecContext(
 		ctx,
 		`INSERT INTO ax_saga_snapshot SET
@@ -104,7 +111,7 @@ func (SnapshotRepository) SaveSagaSnapshot(
 		i.InstanceID,
 		i.Revision,
 		pk,
-		i.Data.InstanceDescription(),
+		descr,
 		contentType,
 		data,
 	)
