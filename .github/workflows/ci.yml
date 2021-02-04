@@ -1,0 +1,42 @@
+name: CI
+on:
+  push:
+    branches:
+    - '*'
+  pull_request:
+  schedule:
+  - cron: 0 14 * * 0
+jobs:
+  ci:
+    name: Continuous Integration
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Go
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.15
+      id: go
+    - name: Checkout
+      uses: actions/checkout@v1
+    - name: Make
+      run: make ci
+      env:
+        AX_MYSQL_DSN: "root:rootpass@tcp(127.0.0.1:${{ job.services.mariadb.ports['3306'] }})/ax"
+    - name: Upload Coverage Reports
+      if: success()
+      run: |
+        [[ -z "${{ secrets.CODECOV_TOKEN }}" ]] || bash <(curl -s https://codecov.io/bash) -t "${{ secrets.CODECOV_TOKEN }}" -B "${{ github.ref }}"
+    services:
+      mariadb:
+        image: mariadb:10
+        options: >-
+          --mount type=tmpfs,destination=/var/lib/mysql
+          --health-cmd="mysqladmin ping --host 127.0.0.1 --port 3306 --user root --password=rootpass"
+          --health-interval 2s
+          --health-timeout 10s
+          --health-retries 10
+        ports:
+        - 3306/tcp
+        env:
+          MYSQL_ROOT_PASSWORD: rootpass
+          MYSQL_DATABASE: ax
