@@ -7,7 +7,7 @@ require (
 	github.com/dogmatiq/dogma v0.4.0
 	github.com/dogmatiq/enginekit v0.5.2
 	github.com/go-sql-driver/mysql v1.4.1
-	github.com/golang/protobuf v1.3.1
+	github.com/golang/protobuf v1.4.1
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jmalloc/twelf v0.0.0-20181105211840-fb3651c5f97f
 	github.com/onsi/ginkgo v1.7.0
@@ -26,5 +26,5 @@ require (
 	go.uber.org/multierr v1.1.0
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859 // indirect
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
-	google.golang.org/appengine v1.1.0 // indirect
+	google.golang.org/protobuf v1.25.0
 )
