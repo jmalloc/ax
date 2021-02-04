@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.2 (2021-02-04)
+- **[FIX]** Truncate long message descriptions to prevent persistence failures
+
 ## 0.4.1 (2020-04-21)
 
 - **[FIX]** Fix unexpected OCC failure when a saga instance is completed by its beginning message (thanks @danilvpetrov)
