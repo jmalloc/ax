@@ -22,7 +22,7 @@ var _ = Describe("MarshalJSON", func() {
 		var m testmessages.NonAxMessage
 		err = json.Unmarshal(data, &m)
 		Expect(err).ShouldNot(HaveOccurred())
-		Expect(m).Should(Equal(*message))
+		Expect(proto.Equal(&m, message)).Should(BeTrue())
 	})
 
 	It("includes the protocol information in the content-type", func() {
